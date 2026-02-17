@@ -1,0 +1,4666 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu de Plateau - Arène Tactique</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .game-header h1 {
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(100, 200, 255, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .game-info {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .player-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            min-width: 280px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .player-panel.active {
+            border-color: #ffd700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .player-panel.player1 {
+            border-left: 5px solid #4a90d9;
+        }
+
+        .player-panel.player2 {
+            border-left: 5px solid #d94a4a;
+        }
+
+        .player-panel h2 {
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .player-panel .stat {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+
+        .crystals-display {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+
+        .crystal-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .crystal-icon.player2-icon {
+            background: linear-gradient(135deg, #ff4a8d, #cc0066);
+        }
+
+        .crystal-icon.destroyed {
+            background: #444;
+            opacity: 0.5;
+        }
+
+        .main-area {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .board-container {
+            position: relative;
+        }
+
+        .board-wrapper {
+            position: relative;
+            transform-origin: top center;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(12, 50px);
+            grid-template-rows: repeat(12, 50px);
+            gap: 2px;
+            background: linear-gradient(135deg, rgba(20,15,10,0.8), rgba(30,25,15,0.9));
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5), inset 0 0 30px rgba(0,0,0,0.3);
+            border: 2px solid rgba(100, 80, 50, 0.4);
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(145deg, #2d5a3d 0%, #1e4a2e 40%, #1a3d25 100%);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.3);
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.05);
+        }
+
+        .cell::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 5px;
+            background: radial-gradient(ellipse at 30% 20%, rgba(100,200,100,0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @media (hover: hover) {
+            .cell:hover {
+                transform: scale(1.05);
+                z-index: 10;
+                box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+            }
+        }
+
+        .cell.height-0 {
+            background: linear-gradient(145deg, #2d5a3d 0%, #1e4a2e 40%, #1a3d25 100%);
+        }
+
+        .cell.height-1 {
+            background: linear-gradient(145deg, #4a8c5e 0%, #3d7a4e 50%, #2d6a3e 100%);
+            box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.35), inset 0 2px 2px rgba(255,255,255,0.08);
+        }
+
+        .cell.height-1::after {
+            content: '1';
+            position: absolute;
+            bottom: 2px;
+            right: 3px;
+            font-size: 8px;
+            color: rgba(255,255,255,0.2);
+            pointer-events: none;
+        }
+
+        .cell.height-2 {
+            background: linear-gradient(145deg, #6bab82 0%, #5a9a70 50%, #4a8a60 100%);
+            box-shadow: inset 0 -7px 0 rgba(0, 0, 0, 0.35), inset 0 2px 3px rgba(255,255,255,0.12);
+        }
+
+        .cell.height-2::after {
+            content: '2';
+            position: absolute;
+            bottom: 2px;
+            right: 3px;
+            font-size: 8px;
+            color: rgba(255,255,255,0.25);
+            pointer-events: none;
+        }
+
+        .cell.water {
+            background: linear-gradient(145deg, #2196f3 0%, #1976d2 40%, #0d47a1 100%);
+            overflow: hidden;
+        }
+
+        .cell.water::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 25% 35%, rgba(255,255,255,0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 75% 65%, rgba(255,255,255,0.1) 0%, transparent 40%);
+            animation: water-ripple 4s ease-in-out infinite, water-shimmer 3s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .cell.water::after {
+            content: '';
+            pointer-events: none;
+        }
+
+        @keyframes water-shimmer {
+            0%, 100% { filter: brightness(0.9); }
+            50% { filter: brightness(1.1); }
+        }
+
+        @keyframes water-ripple {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .cell.obstacle {
+            background: linear-gradient(145deg, #6b6b6b 0%, #4a4a4a 30%, #383838 60%, #2a2a2a 100%);
+            cursor: not-allowed;
+            box-shadow: inset 0 2px 3px rgba(255,255,255,0.1), inset 0 -3px 3px rgba(0,0,0,0.3);
+        }
+
+        .cell.obstacle::before {
+            background:
+                repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.1) 4px, rgba(0,0,0,0.1) 6px);
+        }
+
+        .cell.obstacle-tall {
+            background: linear-gradient(145deg, #7a7a7a 0%, #5a5a5a 30%, #484848 60%, #363636 100%);
+            box-shadow: inset 0 -8px 0 rgba(0, 0, 0, 0.45), inset 0 3px 4px rgba(255,255,255,0.1);
+            cursor: not-allowed;
+        }
+
+        .cell.obstacle-tall::before {
+            background:
+                repeating-linear-gradient(0deg, transparent, transparent 6px, rgba(0,0,0,0.08) 6px, rgba(0,0,0,0.08) 8px),
+                repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0,0,0,0.06) 10px, rgba(0,0,0,0.06) 12px);
+        }
+
+        .cell.obstacle-tall::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 3px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 1px;
+            pointer-events: none;
+        }
+
+        .cell.highlight-move {
+            box-shadow: inset 0 0 0 3px #4aff4a, 0 0 15px rgba(74, 255, 74, 0.5);
+        }
+
+        .cell.highlight-attack {
+            box-shadow: inset 0 0 0 3px #ff4a4a, 0 0 15px rgba(255, 74, 74, 0.5);
+        }
+
+        .cell.highlight-summon {
+            box-shadow: inset 0 0 0 3px #ffd700, 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        .cell.highlight-crystal {
+            box-shadow: inset 0 0 0 3px #00ffff, 0 0 20px rgba(0, 255, 255, 0.6);
+            animation: pulse-crystal 1s ease-in-out infinite;
+        }
+
+        .cell.selected-crystal {
+            box-shadow: inset 0 0 0 4px #ffd700, 0 0 25px rgba(255, 215, 0, 0.8);
+        }
+
+        @keyframes pulse-crystal {
+            0%, 100% { box-shadow: inset 0 0 0 3px #00ffff, 0 0 20px rgba(0, 255, 255, 0.6); }
+            50% { box-shadow: inset 0 0 0 3px #00ffff, 0 0 30px rgba(0, 255, 255, 0.9); }
+        }
+
+        .unit {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            cursor: pointer;
+            line-height: 1;
+            z-index: 5;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            background: rgba(30, 30, 30, 0.7);
+        }
+
+        .unit .unit-emoji {
+            font-size: 28px;
+            line-height: 1;
+            color: white;
+        }
+
+        .unit.player1 {
+            border-color: #5a9ae0;
+            background: radial-gradient(circle at 50% 65%, #1a3a5c, #2a5a8c);
+        }
+
+        .unit.player2 {
+            border-color: #e05a5a;
+            background: radial-gradient(circle at 50% 65%, #5c1a1a, #8c2a2a);
+        }
+
+        .unit.selected {
+            transform: scale(1.15);
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        .unit.cannot-act {
+        }
+
+        .unit .hp-bar {
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 36px;
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .unit .hp-bar .hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444, #44ff44);
+            transition: width 0.3s ease;
+        }
+
+        .crystal {
+            width: 35px;
+            height: 35px;
+            position: absolute;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            animation: crystal-glow 2s ease-in-out infinite;
+        }
+
+        .crystal.player1 {
+            background: linear-gradient(135deg, #4ad4ff 0%, #0099cc 100%);
+        }
+
+        .crystal.player2 {
+            background: linear-gradient(135deg, #ff4a8d 0%, #cc0066 100%);
+        }
+
+        @keyframes crystal-glow {
+            0%, 100% { filter: brightness(1) drop-shadow(0 0 5px currentColor); }
+            50% { filter: brightness(1.3) drop-shadow(0 0 15px currentColor); }
+        }
+
+        .roster-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            min-width: 320px;
+            max-width: 350px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .roster-panel h3 {
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.3em;
+        }
+
+        .character-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        @media (hover: hover) {
+            .character-card:hover {
+                background: rgba(0, 0, 0, 0.5);
+                transform: translateX(5px);
+            }
+        }
+
+        .character-card.selected {
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .character-card.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .character-card .char-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .character-card .char-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .character-card .char-power {
+            background: #ffd700;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .character-card .char-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            font-size: 0.85em;
+            margin-bottom: 8px;
+        }
+
+        .character-card .char-stats span {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 3px 5px;
+            border-radius: 3px;
+            text-align: center;
+        }
+
+        .character-card .char-ability {
+            font-size: 0.8em;
+            color: #aaa;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 8px;
+        }
+
+        .character-card .char-passive {
+            font-size: 0.75em;
+            color: #88ccff;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        .character-card .on-field-count {
+            font-size: 0.8em;
+            color: #aaa;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .action-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            min-width: 250px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .action-panel h3 {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .action-btn.move {
+            background: linear-gradient(135deg, #4aff4a 0%, #2d9b2d 100%);
+            color: #000;
+        }
+
+        .action-btn.attack {
+            background: linear-gradient(135deg, #ff4a4a 0%, #9b2d2d 100%);
+            color: #fff;
+        }
+
+        .action-btn.summon {
+            background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
+            color: #000;
+        }
+
+        .action-btn.end-turn {
+            background: linear-gradient(135deg, #888 0%, #555 100%);
+            color: #fff;
+        }
+
+        .action-btn.cancel {
+            background: linear-gradient(135deg, #666 0%, #333 100%);
+            color: #fff;
+        }
+
+        .action-btn.confirm {
+            background: linear-gradient(135deg, #00cc66 0%, #009944 100%);
+            color: #fff;
+        }
+
+        .action-btn:not(:disabled):hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .selected-unit-info {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .selected-unit-info h4 {
+            margin-bottom: 10px;
+            color: #ffd700;
+        }
+
+        .selected-unit-info .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .phase-banner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px 60px;
+            border-radius: 15px;
+            font-size: 2em;
+            font-weight: bold;
+            z-index: 1000;
+            animation: banner-appear 0.5s ease-out;
+            text-align: center;
+            border: 3px solid #ffd700;
+            pointer-events: none;
+        }
+
+        @keyframes banner-appear {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .phase-banner.hidden {
+            display: none;
+        }
+
+        .message-log {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            max-width: 400px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 0.85em;
+        }
+
+        .message-log .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #ffd700;
+            padding-left: 10px;
+        }
+
+        .message-log .message.player1 {
+            border-left-color: #4a90d9;
+        }
+
+        .message-log .message.player2 {
+            border-left-color: #d94a4a;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .overlay.hidden {
+            display: none;
+        }
+
+        .modal {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+            border: 3px solid #ffd700;
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .modal p {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #ccc;
+        }
+
+        .modal button {
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
+            color: #000;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            margin: 5px;
+        }
+
+        .modal button:hover {
+            transform: scale(1.05);
+        }
+
+        .modal button.secondary {
+            background: linear-gradient(135deg, #666 0%, #444 100%);
+            color: #fff;
+        }
+
+        .turn-indicator {
+            font-size: 1.5em;
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .instruction-banner {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 150, 255, 0.2));
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            padding: 15px 25px;
+            text-align: center;
+            margin-bottom: 15px;
+            animation: pulse-border 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { border-color: #00ffff; }
+            50% { border-color: #ffd700; }
+        }
+
+        .instruction-banner h3 {
+            margin-bottom: 8px;
+            color: #00ffff;
+        }
+
+        .instruction-banner p {
+            font-size: 0.95em;
+            color: #ddd;
+        }
+
+        .instruction-banner.hidden {
+            display: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ==================== ANIMATIONS ==================== */
+
+        /* Animation de deplacement */
+        .unit.moving {
+            z-index: 100;
+            transition: left 0.15s linear, top 0.15s linear;
+        }
+
+        /* Conteneur pour les animations sur le plateau */
+        .animation-layer {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(12 * 52px);
+            height: calc(12 * 52px);
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        /* Projectile d'attaque */
+        .attack-projectile {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff6b6b, #ff0000);
+            box-shadow: 0 0 20px #ff0000, 0 0 40px #ff6b6b;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .attack-projectile.line {
+            width: 30px;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #ffff00, #ff6600);
+            box-shadow: 0 0 15px #ff6600;
+        }
+
+        .attack-projectile.aoe {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #ff9900, #ff3300);
+            box-shadow: 0 0 30px #ff6600;
+        }
+
+        .attack-projectile.heal {
+            background: radial-gradient(circle, #90ff90, #00ff00);
+            box-shadow: 0 0 20px #00ff00, 0 0 40px #90ff90;
+        }
+
+        /* Impact d'attaque */
+        .attack-impact {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 100, 100, 0.8), transparent);
+            transform: translate(-50%, -50%) scale(0);
+            animation: impact-expand 0.5s ease-out forwards;
+            pointer-events: none;
+            z-index: 90;
+        }
+
+        .attack-impact.heal {
+            background: radial-gradient(circle, rgba(100, 255, 100, 0.8), transparent);
+        }
+
+        .attack-impact.aoe {
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(255, 150, 0, 0.6), rgba(255, 50, 0, 0.3), transparent);
+        }
+
+        @keyframes impact-expand {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+
+        /* Animation d'invocation */
+        .summon-effect {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #ffd700;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.3), transparent);
+            transform: translate(-50%, -50%) scale(0);
+            animation: summon-appear 0.8s ease-out forwards;
+            pointer-events: none;
+            z-index: 80;
+        }
+
+        @keyframes summon-appear {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+        }
+
+        .summon-ring {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid #ffd700;
+            transform: translate(-50%, -50%) scale(0);
+            animation: summon-ring-expand 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 79;
+        }
+
+        @keyframes summon-ring-expand {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; border-width: 4px; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; border-width: 1px; }
+        }
+
+        /* Unite qui apparait */
+        .unit.spawning {
+            animation: unit-spawn 0.6s ease-out;
+        }
+
+        @keyframes unit-spawn {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            60% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        /* Effet de degats */
+        .unit.taking-damage {
+            animation: shake-damage 0.4s ease-out;
+        }
+
+        @keyframes shake-damage {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-5px); }
+            40% { transform: translateX(5px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
+
+        .unit.taking-damage.selected {
+            animation: shake-damage-selected 0.4s ease-out;
+        }
+
+        @keyframes shake-damage-selected {
+            0%, 100% { transform: scale(1.15) translateX(0); }
+            20% { transform: scale(1.15) translateX(-5px); }
+            40% { transform: scale(1.15) translateX(5px); }
+            60% { transform: scale(1.15) translateX(-5px); }
+            80% { transform: scale(1.15) translateX(5px); }
+        }
+
+        /* Effet de soin */
+        .unit.healing {
+            animation: heal-glow 0.6s ease-out;
+        }
+
+        @keyframes heal-glow {
+            0% { box-shadow: none; }
+            50% { box-shadow: 0 0 15px 5px rgba(0, 255, 0, 0.6); }
+            100% { box-shadow: none; }
+        }
+
+        /* Indicateur de dommage flottant */
+        .damage-number {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff4444;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px #ff0000;
+            pointer-events: none;
+            z-index: 200;
+            animation: damage-float 1s ease-out forwards;
+        }
+
+        .damage-number.heal {
+            color: #44ff44;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px #00ff00;
+        }
+
+        @keyframes damage-float {
+            0% { transform: translate(-50%, 0); opacity: 1; }
+            100% { transform: translate(-50%, -40px); opacity: 0; }
+        }
+
+        /* Trail de deplacement */
+        .move-trail {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(74, 255, 74, 0.4);
+            pointer-events: none;
+            animation: trail-fade 0.5s ease-out forwards;
+            z-index: 40;
+        }
+
+        @keyframes trail-fade {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(0.3); opacity: 0; }
+        }
+
+        /* ==================== EDITEUR DE CARTE ==================== */
+        .map-editor-modal {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            text-align: center;
+            border: 3px solid #ffd700;
+        }
+
+        .map-editor-modal h2 {
+            margin-bottom: 15px;
+            font-size: 1.6em;
+            color: #ffd700;
+        }
+
+        .editor-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .editor-palette {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 140px;
+        }
+
+        .editor-palette h4 {
+            margin-bottom: 5px;
+            color: #ccc;
+            font-size: 0.95em;
+        }
+
+        .palette-btn {
+            padding: 10px 14px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .palette-btn:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateX(3px);
+        }
+
+        .palette-btn.active {
+            border-color: #ffd700;
+            background: rgba(255,215,0,0.15);
+            box-shadow: 0 0 10px rgba(255,215,0,0.3);
+        }
+
+        .editor-board {
+            display: grid;
+            grid-template-columns: repeat(12, 44px);
+            grid-template-rows: repeat(12, 44px);
+            gap: 2px;
+            background: linear-gradient(135deg, rgba(20,15,10,0.8), rgba(30,25,15,0.9));
+            padding: 8px;
+            border-radius: 8px;
+            border: 2px solid rgba(100,80,50,0.4);
+            user-select: none;
+            touch-action: none;
+        }
+
+        .editor-cell {
+            width: 44px;
+            height: 44px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 9px;
+            color: rgba(255,255,255,0.4);
+            transition: background 0.15s ease;
+            position: relative;
+        }
+
+        .editor-cell:hover {
+            outline: 2px solid rgba(255,255,255,0.5);
+            z-index: 1;
+        }
+
+        .editor-cell.ec-plain { background: linear-gradient(145deg, #2d5a3d, #1a3d25); }
+        .editor-cell.ec-hill { background: linear-gradient(145deg, #4a8c5e, #2d6a3e); box-shadow: inset 0 -3px 0 rgba(0,0,0,0.3); }
+        .editor-cell.ec-mountain { background: linear-gradient(145deg, #6bab82, #4a8a60); box-shadow: inset 0 -6px 0 rgba(0,0,0,0.3); }
+        .editor-cell.ec-water { background: linear-gradient(145deg, #2196f3, #0d47a1); }
+        .editor-cell.ec-rock { background: linear-gradient(145deg, #6b6b6b, #2a2a2a); }
+        .editor-cell.ec-wall { background: linear-gradient(145deg, #7a7a7a, #363636); box-shadow: inset 0 -6px 0 rgba(0,0,0,0.4); }
+
+        .editor-options {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .editor-options label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.95em;
+            color: #ccc;
+            cursor: pointer;
+        }
+
+        .editor-options label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .editor-actions button {
+            padding: 12px 30px;
+            font-size: 1.05em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .editor-actions button:hover {
+            transform: scale(1.05);
+        }
+
+        .editor-actions .btn-confirm-map {
+            background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
+            color: #000;
+        }
+
+        .editor-actions .btn-reset-map {
+            background: linear-gradient(135deg, #666 0%, #444 100%);
+            color: #fff;
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+
+        /* Tablette */
+        @media (max-width: 960px) {
+            .game-header h1 {
+                font-size: 1.8em;
+            }
+
+            .game-info {
+                gap: 15px;
+            }
+
+            .player-panel {
+                min-width: 200px;
+                padding: 12px;
+            }
+
+            .player-panel h2 {
+                font-size: 1.1em;
+            }
+
+            .main-area {
+                gap: 15px;
+            }
+
+            .roster-panel {
+                min-width: 260px;
+                max-width: 300px;
+                padding: 12px;
+            }
+
+            .action-panel {
+                min-width: 200px;
+                padding: 12px;
+            }
+        }
+
+        /* Mobile */
+        @media (max-width: 700px) {
+            body {
+                overflow-x: hidden;
+            }
+
+            .game-container {
+                padding: 10px 5px;
+                gap: 10px;
+            }
+
+            .game-header h1 {
+                font-size: 1.4em;
+                margin-bottom: 5px;
+            }
+
+            .game-info {
+                gap: 8px;
+                flex-direction: row;
+                width: 100%;
+            }
+
+            .player-panel {
+                min-width: 0;
+                flex: 1;
+                padding: 8px;
+                border-radius: 10px;
+            }
+
+            .player-panel h2 {
+                font-size: 0.9em;
+                margin-bottom: 8px;
+            }
+
+            .player-panel .stat {
+                font-size: 0.75em;
+                margin: 4px 0;
+                padding: 3px 6px;
+            }
+
+            .crystals-display {
+                font-size: 0.8em;
+                gap: 5px;
+                margin-top: 5px;
+            }
+
+            .crystal-icon {
+                width: 22px;
+                height: 22px;
+                font-size: 9px;
+            }
+
+            .instruction-banner {
+                padding: 8px 12px;
+                margin-bottom: 8px;
+            }
+
+            .instruction-banner h3 {
+                font-size: 0.95em;
+            }
+
+            .instruction-banner p {
+                font-size: 0.8em;
+            }
+
+            .turn-indicator {
+                font-size: 1.1em;
+                padding: 6px;
+                margin-bottom: 8px;
+            }
+
+            .main-area {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+                width: 100%;
+            }
+
+            /* Board scaling for mobile */
+            .board-container {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                overflow: visible;
+            }
+
+            .board-wrapper {
+                transform-origin: top center;
+                /* Scale is set by JS */
+            }
+
+            .roster-panel {
+                min-width: 0;
+                max-width: 100%;
+                width: 100%;
+                padding: 10px;
+                order: 3;
+            }
+
+            .roster-panel h3 {
+                font-size: 1.1em;
+                margin-bottom: 8px;
+            }
+
+            .character-card {
+                padding: 8px;
+                margin-bottom: 6px;
+            }
+
+            .character-card .char-name {
+                font-size: 0.95em;
+            }
+
+            .character-card .char-stats {
+                font-size: 0.75em;
+            }
+
+            .character-card .char-ability {
+                font-size: 0.7em;
+            }
+
+            .character-card .char-passive {
+                font-size: 0.65em;
+            }
+
+            .action-panel {
+                min-width: 0;
+                width: 100%;
+                padding: 10px;
+                order: 2;
+            }
+
+            .action-panel h3 {
+                font-size: 1.1em;
+                margin-bottom: 8px;
+            }
+
+            .action-btn {
+                padding: 14px 16px;
+                font-size: 0.95em;
+                margin: 5px 0;
+                min-height: 48px;
+            }
+
+            .selected-unit-info {
+                padding: 10px;
+            }
+
+            .selected-unit-info h4 {
+                font-size: 0.95em;
+            }
+
+            .selected-unit-info .stat-row {
+                font-size: 0.8em;
+            }
+
+            /* Message log mobile */
+            .message-log {
+                position: fixed;
+                bottom: 5px;
+                left: 5px;
+                right: 5px;
+                max-width: none;
+                max-height: 100px;
+                padding: 8px;
+                font-size: 0.75em;
+                border-radius: 8px;
+                z-index: 500;
+            }
+
+            /* Phase banner mobile */
+            .phase-banner {
+                font-size: 1.3em;
+                padding: 20px 30px;
+            }
+
+            /* Overlays mobile */
+            .modal {
+                padding: 25px 20px;
+                max-width: 90vw;
+                margin: 10px;
+            }
+
+            .modal h2 {
+                font-size: 1.4em;
+            }
+
+            .modal p {
+                font-size: 1em;
+            }
+
+            .modal button {
+                padding: 12px 25px;
+                font-size: 1em;
+            }
+
+            /* Map editor mobile */
+            .map-editor-modal {
+                padding: 15px 10px;
+                max-width: 98vw;
+                max-height: 95vh;
+            }
+
+            .map-editor-modal h2 {
+                font-size: 1.2em;
+                margin-bottom: 10px;
+            }
+
+            .editor-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .editor-palette {
+                flex-direction: row;
+                flex-wrap: wrap;
+                min-width: 0;
+                gap: 4px;
+                justify-content: center;
+            }
+
+            .palette-btn {
+                padding: 6px 10px;
+                font-size: 0.75em;
+            }
+
+            .editor-board {
+                grid-template-columns: repeat(12, 26px);
+                grid-template-rows: repeat(12, 26px);
+                gap: 1px;
+                padding: 4px;
+            }
+
+            .editor-cell {
+                width: 26px;
+                height: 26px;
+                font-size: 7px;
+            }
+
+            .editor-options {
+                margin: 8px 0;
+                gap: 10px;
+                flex-direction: column;
+            }
+
+            .editor-options label {
+                font-size: 0.85em;
+            }
+
+            .editor-actions {
+                margin-top: 8px;
+            }
+
+            .editor-actions button {
+                padding: 10px 20px;
+                font-size: 0.9em;
+                min-height: 44px;
+            }
+        }
+
+        /* Very small phones */
+        @media (max-width: 380px) {
+            .player-panel h2 {
+                font-size: 0.8em;
+            }
+
+            .player-panel .stat {
+                font-size: 0.7em;
+            }
+
+            .editor-board {
+                grid-template-columns: repeat(12, 22px);
+                grid-template-rows: repeat(12, 22px);
+            }
+
+            .editor-cell {
+                width: 22px;
+                height: 22px;
+                font-size: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>Arene Tactique</h1>
+            <div class="instruction-banner" id="instructionBanner">
+                <h3 id="instructionTitle">Placement des Cristaux</h3>
+                <p id="instructionText">Joueur 1, cliquez sur une case pour placer votre cristal.</p>
+            </div>
+            <div class="turn-indicator hidden" id="turnIndicator">Tour 1 - Joueur 1</div>
+        </div>
+
+        <div class="game-info">
+            <div class="player-panel player1" id="player1Panel">
+                <h2>Joueur 1 (Bleu)</h2>
+                <div class="stat">
+                    <span>Effectif utilise:</span>
+                    <span id="p1EffectifUsed">0</span>
+                </div>
+                <div class="stat">
+                    <span>Effectif max:</span>
+                    <span id="p1EffectifMax">1</span>
+                </div>
+                <div class="stat">
+                    <span>Effectif disponible:</span>
+                    <span id="p1EffectifAvailable">1</span>
+                </div>
+                <div class="crystals-display">
+                    <span>Cristaux:</span>
+                    <div class="crystal-icon" id="p1Crystal1">5</div>
+                    <div class="crystal-icon" id="p1Crystal2">5</div>
+                </div>
+            </div>
+
+            <div class="player-panel player2" id="player2Panel">
+                <h2>Joueur 2 (Rouge)</h2>
+                <div class="stat">
+                    <span>Effectif utilise:</span>
+                    <span id="p2EffectifUsed">0</span>
+                </div>
+                <div class="stat">
+                    <span>Effectif max:</span>
+                    <span id="p2EffectifMax">1</span>
+                </div>
+                <div class="stat">
+                    <span>Effectif disponible:</span>
+                    <span id="p2EffectifAvailable">1</span>
+                </div>
+                <div class="crystals-display">
+                    <span>Cristaux:</span>
+                    <div class="crystal-icon player2-icon" id="p2Crystal1">5</div>
+                    <div class="crystal-icon player2-icon" id="p2Crystal2">5</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-area">
+            <div class="roster-panel hidden" id="rosterPanel">
+                <h3>Roster - <span id="rosterPlayerName">Joueur 1</span></h3>
+                <div id="rosterList"></div>
+            </div>
+
+            <div class="board-container" id="boardContainer">
+                <div class="board-wrapper" id="boardWrapper">
+                    <div class="board" id="board"></div>
+                    <div class="animation-layer" id="animationLayer"></div>
+                </div>
+            </div>
+
+            <div class="action-panel" id="actionPanel">
+                <h3>Actions</h3>
+                <button class="action-btn confirm hidden" id="btnConfirmCrystal">Confirmer placement</button>
+                <button class="action-btn summon hidden" id="btnSummon" disabled>Invoquer</button>
+                <button class="action-btn move hidden" id="btnMove" disabled>Deplacer</button>
+                <button class="action-btn attack hidden" id="btnAttack" disabled>Attaquer</button>
+                <button class="action-btn cancel hidden" id="btnCancel" disabled>Annuler</button>
+                <button class="action-btn end-turn hidden" id="btnEndTurn">Fin de tour</button>
+
+                <div class="selected-unit-info hidden" id="selectedUnitInfo">
+                    <h4 id="selectedUnitName">-</h4>
+                    <div class="stat-row">
+                        <span>PV:</span>
+                        <span id="selectedUnitHP">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Deplacement restant:</span>
+                        <span id="selectedUnitMP">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>A agi:</span>
+                        <span id="selectedUnitActed">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="message-log" id="messageLog"></div>
+
+    <div class="phase-banner hidden" id="phaseBanner"></div>
+
+    <div class="overlay hidden" id="handoverOverlay">
+        <div class="modal">
+            <h2 id="handoverTitle">Passez l'ecran</h2>
+            <p id="handoverText">Passez l'ecran au Joueur 2 pour qu'il place son cristal.</p>
+            <button id="btnHandoverConfirm">C'est bon !</button>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="gameOverOverlay">
+        <div class="modal">
+            <h2 id="gameOverText">Victoire!</h2>
+            <p id="gameOverDetails"></p>
+            <button onclick="location.reload()">Rejouer</button>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="mapEditorOverlay">
+        <div class="map-editor-modal">
+            <h2>Editeur de Carte</h2>
+            <div class="editor-container">
+                <div class="editor-palette">
+                    <h4>Terrain</h4>
+                    <button class="palette-btn active" data-terrain="plain" onclick="selectEditorTerrain('plain', this)">Plaine (h0)</button>
+                    <button class="palette-btn" data-terrain="hill" onclick="selectEditorTerrain('hill', this)">Colline (h1)</button>
+                    <button class="palette-btn" data-terrain="mountain" onclick="selectEditorTerrain('mountain', this)">Montagne (h2)</button>
+                    <button class="palette-btn" data-terrain="water" onclick="selectEditorTerrain('water', this)">Eau</button>
+                    <button class="palette-btn" data-terrain="rock" onclick="selectEditorTerrain('rock', this)">Rocher</button>
+                    <button class="palette-btn" data-terrain="wall" onclick="selectEditorTerrain('wall', this)">Mur</button>
+                </div>
+                <div class="editor-board" id="editorBoard"></div>
+            </div>
+            <div class="editor-options">
+                <label><input type="checkbox" id="editorSymmetry" checked> Symetrie (miroir)</label>
+                <label>PV des cristaux: <input type="number" id="editorCrystalHP" min="1" max="20" value="5" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+            </div>
+            <div class="editor-actions">
+                <button class="btn-reset-map" onclick="resetMap()">Reinitialiser</button>
+                <button class="btn-confirm-map" onclick="confirmMapEditor()">Confirmer la carte</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="gameModeOverlay">
+        <div class="modal">
+            <h2>Arene Tactique</h2>
+            <p>Choisissez votre mode de jeu</p>
+            <button id="btnMode2Players">2 Joueurs (local)</button>
+            <button id="btnModeVsAI">Jouer contre l'IA</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONFIGURATION DES PERSONNAGES ====================
+        const CHARACTERS = [
+            {
+                id: 'souris',
+                name: 'Souris',
+                power: 1,
+                hp: 2,
+                movement: 5,
+                maxOnField: 3,
+                attack: {
+                    name: 'Morsure',
+                    damage: 1,
+                    range: 1,
+                    type: 'melee',
+                    pattern: 'single'
+                },
+                passive: {
+                    name: 'Fuite rapide',
+                    description: 'Apres attaque, peut se deplacer de 2 cases'
+                },
+                postAttackMove: 2,
+                icon: '🐭'
+            },
+            {
+                id: 'ecureuil',
+                name: 'Ecureuil',
+                power: 2,
+                hp: 2,
+                movement: 2,
+                maxOnField: 3,
+                attack: {
+                    name: 'Lancer de gland',
+                    damage: 1,
+                    range: 3,
+                    type: 'ranged',
+                    pattern: 'single'
+                },
+                passive: {
+                    name: 'Grimpeur',
+                    description: 'Peut cibler des personnages de hauteur differente'
+                },
+                ignoreHeight: true,
+                icon: '🐿️'
+            },
+            {
+                id: 'lapin',
+                name: 'Lapin',
+                power: 3,
+                hp: 3,
+                movement: 4,
+                maxOnField: 2,
+                attack: {
+                    name: 'Charge',
+                    damage: 2,
+                    range: 2,
+                    type: 'melee',
+                    pattern: 'charge',
+                    chargeDistance: 2
+                },
+                passive: null,
+                icon: '🐰'
+            },
+            {
+                id: 'canard',
+                name: 'Canard',
+                power: 4,
+                hp: 4,
+                movement: 2,
+                maxOnField: 2,
+                attack: {
+                    name: 'Coup de bec',
+                    damage: 2,
+                    range: 1,
+                    type: 'melee',
+                    pattern: 'single'
+                },
+                passive: {
+                    name: 'Aquatique',
+                    description: 'Se deplace sur l\'eau. Sur l\'eau, soigne 1 PV adjacent'
+                },
+                canMoveOnWater: true,
+                waterHeal: true,
+                icon: '🦆'
+            },
+            {
+                id: 'renard',
+                name: 'Renard',
+                power: 5,
+                hp: 5,
+                movement: 3,
+                maxOnField: 1,
+                attack: {
+                    name: 'Griffure percante',
+                    damage: 3,
+                    range: 1,
+                    type: 'melee',
+                    pattern: 'pierce',
+                    pierceRange: 2
+                },
+                passive: {
+                    name: 'Predateur',
+                    description: 'Se soigne de 1 PV apres avoir elimine un ennemi'
+                },
+                healOnKill: 1,
+                icon: '🦊'
+            },
+            {
+                id: 'sanglier',
+                name: 'Sanglier',
+                power: 6,
+                hp: 6,
+                movement: 2,
+                maxOnField: 1,
+                attack: {
+                    name: 'Furie',
+                    damage: 3,
+                    range: 1,
+                    type: 'melee',
+                    pattern: 'adjacent_aoe'
+                },
+                passive: {
+                    name: 'Cuir epais',
+                    description: 'Ne peut pas perdre plus de 4 PV par tour'
+                },
+                maxDamagePerTurn: 4,
+                icon: '🐗'
+            }
+        ];
+
+        // ==================== ETAT DU JEU ====================
+        const BOARD_SIZE = 12;
+        const AI_DELAY = 600; // Delai entre les actions de l'IA (ms)
+
+        let gameState = {
+            phase: 'mode_selection', // mode_selection, crystal_placement_p1, crystal_placement_p2, playing, game_over
+            gameMode: '2players', // '2players' ou 'vsAI'
+            turn: 1,
+            currentPlayer: 1,
+            actionTaken: false,
+            aiThinking: false,
+            animating: false, // Pour bloquer les interactions pendant les animations
+
+            players: {
+                1: {
+                    effectifMax: 1,
+                    effectifUsed: 0,
+                    crystals: [],
+                    pendingCrystalPos: null,
+                    units: [],
+                    isAI: false
+                },
+                2: {
+                    effectifMax: 1,
+                    effectifUsed: 0,
+                    crystals: [],
+                    pendingCrystalPos: null,
+                    units: [],
+                    isAI: false
+                }
+            },
+
+            board: [],
+            crystalHP: 5,
+            selectedUnit: null,
+            selectedCharacter: null,
+            actionMode: null,
+            highlightedCells: []
+        };
+
+        // ==================== INITIALISATION DU PLATEAU ====================
+        function initDefaultBoardData() {
+            gameState.board = [];
+            for (let y = 0; y < BOARD_SIZE; y++) {
+                gameState.board[y] = [];
+                for (let x = 0; x < BOARD_SIZE; x++) {
+                    const cell = {
+                        x: x,
+                        y: y,
+                        height: 0,
+                        type: 'normal',
+                        unit: null,
+                        crystal: null
+                    };
+
+                    // Variations de terrain symetriques
+                    if ((x === 3 && y === 3) || (x === 8 && y === 8) ||
+                        (x === 3 && y === 8) || (x === 8 && y === 3)) {
+                        cell.height = 1;
+                    }
+                    if ((x === 5 && y === 5) || (x === 6 && y === 6)) {
+                        cell.height = 2;
+                    }
+                    if ((x === 5 && y === 2) || (x === 6 && y === 9) ||
+                        (x === 2 && y === 5) || (x === 9 && y === 6)) {
+                        cell.type = 'water';
+                    }
+                    if ((x === 2 && y === 2) || (x === 9 && y === 9)) {
+                        cell.type = 'obstacle';
+                    }
+                    if ((x === 5 && y === 6) || (x === 6 && y === 5)) {
+                        cell.type = 'obstacle_tall';
+                    }
+
+                    gameState.board[y][x] = cell;
+                }
+            }
+        }
+
+        function renderGameBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+
+            for (let y = 0; y < BOARD_SIZE; y++) {
+                for (let x = 0; x < BOARD_SIZE; x++) {
+                    const cell = gameState.board[y][x];
+                    const cellEl = document.createElement('div');
+                    cellEl.className = `cell height-${cell.height}`;
+                    if (cell.type !== 'normal') {
+                        cellEl.classList.add(cell.type.replace('_', '-'));
+                    }
+                    cellEl.dataset.x = x;
+                    cellEl.dataset.y = y;
+                    cellEl.addEventListener('click', () => onCellClick(x, y));
+                    boardEl.appendChild(cellEl);
+                }
+            }
+            // Responsive scaling after board render
+            setTimeout(scaleBoardForMobile, 10);
+        }
+
+        function initBoard() {
+            initDefaultBoardData();
+            renderGameBoard();
+            highlightValidCrystalCells();
+        }
+
+        // ==================== EDITEUR DE CARTE ====================
+        let editorState = {
+            selectedTerrain: 'plain',
+            painting: false
+        };
+
+        function selectEditorTerrain(terrain, btn) {
+            editorState.selectedTerrain = terrain;
+            document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+        }
+
+        function showMapEditor() {
+            // Initialiser les donnees par defaut si pas encore fait
+            if (gameState.board.length === 0) {
+                initDefaultBoardData();
+            }
+            document.getElementById('mapEditorOverlay').classList.remove('hidden');
+            initEditorBoard();
+        }
+
+        function initEditorBoard() {
+            const editorBoard = document.getElementById('editorBoard');
+            editorBoard.innerHTML = '';
+
+            for (let y = 0; y < BOARD_SIZE; y++) {
+                for (let x = 0; x < BOARD_SIZE; x++) {
+                    const cellEl = document.createElement('div');
+                    cellEl.className = 'editor-cell';
+                    cellEl.dataset.x = x;
+                    cellEl.dataset.y = y;
+                    updateEditorCellAppearance(cellEl, gameState.board[y][x]);
+
+                    cellEl.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        editorState.painting = true;
+                        paintCell(x, y);
+                    });
+                    cellEl.addEventListener('mouseenter', () => {
+                        if (editorState.painting) paintCell(x, y);
+                    });
+                    cellEl.addEventListener('mouseup', () => {
+                        editorState.painting = false;
+                    });
+
+                    // Touch support for mobile editor
+                    cellEl.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        editorState.painting = true;
+                        paintCell(x, y);
+                    }, {passive: false});
+                    cellEl.addEventListener('touchend', () => {
+                        editorState.painting = false;
+                    });
+
+                    editorBoard.appendChild(cellEl);
+                }
+            }
+
+            // Touch move painting on editor board
+            editorBoard.addEventListener('touchmove', (e) => {
+                if (!editorState.painting) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (el && el.classList.contains('editor-cell')) {
+                    const tx = parseInt(el.dataset.x);
+                    const ty = parseInt(el.dataset.y);
+                    paintCell(tx, ty);
+                }
+            }, {passive: false});
+
+            // Stop painting when mouse leaves the board
+            editorBoard.addEventListener('mouseleave', () => {
+                editorState.painting = false;
+            });
+            document.addEventListener('mouseup', () => {
+                editorState.painting = false;
+            });
+            document.addEventListener('touchend', () => {
+                editorState.painting = false;
+            });
+        }
+
+        function paintCell(x, y) {
+            const terrain = editorState.selectedTerrain;
+            applyCellTerrain(x, y, terrain);
+
+            // Symetrie
+            if (document.getElementById('editorSymmetry').checked) {
+                const mx = BOARD_SIZE - 1 - x;
+                const my = BOARD_SIZE - 1 - y;
+                if (mx !== x || my !== y) {
+                    applyCellTerrain(mx, my, terrain);
+                }
+            }
+        }
+
+        function applyCellTerrain(x, y, terrain) {
+            const cell = gameState.board[y][x];
+            switch (terrain) {
+                case 'plain':
+                    cell.type = 'normal';
+                    cell.height = 0;
+                    break;
+                case 'hill':
+                    cell.type = 'normal';
+                    cell.height = 1;
+                    break;
+                case 'mountain':
+                    cell.type = 'normal';
+                    cell.height = 2;
+                    break;
+                case 'water':
+                    cell.type = 'water';
+                    cell.height = 0;
+                    break;
+                case 'rock':
+                    cell.type = 'obstacle';
+                    cell.height = 0;
+                    break;
+                case 'wall':
+                    cell.type = 'obstacle_tall';
+                    cell.height = 0;
+                    break;
+            }
+            // Update the editor cell appearance
+            const cellEl = document.querySelector(`.editor-cell[data-x="${x}"][data-y="${y}"]`);
+            if (cellEl) updateEditorCellAppearance(cellEl, cell);
+        }
+
+        function updateEditorCellAppearance(cellEl, cell) {
+            cellEl.className = 'editor-cell';
+            if (cell.type === 'water') {
+                cellEl.classList.add('ec-water');
+                cellEl.textContent = '';
+            } else if (cell.type === 'obstacle') {
+                cellEl.classList.add('ec-rock');
+                cellEl.textContent = '';
+            } else if (cell.type === 'obstacle_tall') {
+                cellEl.classList.add('ec-wall');
+                cellEl.textContent = '';
+            } else if (cell.height === 1) {
+                cellEl.classList.add('ec-hill');
+                cellEl.textContent = '1';
+            } else if (cell.height === 2) {
+                cellEl.classList.add('ec-mountain');
+                cellEl.textContent = '2';
+            } else {
+                cellEl.classList.add('ec-plain');
+                cellEl.textContent = '';
+            }
+        }
+
+        function resetMap() {
+            initDefaultBoardData();
+            initEditorBoard();
+        }
+
+        function confirmMapEditor() {
+            document.getElementById('mapEditorOverlay').classList.add('hidden');
+            // Lire les PV des cristaux depuis l'editeur
+            const crystalHPInput = document.getElementById('editorCrystalHP');
+            gameState.crystalHP = parseInt(crystalHPInput.value) || 5;
+            // Clear units and crystals from board data (clean slate)
+            for (let y = 0; y < BOARD_SIZE; y++) {
+                for (let x = 0; x < BOARD_SIZE; x++) {
+                    gameState.board[y][x].unit = null;
+                    gameState.board[y][x].crystal = null;
+                }
+            }
+            addMessage('Carte confirmee!', 'system');
+            startCrystalPlacement();
+        }
+
+        function highlightValidCrystalCells() {
+            document.querySelectorAll('.cell').forEach(cellEl => {
+                const x = parseInt(cellEl.dataset.x);
+                const y = parseInt(cellEl.dataset.y);
+                const cell = gameState.board[y][x];
+
+                if (cell.type === 'normal' && !cell.crystal) {
+                    cellEl.classList.add('highlight-crystal');
+                }
+            });
+        }
+
+        function clearCrystalHighlights() {
+            document.querySelectorAll('.cell').forEach(cellEl => {
+                cellEl.classList.remove('highlight-crystal', 'selected-crystal');
+            });
+        }
+
+        // ==================== GESTION DES CLICS ====================
+        function onCellClick(x, y) {
+            // Bloquer les interactions pendant les animations
+            if (gameState.animating) return;
+
+            const cell = gameState.board[y][x];
+
+            // Phase de placement de cristaux
+            if (gameState.phase === 'crystal_placement_p1' || gameState.phase === 'crystal_placement_p2') {
+                handleCrystalPlacement(x, y);
+                return;
+            }
+
+            if (gameState.phase !== 'playing') return;
+
+            // Mode invocation
+            if (gameState.actionMode === 'summon') {
+                if (gameState.highlightedCells.some(c => c.x === x && c.y === y)) {
+                    summonUnit(x, y);
+                }
+                return;
+            }
+
+            // Mode deplacement
+            if (gameState.actionMode === 'move') {
+                if (gameState.highlightedCells.some(c => c.x === x && c.y === y)) {
+                    moveUnit(x, y);
+                }
+                return;
+            }
+
+            // Mode attaque
+            if (gameState.actionMode === 'attack') {
+                if (gameState.highlightedCells.some(c => c.x === x && c.y === y)) {
+                    attackTarget(x, y);
+                }
+                return;
+            }
+
+            // Mode deplacement post-attaque (Souris)
+            if (gameState.actionMode === 'postAttackMove') {
+                if (gameState.highlightedCells.some(c => c.x === x && c.y === y)) {
+                    const cb = gameState.postAttackMoveCallback;
+                    const unit = gameState.selectedUnit;
+                    const range = gameState.postAttackMoveRange;
+                    gameState.actionMode = null;
+                    gameState.postAttackMoveCallback = null;
+
+                    // Sauvegarder et restaurer mouvement pour le deplacement
+                    const origMove = unit.movementLeft;
+                    unit.movementLeft = range;
+                    const targetCell = gameState.highlightedCells.find(c => c.x === x && c.y === y);
+                    gameState.highlightedCells = [targetCell];
+                    moveUnit(x, y, () => {
+                        unit.movementLeft = origMove;
+                        if (cb) cb();
+                    });
+                }
+                return;
+            }
+
+            // Selection d'unite
+            if (cell.unit && cell.unit.player === gameState.currentPlayer) {
+                selectUnit(cell.unit);
+            } else {
+                clearSelection();
+            }
+        }
+
+        // ==================== PLACEMENT DES CRISTAUX ====================
+        function handleCrystalPlacement(x, y) {
+            const cell = gameState.board[y][x];
+
+            if (cell.type !== 'normal') {
+                addMessage('Case invalide! Choisissez une case de terrain normal.', 'system');
+                return;
+            }
+
+            if (cell.crystal) {
+                addMessage('Case deja occupee!', 'system');
+                return;
+            }
+
+            const currentPlayer = gameState.phase === 'crystal_placement_p1' ? 1 : 2;
+
+            // Retirer la selection precedente
+            clearCrystalHighlights();
+            highlightValidCrystalCells();
+
+            // Marquer la nouvelle selection
+            gameState.players[currentPlayer].pendingCrystalPos = {x, y};
+            const cellEl = getCellElement(x, y);
+            cellEl.classList.remove('highlight-crystal');
+            cellEl.classList.add('selected-crystal');
+
+            document.getElementById('btnConfirmCrystal').disabled = false;
+            addMessage(`Position selectionnee: (${x}, ${y}). Cliquez sur "Confirmer" ou choisissez une autre case.`, `player${currentPlayer}`);
+        }
+
+        function confirmCrystalPlacement() {
+            const currentPlayer = gameState.phase === 'crystal_placement_p1' ? 1 : 2;
+            const pos = gameState.players[currentPlayer].pendingCrystalPos;
+
+            if (!pos) {
+                addMessage('Selectionnez d\'abord une case!', 'system');
+                return;
+            }
+
+            clearCrystalHighlights();
+
+            if (currentPlayer === 1) {
+                // J1 a confirme, passer a J2
+                gameState.phase = 'crystal_placement_p2';
+                if (gameState.players[2].isAI) {
+                    // L'IA place son cristal automatiquement
+                    addMessage('L\'IA place son cristal...', 'system');
+                    setTimeout(() => aiPlaceCrystal(), AI_DELAY);
+                } else {
+                    showHandoverScreen(2);
+                }
+            } else {
+                // J2 a confirme, reveler les cristaux
+                revealCrystals();
+            }
+        }
+
+        function showHandoverScreen(nextPlayer) {
+            document.getElementById('handoverTitle').textContent = 'Passez l\'ecran';
+            document.getElementById('handoverText').textContent =
+                `Passez l'ecran au Joueur ${nextPlayer} pour qu'il place son cristal secretement.`;
+            document.getElementById('handoverOverlay').classList.remove('hidden');
+        }
+
+        function confirmHandover() {
+            document.getElementById('handoverOverlay').classList.add('hidden');
+
+            if (gameState.phase === 'crystal_placement_p2') {
+                document.getElementById('instructionText').textContent =
+                    'Joueur 2, cliquez sur une case pour placer votre cristal.';
+                highlightValidCrystalCells();
+                document.getElementById('btnConfirmCrystal').disabled = true;
+            }
+        }
+
+        function revealCrystals() {
+            const p1Pos = gameState.players[1].pendingCrystalPos;
+            const p2Pos = gameState.players[2].pendingCrystalPos;
+
+            // Cristal 1 du joueur 1 a sa position choisie
+            placeCrystal(p1Pos.x, p1Pos.y, 1);
+            // Cristal 2 du joueur 1 en miroir de la position du joueur 2
+            const p1Mirror = getMirrorPosition(p2Pos.x, p2Pos.y);
+            placeCrystal(p1Mirror.x, p1Mirror.y, 1);
+
+            // Cristal 1 du joueur 2 a sa position choisie
+            placeCrystal(p2Pos.x, p2Pos.y, 2);
+            // Cristal 2 du joueur 2 en miroir de la position du joueur 1
+            const p2Mirror = getMirrorPosition(p1Pos.x, p1Pos.y);
+            placeCrystal(p2Mirror.x, p2Mirror.y, 2);
+
+            gameState.phase = 'playing';
+            startGame();
+        }
+
+        function getMirrorPosition(x, y) {
+            return {
+                x: BOARD_SIZE - 1 - x,
+                y: BOARD_SIZE - 1 - y
+            };
+        }
+
+        function placeCrystal(x, y, player) {
+            // Verifier si la case est deja occupee par un cristal
+            if (gameState.board[y][x].crystal) {
+                // Trouver une case adjacente libre
+                const directions = [{dx:0,dy:1},{dx:1,dy:0},{dx:0,dy:-1},{dx:-1,dy:0}];
+                for (const dir of directions) {
+                    const nx = x + dir.dx;
+                    const ny = y + dir.dy;
+                    if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+                        const cell = gameState.board[ny][nx];
+                        if (cell.type === 'normal' && !cell.crystal) {
+                            x = nx;
+                            y = ny;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            const crystal = {
+                x: x,
+                y: y,
+                player: player,
+                hp: gameState.crystalHP || 5
+            };
+
+            gameState.players[player].crystals.push(crystal);
+            gameState.board[y][x].crystal = crystal;
+            renderCrystal(crystal);
+        }
+
+        function startGame() {
+            document.getElementById('instructionBanner').classList.add('hidden');
+            document.getElementById('turnIndicator').classList.remove('hidden');
+            document.getElementById('rosterPanel').classList.remove('hidden');
+            document.getElementById('btnConfirmCrystal').classList.add('hidden');
+            document.getElementById('btnSummon').classList.remove('hidden');
+            document.getElementById('btnMove').classList.remove('hidden');
+            document.getElementById('btnAttack').classList.remove('hidden');
+            document.getElementById('btnCancel').classList.remove('hidden');
+            document.getElementById('btnEndTurn').classList.remove('hidden');
+
+            showPhaseBanner('La partie commence!<br>Tour du Joueur 1');
+            updateUI();
+            addMessage('Les cristaux sont places! La partie commence.', 'system');
+        }
+
+        // ==================== RENDU ====================
+        function renderCrystal(crystal) {
+            const cellEl = getCellElement(crystal.x, crystal.y);
+
+            const crystalEl = document.createElement('div');
+            crystalEl.className = `crystal player${crystal.player}`;
+            crystalEl.textContent = crystal.hp;
+            crystalEl.id = `crystal-${crystal.player}-${gameState.players[crystal.player].crystals.indexOf(crystal)}`;
+
+            cellEl.appendChild(crystalEl);
+        }
+
+        function renderUnit(unit) {
+            const cellEl = getCellElement(unit.x, unit.y);
+
+            const unitEl = document.createElement('div');
+            unitEl.className = `unit player${unit.player}`;
+            if (unit.hasActed || unit.justSummoned) unitEl.classList.add('cannot-act');
+            unitEl.id = `unit-${unit.id}`;
+
+            const emojiSpan = document.createElement('span');
+            emojiSpan.className = 'unit-emoji';
+            emojiSpan.textContent = unit.character.icon;
+            unitEl.appendChild(emojiSpan);
+
+            const hpBar = document.createElement('div');
+            hpBar.className = 'hp-bar';
+            const hpFill = document.createElement('div');
+            hpFill.className = 'hp-fill';
+            hpFill.style.width = `${(unit.currentHP / unit.character.hp) * 100}%`;
+            hpBar.appendChild(hpFill);
+            unitEl.appendChild(hpBar);
+
+            unitEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                onCellClick(unit.x, unit.y);
+            });
+
+            cellEl.appendChild(unitEl);
+        }
+
+        function getCellElement(x, y) {
+            return document.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+        }
+
+        // ==================== SELECTION ET ACTIONS ====================
+        function selectUnit(unit) {
+            clearSelection();
+
+            if (unit.justSummoned) {
+                addMessage('Cette unite vient d\'etre invoquee et ne peut pas agir ce tour.', 'system');
+                return;
+            }
+
+            gameState.selectedUnit = unit;
+            const unitEl = document.getElementById(`unit-${unit.id}`);
+            if (unitEl) unitEl.classList.add('selected');
+
+            updateActionButtons();
+            updateSelectedUnitInfo();
+        }
+
+        function selectCharacter(characterId) {
+            if (gameState.actionMode === 'summon') {
+                cancelAction();
+            }
+
+            const char = CHARACTERS.find(c => c.id === characterId);
+            if (!char) return;
+
+            const player = gameState.players[gameState.currentPlayer];
+            const available = player.effectifMax - player.effectifUsed;
+
+            if (char.power > available) {
+                addMessage('Effectif insuffisant pour invoquer ce personnage!', 'system');
+                return;
+            }
+
+            const onField = player.units.filter(u => u.character.id === characterId).length;
+            if (onField >= char.maxOnField) {
+                addMessage(`Maximum de ${char.name} deja sur le terrain!`, 'system');
+                return;
+            }
+
+            gameState.selectedCharacter = char;
+            updateRosterDisplay();
+            document.getElementById('btnSummon').disabled = false;
+        }
+
+        function clearSelection() {
+            if (gameState.selectedUnit) {
+                const unitEl = document.getElementById(`unit-${gameState.selectedUnit.id}`);
+                if (unitEl) unitEl.classList.remove('selected');
+            }
+
+            gameState.selectedUnit = null;
+            gameState.selectedCharacter = null;
+            gameState.actionMode = null;
+            clearHighlights();
+            updateActionButtons();
+            updateSelectedUnitInfo();
+            updateRosterDisplay();
+        }
+
+        function cancelAction() {
+            gameState.actionMode = null;
+            clearHighlights();
+            updateActionButtons();
+        }
+
+        // ==================== MISE EN SURBRILLANCE ====================
+        function highlightCells(cells, type) {
+            clearHighlights();
+            gameState.highlightedCells = cells;
+
+            cells.forEach(pos => {
+                const cellEl = getCellElement(pos.x, pos.y);
+                if (cellEl) {
+                    cellEl.classList.add(`highlight-${type}`);
+                }
+            });
+        }
+
+        function clearHighlights() {
+            gameState.highlightedCells = [];
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('highlight-move', 'highlight-attack', 'highlight-summon');
+            });
+        }
+
+        // ==================== INVOCATION ====================
+        function startSummon() {
+            if (!gameState.selectedCharacter) return;
+
+            gameState.actionMode = 'summon';
+            const summonCells = getSummonCells();
+
+            if (summonCells.length === 0) {
+                addMessage('Aucune case disponible pour invoquer!', 'system');
+                cancelAction();
+                return;
+            }
+
+            highlightCells(summonCells, 'summon');
+            updateActionButtons();
+        }
+
+        function getSummonCells() {
+            const player = gameState.players[gameState.currentPlayer];
+            const cells = [];
+
+            player.crystals.forEach(crystal => {
+                if (crystal.hp <= 0) return;
+
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        if (dx === 0 && dy === 0) continue;
+
+                        const nx = crystal.x + dx;
+                        const ny = crystal.y + dy;
+
+                        if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+
+                        const cell = gameState.board[ny][nx];
+                        if (cell.type !== 'normal') continue;
+                        if (cell.unit || cell.crystal) continue;
+
+                        if (!cells.some(c => c.x === nx && c.y === ny)) {
+                            cells.push({x: nx, y: ny});
+                        }
+                    }
+                }
+            });
+
+            return cells;
+        }
+
+        function summonUnit(x, y, callback) {
+            const char = gameState.selectedCharacter;
+            const player = gameState.players[gameState.currentPlayer];
+
+            const unit = {
+                id: Date.now(),
+                character: char,
+                player: gameState.currentPlayer,
+                x: x,
+                y: y,
+                currentHP: char.hp,
+                movementLeft: 0,
+                hasActed: true,
+                justSummoned: true,
+                damageTakenThisTurn: 0
+            };
+
+            player.units.push(unit);
+            player.effectifUsed += char.power;
+            gameState.board[y][x].unit = unit;
+
+            // Animation d'invocation
+            playSummonAnimation(x, y, () => {
+                renderUnit(unit);
+                const unitEl = document.getElementById(`unit-${unit.id}`);
+                if (unitEl) {
+                    unitEl.classList.add('spawning');
+                    setTimeout(() => unitEl.classList.remove('spawning'), 600);
+                }
+
+                addMessage(`${char.name} invoque en (${x}, ${y})!`, `player${gameState.currentPlayer}`);
+
+                gameState.actionTaken = true;
+                clearSelection();
+                updateUI();
+
+                if (callback) callback();
+            });
+        }
+
+        function playSummonAnimation(x, y, callback) {
+            const layer = document.getElementById('animationLayer');
+            const pos = getCellPosition(x, y);
+
+            // Effet principal
+            const effect = document.createElement('div');
+            effect.className = 'summon-effect';
+            effect.style.left = pos.x + 'px';
+            effect.style.top = pos.y + 'px';
+            layer.appendChild(effect);
+
+            // Anneaux concentriques
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const ring = document.createElement('div');
+                    ring.className = 'summon-ring';
+                    ring.style.left = pos.x + 'px';
+                    ring.style.top = pos.y + 'px';
+                    layer.appendChild(ring);
+                    setTimeout(() => ring.remove(), 1000);
+                }, i * 200);
+            }
+
+            setTimeout(() => {
+                effect.remove();
+                if (callback) callback();
+            }, 800);
+        }
+
+        function getCellPosition(x, y) {
+            // Calculer la position en pixels d'une case
+            return {
+                x: x * 52 + 26, // 50px + 2px gap, centre de la case
+                y: y * 52 + 26
+            };
+        }
+
+        // ==================== DEPLACEMENT ====================
+        function startMove() {
+            if (!gameState.selectedUnit) return;
+            if (gameState.selectedUnit.movementLeft <= 0) return;
+
+            gameState.actionMode = 'move';
+            const moveCells = getMoveCells(gameState.selectedUnit);
+            highlightCells(moveCells, 'move');
+            updateActionButtons();
+        }
+
+        function getMoveCells(unit) {
+            const cells = [];
+            const visited = new Map();
+            const queue = [{x: unit.x, y: unit.y, cost: 0}];
+            visited.set(`${unit.x},${unit.y}`, 0);
+
+            while (queue.length > 0) {
+                const current = queue.shift();
+
+                const directions = [
+                    {dx: 0, dy: -1},
+                    {dx: 0, dy: 1},
+                    {dx: -1, dy: 0},
+                    {dx: 1, dy: 0}
+                ];
+
+                for (const dir of directions) {
+                    const nx = current.x + dir.dx;
+                    const ny = current.y + dir.dy;
+                    const key = `${nx},${ny}`;
+
+                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+
+                    const targetCell = gameState.board[ny][nx];
+                    const currentCell = gameState.board[current.y][current.x];
+
+                    if (targetCell.type === 'obstacle' || targetCell.type === 'obstacle_tall') continue;
+                    if (targetCell.type === 'water' && !unit.character.canMoveOnWater) continue;
+
+                    const heightDiff = Math.abs(targetCell.height - currentCell.height);
+                    if (heightDiff > 1) continue;
+
+                    let moveCost = 1;
+                    if (targetCell.height > currentCell.height) {
+                        moveCost = 2;
+                    }
+
+                    const totalCost = current.cost + moveCost;
+                    if (totalCost > unit.movementLeft) continue;
+
+                    if (targetCell.unit && targetCell.unit.player !== unit.player) continue;
+                    if (targetCell.crystal) continue;
+
+                    const existingCost = visited.get(key);
+                    if (existingCost !== undefined && existingCost <= totalCost) continue;
+
+                    visited.set(key, totalCost);
+
+                    if (!targetCell.unit) {
+                        const existingCell = cells.find(c => c.x === nx && c.y === ny);
+                        if (existingCell) {
+                            existingCell.cost = Math.min(existingCell.cost, totalCost);
+                        } else {
+                            cells.push({x: nx, y: ny, cost: totalCost});
+                        }
+                    }
+
+                    queue.push({x: nx, y: ny, cost: totalCost});
+                }
+            }
+
+            return cells;
+        }
+
+        function moveUnit(x, y, callback) {
+            const unit = gameState.selectedUnit;
+            const targetCell = gameState.highlightedCells.find(c => c.x === x && c.y === y);
+            if (!targetCell) {
+                if (callback) callback();
+                return;
+            }
+
+            // Calculer le chemin
+            const path = findPath(unit.x, unit.y, x, y, unit);
+
+            // Desactiver les interactions pendant l'animation
+            gameState.animating = true;
+
+            // Retirer de l'ancienne case dans les donnees
+            gameState.board[unit.y][unit.x].unit = null;
+
+            const unitEl = document.getElementById(`unit-${unit.id}`);
+            if (unitEl) {
+                const board = document.getElementById('board');
+
+                // Calculer position initiale (10px = board padding)
+                const cellSize = 52; // 50px + 2px gap
+                const startX = unit.x * cellSize + 5 + 10; // 5px centrage + 10px padding
+                const startY = unit.y * cellSize + 5 + 10;
+
+                // Deplacer l'unite vers le board pour l'animation
+                unitEl.style.position = 'absolute';
+                unitEl.style.left = startX + 'px';
+                unitEl.style.top = startY + 'px';
+                unitEl.style.zIndex = '100';
+                board.appendChild(unitEl);
+
+                unitEl.classList.add('moving');
+
+                animateMovementPath(unitEl, unit, path, 1, () => {
+                    // Supprimer l'element anime
+                    unitEl.remove();
+
+                    // Mettre a jour les donnees finales
+                    unit.x = x;
+                    unit.y = y;
+                    unit.movementLeft -= targetCell.cost;
+                    gameState.board[y][x].unit = unit;
+
+                    // Re-rendre l'unite dans sa nouvelle cellule
+                    renderUnit(unit);
+                    const newUnitEl = document.getElementById(`unit-${unit.id}`);
+                    if (newUnitEl) newUnitEl.classList.add('selected');
+
+                    addMessage(`${unit.character.name} se deplace en (${x}, ${y}).`, `player${gameState.currentPlayer}`);
+
+                    gameState.actionTaken = true;
+                    gameState.animating = false;
+                    cancelAction();
+                    updateSelectedUnitInfo();
+                    updateActionButtons();
+
+                    if (callback) callback();
+                });
+            } else {
+                if (callback) callback();
+            }
+        }
+
+        function findPath(startX, startY, endX, endY, unit) {
+            // BFS pour trouver le chemin le plus court
+            const visited = new Map();
+            const queue = [{x: startX, y: startY, path: [{x: startX, y: startY}]}];
+            visited.set(`${startX},${startY}`, true);
+
+            while (queue.length > 0) {
+                const current = queue.shift();
+
+                if (current.x === endX && current.y === endY) {
+                    return current.path;
+                }
+
+                const directions = [
+                    {dx: 0, dy: -1}, {dx: 0, dy: 1},
+                    {dx: -1, dy: 0}, {dx: 1, dy: 0}
+                ];
+
+                for (const dir of directions) {
+                    const nx = current.x + dir.dx;
+                    const ny = current.y + dir.dy;
+                    const key = `${nx},${ny}`;
+
+                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+                    if (visited.has(key)) continue;
+
+                    const targetCell = gameState.board[ny][nx];
+                    const currentCell = gameState.board[current.y][current.x];
+
+                    if (targetCell.type === 'obstacle' || targetCell.type === 'obstacle_tall') continue;
+                    if (targetCell.type === 'water' && !(unit && unit.character && unit.character.canMoveOnWater)) continue;
+
+                    const heightDiff = Math.abs(targetCell.height - currentCell.height);
+                    if (heightDiff > 1) continue;
+
+                    if (targetCell.unit && !(nx === endX && ny === endY)) continue;
+                    if (targetCell.crystal) continue;
+
+                    visited.set(key, true);
+                    queue.push({
+                        x: nx, y: ny,
+                        path: [...current.path, {x: nx, y: ny}]
+                    });
+                }
+            }
+
+            // Fallback: chemin direct
+            return [{x: startX, y: startY}, {x: endX, y: endY}];
+        }
+
+        function animateMovementPath(unitEl, unit, path, index, callback) {
+            if (index >= path.length) {
+                if (callback) callback();
+                return;
+            }
+
+            const pos = path[index];
+            const layer = document.getElementById('animationLayer');
+
+            // Position en pixels (10px = board padding)
+            const cellSize = 52;
+            const pixelX = pos.x * cellSize + 5 + 10;
+            const pixelY = pos.y * cellSize + 5 + 10;
+
+            // Creer une trainee sur la position precedente
+            if (index > 0) {
+                const trail = document.createElement('div');
+                trail.className = 'move-trail';
+                const prevPos = path[index - 1];
+                trail.style.left = (prevPos.x * cellSize + 15) + 'px';
+                trail.style.top = (prevPos.y * cellSize + 15) + 'px';
+                layer.appendChild(trail);
+                setTimeout(() => trail.remove(), 500);
+            }
+
+            // Animer le deplacement avec transition CSS
+            unitEl.style.left = pixelX + 'px';
+            unitEl.style.top = pixelY + 'px';
+
+            // Continuer au prochain point
+            setTimeout(() => {
+                animateMovementPath(unitEl, unit, path, index + 1, callback);
+            }, 150);
+        }
+
+        // ==================== ATTAQUE ====================
+        function startAttack() {
+            if (!gameState.selectedUnit) return;
+            if (gameState.selectedUnit.hasActed) return;
+
+            gameState.actionMode = 'attack';
+            const attackCells = getAttackCells(gameState.selectedUnit);
+
+            if (attackCells.length === 0) {
+                addMessage('Aucune cible a portee!', 'system');
+                cancelAction();
+                return;
+            }
+
+            highlightCells(attackCells, 'attack');
+            updateActionButtons();
+        }
+
+        function getAttackCells(unit) {
+            const attack = unit.character.attack;
+            const cells = [];
+            const unitHeight = gameState.board[unit.y][unit.x].height;
+            const ignoreHeight = unit.character.ignoreHeight || false;
+            const unitOnWater = gameState.board[unit.y][unit.x].type === 'water';
+
+            // Canard sur l'eau: mode soin (cible allies adjacents)
+            if (unit.character.waterHeal && unitOnWater) {
+                const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+                for (const dir of directions) {
+                    const nx = unit.x + dir.dx;
+                    const ny = unit.y + dir.dy;
+                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+                    const targetCell = gameState.board[ny][nx];
+                    if (targetCell.unit && targetCell.unit.player === unit.player && targetCell.unit !== unit) {
+                        cells.push({x: nx, y: ny});
+                    }
+                }
+                return cells;
+            }
+
+            // Charge du Lapin: cible a exactement chargeDistance en ligne droite (meme hauteur)
+            if (attack.pattern === 'charge') {
+                const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+                const dist = attack.chargeDistance;
+                for (const dir of directions) {
+                    const targetX = unit.x + dir.dx * dist;
+                    const targetY = unit.y + dir.dy * dist;
+                    if (targetX < 0 || targetX >= BOARD_SIZE || targetY < 0 || targetY >= BOARD_SIZE) continue;
+                    const targetCell = gameState.board[targetY][targetX];
+                    if (!ignoreHeight && targetCell.height !== unitHeight) continue;
+                    // Verifier que le chemin est libre (cases intermediaires)
+                    let pathClear = true;
+                    for (let i = 1; i < dist; i++) {
+                        const mx = unit.x + dir.dx * i;
+                        const my = unit.y + dir.dy * i;
+                        const midCell = gameState.board[my][mx];
+                        if (midCell.unit || midCell.crystal || midCell.type === 'obstacle' || midCell.type === 'obstacle_tall') {
+                            pathClear = false;
+                            break;
+                        }
+                        if (midCell.type === 'water' && !unit.character.canMoveOnWater) {
+                            pathClear = false;
+                            break;
+                        }
+                    }
+                    if (!pathClear) continue;
+                    // La cible doit etre un ennemi ou cristal ennemi
+                    if (targetCell.unit && targetCell.unit.player !== unit.player) {
+                        cells.push({x: targetX, y: targetY, dir: dir});
+                    }
+                    if (targetCell.crystal && targetCell.crystal.player !== unit.player) {
+                        cells.push({x: targetX, y: targetY, dir: dir});
+                    }
+                }
+                return cells;
+            }
+
+            // Sanglier AOE: cible les 4 cases cardinales adjacentes (meme hauteur seulement)
+            if (attack.pattern === 'adjacent_aoe') {
+                const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+                let hasTarget = false;
+                for (const dir of directions) {
+                    const nx = unit.x + dir.dx;
+                    const ny = unit.y + dir.dy;
+                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+                    const targetCell = gameState.board[ny][nx];
+                    if (targetCell.height !== unitHeight) continue;
+                    if ((targetCell.unit && targetCell.unit.player !== unit.player) ||
+                        (targetCell.crystal && targetCell.crystal.player !== unit.player)) {
+                        hasTarget = true;
+                    }
+                }
+                // Si au moins une cible, montrer les cases adjacentes de meme hauteur
+                if (hasTarget) {
+                    for (const dir of directions) {
+                        const nx = unit.x + dir.dx;
+                        const ny = unit.y + dir.dy;
+                        if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+                        const targetCell = gameState.board[ny][nx];
+                        if (targetCell.height !== unitHeight) continue;
+                        if (targetCell.type !== 'obstacle' && targetCell.type !== 'obstacle_tall') {
+                            cells.push({x: nx, y: ny});
+                        }
+                    }
+                }
+                return cells;
+            }
+
+            // Renard pierce: attaque adjacente + dommage derriere (meme hauteur seulement)
+            if (attack.pattern === 'pierce') {
+                const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+                for (const dir of directions) {
+                    const nx = unit.x + dir.dx;
+                    const ny = unit.y + dir.dy;
+                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+                    const targetCell = gameState.board[ny][nx];
+                    if (targetCell.height !== unitHeight) continue;
+                    if (targetCell.unit && targetCell.unit.player !== unit.player) {
+                        cells.push({x: nx, y: ny, dir: dir});
+                    }
+                    if (targetCell.crystal && targetCell.crystal.player !== unit.player) {
+                        cells.push({x: nx, y: ny, dir: dir});
+                    }
+                }
+                return cells;
+            }
+
+            // Attaque standard (single, melee/ranged)
+            for (let dy = -attack.range; dy <= attack.range; dy++) {
+                for (let dx = -attack.range; dx <= attack.range; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+
+                    const distance = Math.abs(dx) + Math.abs(dy);
+                    if (distance > attack.range) continue;
+
+                    const nx = unit.x + dx;
+                    const ny = unit.y + dy;
+
+                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+
+                    const targetCell = gameState.board[ny][nx];
+
+                    // Ecureuil ignore la hauteur
+                    if (!ignoreHeight && targetCell.height !== unitHeight) continue;
+                    if (!hasLineOfSight(unit.x, unit.y, nx, ny, ignoreHeight)) continue;
+
+                    if (targetCell.unit && targetCell.unit.player !== unit.player) {
+                        cells.push({x: nx, y: ny});
+                    }
+                    if (targetCell.crystal && targetCell.crystal.player !== unit.player) {
+                        cells.push({x: nx, y: ny});
+                    }
+                }
+            }
+
+            return cells;
+        }
+
+        function hasLineOfSight(x1, y1, x2, y2, ignoreHeightBlocking) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const steps = Math.max(Math.abs(dx), Math.abs(dy));
+
+            if (steps === 0) return true;
+
+            const xStep = dx / steps;
+            const yStep = dy / steps;
+
+            const originHeight = gameState.board[y1][x1].height;
+
+            for (let i = 1; i < steps; i++) {
+                const checkX = Math.round(x1 + xStep * i);
+                const checkY = Math.round(y1 + yStep * i);
+
+                if (checkX < 0 || checkX >= BOARD_SIZE || checkY < 0 || checkY >= BOARD_SIZE) {
+                    return false;
+                }
+
+                const cell = gameState.board[checkY][checkX];
+
+                if (cell.type === 'obstacle_tall') return false;
+                if (!ignoreHeightBlocking && cell.height > originHeight) return false;
+            }
+
+            return true;
+        }
+
+        function attackTarget(x, y, callback) {
+            const unit = gameState.selectedUnit;
+            const attack = unit.character.attack;
+            const targetCell = gameState.board[y][x];
+            const unitOnWater = gameState.board[unit.y][unit.x].type === 'water';
+
+            // Desactiver les interactions pendant l'animation
+            gameState.animating = true;
+
+            // === CANARD SUR L'EAU: MODE SOIN ===
+            if (unit.character.waterHeal && unitOnWater) {
+                const healAttack = {damage: -1, pattern: 'single', range: 1};
+                playAttackAnimation(unit.x, unit.y, x, y, healAttack, () => {
+                    if (targetCell.unit) {
+                        const ally = targetCell.unit;
+                        ally.currentHP = Math.min(ally.character.hp, ally.currentHP + 1);
+                        showDamageNumber(x, y, 1, true);
+                        addMessage(`${unit.character.name} soigne ${ally.character.name} de 1 PV!`, `player${unit.player}`);
+                        const allyEl = document.getElementById(`unit-${ally.id}`);
+                        if (allyEl) {
+                            const hpFill = allyEl.querySelector('.hp-fill');
+                            if (hpFill) hpFill.style.width = `${(ally.currentHP / ally.character.hp) * 100}%`;
+                            allyEl.classList.add('healing');
+                            setTimeout(() => allyEl.classList.remove('healing'), 600);
+                        }
+                    }
+                    finishAttack(unit, callback);
+                });
+                return;
+            }
+
+            // === LAPIN CHARGE ===
+            if (attack.pattern === 'charge') {
+                const highlightedCell = gameState.highlightedCells.find(c => c.x === x && c.y === y);
+                const dir = highlightedCell ? highlightedCell.dir : {dx: Math.sign(x - unit.x), dy: Math.sign(y - unit.y)};
+                // Le lapin se deplace a la case juste avant la cible
+                const chargeX = x - dir.dx;
+                const chargeY = y - dir.dy;
+                const damage = attack.damage;
+
+                // Animer le deplacement du lapin
+                const chargePath = [{x: unit.x, y: unit.y}];
+                for (let i = 1; i <= attack.chargeDistance - 1; i++) {
+                    chargePath.push({x: unit.x + dir.dx * i, y: unit.y + dir.dy * i});
+                }
+
+                // Retirer l'unite de l'ancienne case
+                gameState.board[unit.y][unit.x].unit = null;
+                const unitEl = document.getElementById(`unit-${unit.id}`);
+                if (unitEl) {
+                    const board = document.getElementById('board');
+                    const cellSize = 52;
+                    unitEl.style.position = 'absolute';
+                    unitEl.style.left = (unit.x * cellSize + 5 + 10) + 'px';
+                    unitEl.style.top = (unit.y * cellSize + 5 + 10) + 'px';
+                    unitEl.style.zIndex = '100';
+                    board.appendChild(unitEl);
+                    unitEl.classList.add('moving');
+
+                    animateMovementPath(unitEl, unit, chargePath, 1, () => {
+                        unitEl.remove();
+                        unit.x = chargeX;
+                        unit.y = chargeY;
+                        gameState.board[chargeY][chargeX].unit = unit;
+                        renderUnit(unit);
+
+                        // Appliquer les degats a la cible
+                        playAttackAnimation(chargeX, chargeY, x, y, attack, () => {
+                            if (targetCell.unit) {
+                                applyDamageToUnit(targetCell.unit, damage, unit);
+                                showDamageNumber(x, y, damage, false);
+                            } else if (targetCell.crystal) {
+                                applyDamageToCrystal(targetCell.crystal, damage);
+                                showDamageNumber(x, y, damage, false);
+                            }
+                            finishAttack(unit, callback);
+                        });
+                    });
+                } else {
+                    finishAttack(unit, callback);
+                }
+                return;
+            }
+
+            // === SANGLIER AOE ADJACENT ===
+            if (attack.pattern === 'adjacent_aoe') {
+                const damage = attack.damage;
+                const attackerHeight = gameState.board[unit.y][unit.x].height;
+                // Animation sur les 4 directions
+                playAttackAnimation(unit.x, unit.y, x, y, {...attack, pattern: 'aoe'}, () => {
+                    const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+                    for (const dir of directions) {
+                        const nx = unit.x + dir.dx;
+                        const ny = unit.y + dir.dy;
+                        if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+                        const cell = gameState.board[ny][nx];
+                        if (cell.height !== attackerHeight) continue;
+                        if (cell.unit && cell.unit.player !== unit.player) {
+                            applyDamageToUnit(cell.unit, damage, unit);
+                            showDamageNumber(nx, ny, damage, false);
+                        }
+                        if (cell.crystal && cell.crystal.player !== unit.player) {
+                            applyDamageToCrystal(cell.crystal, damage);
+                            showDamageNumber(nx, ny, damage, false);
+                        }
+                    }
+                    finishAttack(unit, callback);
+                });
+                return;
+            }
+
+            // === RENARD PIERCE ===
+            if (attack.pattern === 'pierce') {
+                const damage = attack.damage;
+                const attackerHeight = gameState.board[unit.y][unit.x].height;
+                const highlightedCell = gameState.highlightedCells.find(c => c.x === x && c.y === y);
+                const dir = highlightedCell ? highlightedCell.dir : {dx: x - unit.x, dy: y - unit.y};
+
+                playAttackAnimation(unit.x, unit.y, x, y, attack, () => {
+                    // Degats sur la cible principale
+                    if (targetCell.unit) {
+                        applyDamageToUnit(targetCell.unit, damage, unit);
+                        showDamageNumber(x, y, damage, false);
+                    } else if (targetCell.crystal) {
+                        applyDamageToCrystal(targetCell.crystal, damage);
+                        showDamageNumber(x, y, damage, false);
+                    }
+                    // Degats sur les 2 cases derriere (meme hauteur seulement)
+                    for (let i = 1; i <= attack.pierceRange; i++) {
+                        const px = x + dir.dx * i;
+                        const py = y + dir.dy * i;
+                        if (px < 0 || px >= BOARD_SIZE || py < 0 || py >= BOARD_SIZE) break;
+                        const pierceCell = gameState.board[py][px];
+                        if (pierceCell.type === 'obstacle' || pierceCell.type === 'obstacle_tall') break;
+                        if (pierceCell.height !== attackerHeight) continue;
+                        if (pierceCell.unit && pierceCell.unit.player !== unit.player) {
+                            applyDamageToUnit(pierceCell.unit, damage, unit);
+                            showDamageNumber(px, py, damage, false);
+                        }
+                        if (pierceCell.crystal && pierceCell.crystal.player !== unit.player) {
+                            applyDamageToCrystal(pierceCell.crystal, damage);
+                            showDamageNumber(px, py, damage, false);
+                        }
+                    }
+                    finishAttack(unit, callback);
+                });
+                return;
+            }
+
+            // === ATTAQUE STANDARD (Souris, Canard sur terre, Ecureuil) ===
+            let damage = attack.damage;
+
+            playAttackAnimation(unit.x, unit.y, x, y, attack, () => {
+                if (targetCell.unit) {
+                    applyDamageToUnit(targetCell.unit, damage, unit);
+                    showDamageNumber(x, y, damage, false);
+                } else if (targetCell.crystal) {
+                    applyDamageToCrystal(targetCell.crystal, damage);
+                    showDamageNumber(x, y, damage, false);
+                }
+                finishAttack(unit, callback);
+            });
+        }
+
+        function finishAttack(unit, callback) {
+            unit.hasActed = true;
+            const unitEl = document.getElementById(`unit-${unit.id}`);
+            if (unitEl) unitEl.classList.add('cannot-act');
+
+            gameState.actionTaken = true;
+            gameState.animating = false;
+            cancelAction();
+            updateSelectedUnitInfo();
+            checkVictory();
+
+            // Souris: deplacement post-attaque
+            if (unit.character.postAttackMove && unit.currentHP > 0 && gameState.phase !== 'game_over') {
+                startPostAttackMove(unit, unit.character.postAttackMove, callback);
+                return;
+            }
+
+            if (callback) callback();
+        }
+
+        function startPostAttackMove(unit, moveRange, callback) {
+            // Calculer les cases accessibles pour le deplacement post-attaque
+            const tempMovement = moveRange;
+            const originalMovement = unit.movementLeft;
+            unit.movementLeft = tempMovement;
+            const moveCells = getMoveCells(unit);
+            unit.movementLeft = originalMovement;
+
+            if (moveCells.length === 0) {
+                if (callback) callback();
+                return;
+            }
+
+            // Si c'est l'IA, choisir automatiquement
+            if (gameState.players[unit.player].isAI) {
+                const bestCell = aiChoosePostAttackMove(unit, moveCells);
+                if (bestCell) {
+                    gameState.selectedUnit = unit;
+                    gameState.highlightedCells = [bestCell];
+                    gameState.animating = false;
+                    moveUnit(bestCell.x, bestCell.y, () => {
+                        if (callback) callback();
+                    });
+                } else {
+                    if (callback) callback();
+                }
+                return;
+            }
+
+            // Pour le joueur humain: montrer les cases de deplacement
+            gameState.selectedUnit = unit;
+            gameState.actionMode = 'postAttackMove';
+            gameState.postAttackMoveCallback = callback;
+            gameState.postAttackMoveRange = moveRange;
+            highlightCells(moveCells, 'move');
+            addMessage('Souris: choisissez une case pour fuir (ou cliquez ailleurs pour rester).', 'system');
+
+            // Permettre de cliquer ailleurs pour ignorer le deplacement
+            const skipHandler = (e) => {
+                if (!e.target.closest('.cell') || !gameState.highlightedCells.some(c => {
+                    const el = getCellElement(c.x, c.y);
+                    return el && el.contains(e.target);
+                })) {
+                    document.removeEventListener('click', skipHandler, true);
+                    gameState.actionMode = null;
+                    clearHighlights();
+                    gameState.postAttackMoveCallback = null;
+                    if (callback) callback();
+                }
+            };
+            setTimeout(() => document.addEventListener('click', skipHandler, true), 100);
+        }
+
+        function aiChoosePostAttackMove(unit, moveCells) {
+            // L'IA choisit la case la plus sure (loin des ennemis)
+            let bestCell = null;
+            let bestScore = -Infinity;
+            const enemy = gameState.players[unit.player === 1 ? 2 : 1];
+
+            for (const cell of moveCells) {
+                let score = 0;
+                // S'eloigner des ennemis
+                for (const eUnit of enemy.units) {
+                    const dist = Math.abs(cell.x - eUnit.x) + Math.abs(cell.y - eUnit.y);
+                    score += dist * 3;
+                }
+                // Se rapprocher de nos cristaux pour se mettre en securite
+                const player = gameState.players[unit.player];
+                for (const crystal of player.crystals) {
+                    if (crystal.hp <= 0) continue;
+                    const dist = Math.abs(cell.x - crystal.x) + Math.abs(cell.y - crystal.y);
+                    score -= dist;
+                }
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestCell = cell;
+                }
+            }
+            return bestCell;
+        }
+
+        function playAttackAnimation(fromX, fromY, toX, toY, attack, callback) {
+            const layer = document.getElementById('animationLayer');
+            const startPos = getCellPosition(fromX, fromY);
+            const endPos = getCellPosition(toX, toY);
+
+            // Creer le projectile
+            const projectile = document.createElement('div');
+            projectile.className = 'attack-projectile';
+
+            if (attack.pattern === 'line') {
+                projectile.classList.add('line');
+            } else if (attack.pattern === 'aoe') {
+                projectile.classList.add('aoe');
+            } else if (attack.damage < 0) {
+                projectile.classList.add('heal');
+            }
+
+            // Calculer l'angle pour le projectile ligne
+            if (attack.pattern === 'line') {
+                const angle = Math.atan2(endPos.y - startPos.y, endPos.x - startPos.x);
+                projectile.style.transform = `rotate(${angle}rad)`;
+            }
+
+            projectile.style.left = startPos.x + 'px';
+            projectile.style.top = startPos.y + 'px';
+            projectile.style.transform += ' translate(-50%, -50%)';
+            layer.appendChild(projectile);
+
+            // Calculer la distance et la duree
+            const dx = endPos.x - startPos.x;
+            const dy = endPos.y - startPos.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const duration = Math.min(800, Math.max(300, distance * 2));
+
+            // Animation du projectile
+            const startTime = performance.now();
+
+            function animateProjectile(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                // Easing pour un mouvement fluide
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+
+                const currentX = startPos.x + dx * easeProgress;
+                const currentY = startPos.y + dy * easeProgress;
+
+                projectile.style.left = currentX + 'px';
+                projectile.style.top = currentY + 'px';
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateProjectile);
+                } else {
+                    // Fin de l'animation - impact
+                    projectile.remove();
+                    playImpactAnimation(toX, toY, attack, callback);
+                }
+            }
+
+            requestAnimationFrame(animateProjectile);
+        }
+
+        function playImpactAnimation(x, y, attack, callback) {
+            const layer = document.getElementById('animationLayer');
+            const pos = getCellPosition(x, y);
+
+            // Creer l'effet d'impact
+            const impact = document.createElement('div');
+            impact.className = 'attack-impact';
+
+            if (attack.damage < 0) {
+                impact.classList.add('heal');
+            } else if (attack.pattern === 'aoe') {
+                impact.classList.add('aoe');
+            }
+
+            impact.style.left = pos.x + 'px';
+            impact.style.top = pos.y + 'px';
+            layer.appendChild(impact);
+
+            // Faire trembler l'unite cible
+            const targetCell = gameState.board[y][x];
+            if (targetCell.unit) {
+                const unitEl = document.getElementById(`unit-${targetCell.unit.id}`);
+                if (unitEl) {
+                    if (attack.damage < 0) {
+                        unitEl.classList.add('healing');
+                        setTimeout(() => unitEl.classList.remove('healing'), 600);
+                    } else {
+                        unitEl.classList.add('taking-damage');
+                        setTimeout(() => unitEl.classList.remove('taking-damage'), 400);
+                    }
+                }
+            }
+
+            // Nettoyer et callback
+            setTimeout(() => {
+                impact.remove();
+                if (callback) callback();
+            }, 500);
+        }
+
+        function showDamageNumber(x, y, damage, isHeal, isAoe) {
+            const layer = document.getElementById('animationLayer');
+            const pos = getCellPosition(x, y);
+
+            const dmgNum = document.createElement('div');
+            dmgNum.className = 'damage-number';
+            if (isHeal) dmgNum.classList.add('heal');
+
+            dmgNum.textContent = isHeal ? `+${Math.abs(damage)}` : `-${damage}`;
+            if (isAoe) dmgNum.textContent += ' (AoE)';
+
+            dmgNum.style.left = pos.x + 'px';
+            dmgNum.style.top = (pos.y - 20) + 'px';
+            layer.appendChild(dmgNum);
+
+            setTimeout(() => dmgNum.remove(), 1000);
+        }
+
+        function applyAoeDamage(centerX, centerY, size, damage, attacker) {
+            const attackerHeight = gameState.board[attacker.y][attacker.x].height;
+            for (let dy = -size; dy <= size; dy++) {
+                for (let dx = -size; dx <= size; dx++) {
+                    const nx = centerX + dx;
+                    const ny = centerY + dy;
+
+                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+
+                    const cell = gameState.board[ny][nx];
+                    if (cell.height !== attackerHeight) continue;
+
+                    if (cell.unit && cell.unit.player !== attacker.player) {
+                        applyDamageToUnit(cell.unit, damage, attacker);
+                    }
+                    if (cell.crystal && cell.crystal.player !== attacker.player) {
+                        applyDamageToCrystal(cell.crystal, damage);
+                    }
+                }
+            }
+        }
+
+        function applyDamageToUnit(target, damage, attacker) {
+            // Sanglier: ne peut pas perdre plus de maxDamagePerTurn PV par tour
+            if (target.character.maxDamagePerTurn && damage > 0) {
+                const maxLeft = target.character.maxDamagePerTurn - target.damageTakenThisTurn;
+                if (maxLeft <= 0) {
+                    addMessage(`${target.character.name} ne peut plus subir de degats ce tour!`, 'system');
+                    return;
+                }
+                damage = Math.min(damage, maxLeft);
+                target.damageTakenThisTurn += damage;
+            }
+
+            if (damage < 0) {
+                const healAmount = Math.abs(damage);
+                target.currentHP = Math.min(target.character.hp, target.currentHP + healAmount);
+                addMessage(`${target.character.name} recupere ${healAmount} PV!`, `player${attacker.player}`);
+            } else {
+                target.currentHP -= damage;
+                addMessage(`${target.character.name} subit ${damage} degats! (${target.currentHP}/${target.character.hp} PV)`, `player${attacker.player}`);
+            }
+
+            const unitEl = document.getElementById(`unit-${target.id}`);
+            if (unitEl) {
+                const hpFill = unitEl.querySelector('.hp-fill');
+                if (hpFill) {
+                    hpFill.style.width = `${Math.max(0, (target.currentHP / target.character.hp) * 100)}%`;
+                }
+            }
+
+            if (target.currentHP <= 0) {
+                killUnit(target, attacker);
+            }
+        }
+
+        function applyDamageToCrystal(crystal, damage) {
+            crystal.hp -= damage;
+            const maxHP = gameState.crystalHP || 5;
+            addMessage(`Cristal du Joueur ${crystal.player} subit ${damage} degats! (${Math.max(0, crystal.hp)}/${maxHP} PV)`, 'system');
+
+            const crystalIndex = gameState.players[crystal.player].crystals.indexOf(crystal);
+            const crystalIconId = `p${crystal.player}Crystal${crystalIndex + 1}`;
+            const crystalIcon = document.getElementById(crystalIconId);
+            if (crystalIcon) {
+                crystalIcon.textContent = Math.max(0, crystal.hp);
+                if (crystal.hp <= 0) {
+                    crystalIcon.classList.add('destroyed');
+                }
+            }
+
+            if (crystal.hp <= 0) {
+                // Retirer le cristal de la carte
+                gameState.board[crystal.y][crystal.x].crystal = null;
+                const crystalEl = document.getElementById(`crystal-${crystal.player}-${crystalIndex}`);
+                if (crystalEl) crystalEl.remove();
+            } else {
+                const crystalEl = document.getElementById(`crystal-${crystal.player}-${crystalIndex}`);
+                if (crystalEl) {
+                    crystalEl.textContent = crystal.hp;
+                }
+            }
+        }
+
+        function killUnit(unit, attacker) {
+            addMessage(`${unit.character.name} du Joueur ${unit.player} est detruit!`, 'system');
+
+            gameState.players[unit.player].effectifUsed -= unit.character.power;
+
+            gameState.board[unit.y][unit.x].unit = null;
+
+            const index = gameState.players[unit.player].units.indexOf(unit);
+            if (index > -1) {
+                gameState.players[unit.player].units.splice(index, 1);
+            }
+
+            const unitEl = document.getElementById(`unit-${unit.id}`);
+            if (unitEl) unitEl.remove();
+
+            if (gameState.selectedUnit === unit) {
+                clearSelection();
+            }
+
+            // Renard: se soigne de 1 PV apres avoir elimine un ennemi
+            if (attacker && attacker.character.healOnKill && attacker.currentHP > 0) {
+                const healAmount = attacker.character.healOnKill;
+                attacker.currentHP = Math.min(attacker.character.hp, attacker.currentHP + healAmount);
+                addMessage(`${attacker.character.name} se soigne de ${healAmount} PV (Predateur)!`, `player${attacker.player}`);
+                const attackerEl = document.getElementById(`unit-${attacker.id}`);
+                if (attackerEl) {
+                    const hpFill = attackerEl.querySelector('.hp-fill');
+                    if (hpFill) hpFill.style.width = `${(attacker.currentHP / attacker.character.hp) * 100}%`;
+                    attackerEl.classList.add('healing');
+                    setTimeout(() => attackerEl.classList.remove('healing'), 600);
+                }
+            }
+
+            updateUI();
+        }
+
+        // ==================== VERIFICATION DES ACTIONS POSSIBLES ====================
+        function canDoAnything() {
+            const player = gameState.players[gameState.currentPlayer];
+            const available = player.effectifMax - player.effectifUsed;
+
+            // Verifier si on peut invoquer
+            const summonCells = getSummonCells();
+            if (summonCells.length > 0) {
+                for (const char of CHARACTERS) {
+                    if (char.power <= available) {
+                        const onField = player.units.filter(u => u.character.id === char.id).length;
+                        if (onField < char.maxOnField) {
+                            return true; // On peut invoquer au moins un personnage
+                        }
+                    }
+                }
+            }
+
+            // Verifier si on peut deplacer ou attaquer avec une unite
+            for (const unit of player.units) {
+                if (unit.justSummoned) continue;
+                if (unit.hasActed) continue; // Une fois qu'on a agi, on ne peut plus rien faire
+
+                // Peut se deplacer?
+                if (unit.movementLeft > 0) {
+                    const moveCells = getMoveCells(unit);
+                    if (moveCells.length > 0) {
+                        return true;
+                    }
+                }
+
+                // Peut attaquer?
+                const attackCells = getAttackCells(unit);
+                if (attackCells.length > 0) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // ==================== FIN DE TOUR ====================
+        function endTurn() {
+            // Permettre de skip si aucune action n'est possible
+            if (!gameState.actionTaken && canDoAnything()) {
+                addMessage('Vous devez effectuer au moins une action!', 'system');
+                return;
+            }
+
+            if (!gameState.actionTaken) {
+                addMessage('Aucune action possible - tour passe.', 'system');
+            }
+
+            clearSelection();
+
+            gameState.players[gameState.currentPlayer].units.forEach(unit => {
+                unit.justSummoned = false;
+            });
+
+            const previousPlayer = gameState.currentPlayer;
+
+            if (gameState.currentPlayer === 1) {
+                gameState.currentPlayer = 2;
+            } else {
+                gameState.currentPlayer = 1;
+                gameState.turn++;
+            }
+
+            // Augmenter l'effectif max au debut du tour du joueur
+            // SAUF pour J1 au tour 1 (premier tour de la partie)
+            if (!(gameState.turn === 1 && gameState.currentPlayer === 1)) {
+                const player = gameState.players[gameState.currentPlayer];
+                if (player.effectifMax < 12) {
+                    player.effectifMax++;
+                }
+            }
+
+            gameState.players[gameState.currentPlayer].units.forEach(unit => {
+                unit.movementLeft = unit.character.movement;
+                unit.hasActed = false;
+                unit.damageTakenThisTurn = 0; // Reset pour Sanglier
+
+                const unitEl = document.getElementById(`unit-${unit.id}`);
+                if (unitEl) unitEl.classList.remove('cannot-act');
+            });
+
+            gameState.actionTaken = false;
+
+            showPhaseBanner(`Tour ${gameState.turn}<br>Joueur ${gameState.currentPlayer}`);
+            updateUI();
+            addMessage(`Tour du Joueur ${gameState.currentPlayer}`, `player${gameState.currentPlayer}`);
+
+            // Verifier si le nouveau joueur peut faire quelque chose
+            if (!canDoAnything()) {
+                addMessage('Aucune action possible ce tour!', 'system');
+            }
+
+            // Si c'est le tour de l'IA, la faire jouer
+            if (gameState.players[gameState.currentPlayer].isAI) {
+                setTimeout(() => aiTakeTurn(), AI_DELAY);
+            }
+        }
+
+        // Les passifs de fin de tour sont geres par les mecaniques specifiques de chaque personnage
+
+        // ==================== VICTOIRE ====================
+        function checkVictory() {
+            for (let player = 1; player <= 2; player++) {
+                const aliveCrystals = gameState.players[player].crystals.filter(c => c.hp > 0).length;
+                if (aliveCrystals === 0) {
+                    const winner = player === 1 ? 2 : 1;
+                    gameOver(winner);
+                    return;
+                }
+            }
+        }
+
+        function gameOver(winner) {
+            gameState.phase = 'game_over';
+            document.getElementById('gameOverText').textContent = `Joueur ${winner} gagne!`;
+            document.getElementById('gameOverDetails').textContent = 'Tous les cristaux adverses ont ete detruits!';
+            document.getElementById('gameOverOverlay').classList.remove('hidden');
+        }
+
+        // ==================== INTERFACE ====================
+        function updateUI() {
+            updateEffectifDisplay();
+            updateTurnIndicator();
+            updateActionButtons();
+            updateRosterDisplay();
+            updatePlayerPanels();
+        }
+
+        function updateEffectifDisplay() {
+            for (let player = 1; player <= 2; player++) {
+                const p = gameState.players[player];
+                document.getElementById(`p${player}EffectifUsed`).textContent = p.effectifUsed;
+                document.getElementById(`p${player}EffectifMax`).textContent = p.effectifMax;
+                document.getElementById(`p${player}EffectifAvailable`).textContent = p.effectifMax - p.effectifUsed;
+            }
+        }
+
+        function updateTurnIndicator() {
+            document.getElementById('turnIndicator').textContent =
+                `Tour ${gameState.turn} - Joueur ${gameState.currentPlayer}`;
+        }
+
+        function updateActionButtons() {
+            const unit = gameState.selectedUnit;
+            const char = gameState.selectedCharacter;
+
+            // Desactiver tous les boutons pendant les animations
+            if (gameState.animating) {
+                document.getElementById('btnSummon').disabled = true;
+                document.getElementById('btnMove').disabled = true;
+                document.getElementById('btnAttack').disabled = true;
+                document.getElementById('btnCancel').disabled = true;
+                document.getElementById('btnEndTurn').disabled = true;
+                return;
+            }
+
+            document.getElementById('btnSummon').disabled = !char || gameState.actionMode === 'summon';
+            // Apres avoir agi (attaque/capacite), on ne peut plus se deplacer
+            document.getElementById('btnMove').disabled = !unit || unit.movementLeft <= 0 || unit.hasActed || gameState.actionMode === 'move';
+            document.getElementById('btnAttack').disabled = !unit || unit.hasActed || gameState.actionMode === 'attack';
+            document.getElementById('btnCancel').disabled = !gameState.actionMode;
+
+            // Permettre de finir le tour si action effectuee OU si aucune action possible
+            const canEnd = gameState.actionTaken || !canDoAnything();
+            document.getElementById('btnEndTurn').disabled = !canEnd;
+
+            // Changer le texte du bouton si on doit skip
+            const endTurnBtn = document.getElementById('btnEndTurn');
+            if (!gameState.actionTaken && !canDoAnything()) {
+                endTurnBtn.textContent = 'Passer le tour';
+            } else {
+                endTurnBtn.textContent = 'Fin de tour';
+            }
+        }
+
+        function updateSelectedUnitInfo() {
+            const infoPanel = document.getElementById('selectedUnitInfo');
+            const unit = gameState.selectedUnit;
+
+            if (!unit) {
+                infoPanel.classList.add('hidden');
+                return;
+            }
+
+            infoPanel.classList.remove('hidden');
+            document.getElementById('selectedUnitName').textContent = unit.character.name;
+            document.getElementById('selectedUnitHP').textContent = `${unit.currentHP}/${unit.character.hp}`;
+            document.getElementById('selectedUnitMP').textContent = unit.movementLeft;
+            document.getElementById('selectedUnitActed').textContent = unit.hasActed ? 'Oui' : 'Non';
+        }
+
+        function updateRosterDisplay() {
+            const rosterList = document.getElementById('rosterList');
+            const player = gameState.players[gameState.currentPlayer];
+
+            document.getElementById('rosterPlayerName').textContent = `Joueur ${gameState.currentPlayer}`;
+
+            rosterList.innerHTML = '';
+
+            CHARACTERS.forEach(char => {
+                const onField = player.units.filter(u => u.character.id === char.id).length;
+                const available = player.effectifMax - player.effectifUsed;
+                const canSummon = char.power <= available && onField < char.maxOnField;
+
+                const card = document.createElement('div');
+                card.className = 'character-card';
+                if (!canSummon) card.classList.add('disabled');
+                if (gameState.selectedCharacter && gameState.selectedCharacter.id === char.id) {
+                    card.classList.add('selected');
+                }
+
+                const damageDisplay = char.attack.damage > 0 ? char.attack.damage : '+' + Math.abs(char.attack.damage);
+
+                card.innerHTML = `
+                    <div class="char-header">
+                        <span class="char-name">[${char.icon}] ${char.name}</span>
+                        <span class="char-power">${char.power} P</span>
+                    </div>
+                    <div class="char-stats">
+                        <span>PV: ${char.hp}</span>
+                        <span>PM: ${char.movement}</span>
+                        <span>Deg: ${damageDisplay}</span>
+                    </div>
+                    <div class="char-ability">
+                        <strong>${char.attack.name}</strong> - Portee: ${char.attack.range}
+                        ${char.attack.pattern === 'charge' ? ' (Charge)' : ''}
+                        ${char.attack.pattern === 'pierce' ? ' (Perforation)' : ''}
+                        ${char.attack.pattern === 'adjacent_aoe' ? ' (Zone adjacente)' : ''}
+                    </div>
+                    ${char.passive ? `<div class="char-passive">* ${char.passive.name}: ${char.passive.description}</div>` : ''}
+                    <div class="on-field-count">Sur le terrain: ${onField}/${char.maxOnField}</div>
+                `;
+
+                if (canSummon) {
+                    card.addEventListener('click', () => selectCharacter(char.id));
+                }
+
+                rosterList.appendChild(card);
+            });
+        }
+
+        function updatePlayerPanels() {
+            document.getElementById('player1Panel').classList.toggle('active', gameState.currentPlayer === 1);
+            document.getElementById('player2Panel').classList.toggle('active', gameState.currentPlayer === 2);
+
+            // Afficher "IA" si c'est une IA
+            const p2Title = document.querySelector('#player2Panel h2');
+            if (gameState.players[2].isAI) {
+                p2Title.textContent = 'Joueur 2 (IA)';
+            } else {
+                p2Title.textContent = 'Joueur 2 (Rouge)';
+            }
+        }
+
+        function showPhaseBanner(text) {
+            const banner = document.getElementById('phaseBanner');
+            banner.innerHTML = text;
+            banner.classList.remove('hidden');
+
+            setTimeout(() => {
+                banner.classList.add('hidden');
+            }, 2000);
+        }
+
+        function addMessage(text, type) {
+            const log = document.getElementById('messageLog');
+            const msg = document.createElement('div');
+            msg.className = `message ${type}`;
+            msg.textContent = text;
+            log.appendChild(msg);
+            log.scrollTop = log.scrollHeight;
+
+            while (log.children.length > 20) {
+                log.removeChild(log.firstChild);
+            }
+        }
+
+        // ==================== INTELLIGENCE ARTIFICIELLE ====================
+
+        function aiTakeTurn() {
+            if (gameState.currentPlayer !== 2 || !gameState.players[2].isAI) return;
+            if (gameState.phase !== 'playing') return;
+            if (gameState.aiThinking) return;
+
+            gameState.aiThinking = true;
+
+            setTimeout(() => {
+                aiExecuteTurn();
+            }, AI_DELAY);
+        }
+
+        function aiExecuteTurn() {
+            if (gameState.phase === 'game_over') {
+                gameState.aiThinking = false;
+                return;
+            }
+
+            if (gameState.actionTaken && !canDoAnything()) {
+                gameState.aiThinking = false;
+                addMessage('L\'IA termine son tour.', 'system');
+                endTurn();
+                return;
+            }
+
+            const actions = aiGetAllPossibleActions();
+
+            if (actions.length === 0) {
+                gameState.aiThinking = false;
+                if (gameState.actionTaken || !canDoAnything()) {
+                    addMessage('L\'IA termine son tour.', 'system');
+                    endTurn();
+                }
+                return;
+            }
+
+            actions.sort((a, b) => b.score - a.score);
+
+            const bestAction = actions[0];
+            addMessage(`IA: ${aiDescribeAction(bestAction)}`, 'player2');
+            aiExecuteAction(bestAction);
+        }
+
+        function aiDescribeAction(action) {
+            switch (action.type) {
+                case 'summon': return `Invoque ${action.character.name}`;
+                case 'move': return `Deplace ${action.unit.character.name}`;
+                case 'attack': return `${action.unit.character.name} attaque`;
+                case 'moveAttack': return `${action.unit.character.name} avance et attaque`;
+                default: return 'Action';
+            }
+        }
+
+        // === PHASE DU JEU ===
+        function aiGetGamePhase() {
+            const turn = gameState.turn;
+            const player = gameState.players[2];
+            const enemy = gameState.players[1];
+            const ourUnits = player.units.length;
+            const enemyUnits = enemy.units.length;
+            const ourCrystalsHP = player.crystals.reduce((s, c) => s + Math.max(0, c.hp), 0);
+            const enemyCrystalsHP = enemy.crystals.reduce((s, c) => s + Math.max(0, c.hp), 0);
+
+            if (turn <= 3 && ourUnits <= 2) return 'early';
+            if (enemyCrystalsHP <= 3 || ourCrystalsHP <= 3) return 'late';
+            return 'mid';
+        }
+
+        // === EVALUATION DU DANGER ===
+        function aiEvaluateThreatLevel(pos, enemy, ignoreHeight) {
+            let threat = 0;
+            const cellHeight = gameState.board[pos.y][pos.x].height;
+            for (const eu of enemy.units) {
+                const dist = Math.abs(pos.x - eu.x) + Math.abs(pos.y - eu.y);
+                const eHeight = gameState.board[eu.y][eu.x].height;
+                const canReach = dist <= eu.character.attack.range + eu.character.movement;
+                const canAttackNow = dist <= eu.character.attack.range;
+                const heightOk = ignoreHeight || eu.character.ignoreHeight || cellHeight === eHeight;
+
+                if (canAttackNow && heightOk) {
+                    threat += eu.character.attack.damage * 2;
+                } else if (canReach) {
+                    threat += eu.character.attack.damage * 0.5;
+                }
+            }
+            return threat;
+        }
+
+        // === SIMULER ATTAQUE DEPUIS POSITION ===
+        function aiSimulateAttacksFrom(unit, fromX, fromY, enemy) {
+            // Simuler quelles attaques seraient possibles depuis cette position
+            const results = [];
+            const attack = unit.character.attack;
+            const unitHeight = gameState.board[fromY][fromX].height;
+            const ignoreHeight = unit.character.ignoreHeight || false;
+            const onWater = gameState.board[fromY][fromX].type === 'water';
+
+            // Canard sur eau = soin, pas d'attaque offensive
+            if (unit.character.waterHeal && onWater) return results;
+
+            // Charge du lapin (meme hauteur)
+            if (attack.pattern === 'charge') {
+                const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+                for (const dir of directions) {
+                    const tx = fromX + dir.dx * attack.chargeDistance;
+                    const ty = fromY + dir.dy * attack.chargeDistance;
+                    if (tx < 0 || tx >= BOARD_SIZE || ty < 0 || ty >= BOARD_SIZE) continue;
+                    const tc = gameState.board[ty][tx];
+                    if (!ignoreHeight && tc.height !== unitHeight) continue;
+                    let pathClear = true;
+                    for (let i = 1; i < attack.chargeDistance; i++) {
+                        const mx = fromX + dir.dx * i;
+                        const my = fromY + dir.dy * i;
+                        const mc = gameState.board[my][mx];
+                        if (mc.unit || mc.crystal || mc.type === 'obstacle' || mc.type === 'obstacle_tall') { pathClear = false; break; }
+                        if (mc.type === 'water' && !unit.character.canMoveOnWater) { pathClear = false; break; }
+                    }
+                    if (!pathClear) continue;
+                    if (tc.unit && tc.unit.player !== unit.player) {
+                        results.push({x: tx, y: ty, target: tc.unit, isCrystal: false, dir: dir});
+                    }
+                    if (tc.crystal && tc.crystal.player !== unit.player) {
+                        results.push({x: tx, y: ty, target: tc.crystal, isCrystal: true, dir: dir});
+                    }
+                }
+                return results;
+            }
+
+            // Sanglier AOE adjacent (meme hauteur)
+            if (attack.pattern === 'adjacent_aoe') {
+                const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+                let targets = [];
+                for (const dir of directions) {
+                    const nx = fromX + dir.dx;
+                    const ny = fromY + dir.dy;
+                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+                    const c = gameState.board[ny][nx];
+                    if (c.height !== unitHeight) continue;
+                    if (c.unit && c.unit.player !== unit.player) targets.push({x: nx, y: ny, target: c.unit, isCrystal: false});
+                    if (c.crystal && c.crystal.player !== unit.player) targets.push({x: nx, y: ny, target: c.crystal, isCrystal: true});
+                }
+                if (targets.length > 0) {
+                    // Retourner le premier comme action declencheur, mais scorer pour tous
+                    results.push({x: targets[0].x, y: targets[0].y, allTargets: targets, isAoe: true});
+                }
+                return results;
+            }
+
+            // Pierce du renard (meme hauteur)
+            if (attack.pattern === 'pierce') {
+                const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+                for (const dir of directions) {
+                    const nx = fromX + dir.dx;
+                    const ny = fromY + dir.dy;
+                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+                    const tc = gameState.board[ny][nx];
+                    if (tc.height !== unitHeight) continue;
+                    if ((tc.unit && tc.unit.player !== unit.player) || (tc.crystal && tc.crystal.player !== unit.player)) {
+                        let pierceTargets = [{x: nx, y: ny, cell: tc}];
+                        for (let i = 1; i <= attack.pierceRange; i++) {
+                            const px = nx + dir.dx * i;
+                            const py = ny + dir.dy * i;
+                            if (px < 0 || px >= BOARD_SIZE || py < 0 || py >= BOARD_SIZE) break;
+                            const pc = gameState.board[py][px];
+                            if (pc.type === 'obstacle' || pc.type === 'obstacle_tall') break;
+                            if (pc.height !== unitHeight) continue;
+                            if ((pc.unit && pc.unit.player !== unit.player) || (pc.crystal && pc.crystal.player !== unit.player)) {
+                                pierceTargets.push({x: px, y: py, cell: pc});
+                            }
+                        }
+                        results.push({x: nx, y: ny, target: tc.unit || tc.crystal, pierceTargets: pierceTargets, dir: dir});
+                    }
+                }
+                return results;
+            }
+
+            // Attaque standard (single)
+            for (let dy = -attack.range; dy <= attack.range; dy++) {
+                for (let dx = -attack.range; dx <= attack.range; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const distance = Math.abs(dx) + Math.abs(dy);
+                    if (distance > attack.range) continue;
+                    const nx = fromX + dx;
+                    const ny = fromY + dy;
+                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+                    const tc = gameState.board[ny][nx];
+                    if (!ignoreHeight && tc.height !== unitHeight) continue;
+                    if (!hasLineOfSight(fromX, fromY, nx, ny)) continue;
+                    if (tc.unit && tc.unit.player !== unit.player) {
+                        results.push({x: nx, y: ny, target: tc.unit, isCrystal: false});
+                    }
+                    if (tc.crystal && tc.crystal.player !== unit.player) {
+                        results.push({x: nx, y: ny, target: tc.crystal, isCrystal: true});
+                    }
+                }
+            }
+            return results;
+        }
+
+        // === GENERATION D'ACTIONS ===
+        function aiGetAllPossibleActions() {
+            const actions = [];
+            const player = gameState.players[2];
+            const enemy = gameState.players[1];
+            const phase = aiGetGamePhase();
+
+            // === INVOCATIONS ===
+            const summonCells = getSummonCells();
+            if (summonCells.length > 0) {
+                const available = player.effectifMax - player.effectifUsed;
+
+                for (const char of CHARACTERS) {
+                    if (char.power > available) continue;
+                    const onField = player.units.filter(u => u.character.id === char.id).length;
+                    if (onField >= char.maxOnField) continue;
+
+                    // Evaluer chaque case d'invocation
+                    let bestSummonScore = -Infinity;
+                    let bestSummonCell = null;
+                    for (const cell of summonCells) {
+                        const score = aiScoreSummon(char, cell, player, enemy, phase);
+                        if (score > bestSummonScore) {
+                            bestSummonScore = score;
+                            bestSummonCell = cell;
+                        }
+                    }
+                    if (bestSummonCell) {
+                        actions.push({
+                            type: 'summon',
+                            character: char,
+                            x: bestSummonCell.x,
+                            y: bestSummonCell.y,
+                            score: bestSummonScore
+                        });
+                    }
+                }
+            }
+
+            // === ACTIONS PAR UNITE (attaque, deplacement, combo move+attack) ===
+            for (const unit of player.units) {
+                if (unit.justSummoned) continue;
+
+                // Attaques directes (sans deplacement)
+                if (!unit.hasActed) {
+                    const attackCells = getAttackCells(unit);
+
+                    // Sanglier AOE: une seule action pour toute l'AOE
+                    if (unit.character.attack.pattern === 'adjacent_aoe' && attackCells.length > 0) {
+                        const score = aiScoreAttack(unit, attackCells[0], player, enemy, phase);
+                        actions.push({
+                            type: 'attack',
+                            unit: unit,
+                            x: attackCells[0].x,
+                            y: attackCells[0].y,
+                            score: score
+                        });
+                    } else {
+                        for (const cell of attackCells) {
+                            const score = aiScoreAttack(unit, cell, player, enemy, phase);
+                            actions.push({
+                                type: 'attack',
+                                unit: unit,
+                                x: cell.x,
+                                y: cell.y,
+                                score: score
+                            });
+                        }
+                    }
+                }
+
+                // Deplacements simples
+                if (unit.movementLeft > 0 && !unit.hasActed) {
+                    const moveCells = getMoveCells(unit);
+
+                    for (const cell of moveCells) {
+                        // Score de deplacement pur
+                        let moveScore = aiScoreMove(unit, cell, player, enemy, phase);
+
+                        // === COMBO MOVE+ATTACK: Simuler les attaques possibles apres deplacement ===
+                        const attacksAfterMove = aiSimulateAttacksFrom(unit, cell.x, cell.y, enemy);
+                        let bestAttackScore = 0;
+                        let bestAttackTarget = null;
+
+                        for (const atk of attacksAfterMove) {
+                            const atkScore = aiScoreSimulatedAttack(unit, atk, player, enemy, phase);
+                            if (atkScore > bestAttackScore) {
+                                bestAttackScore = atkScore;
+                                bestAttackTarget = atk;
+                            }
+                        }
+
+                        // Si on peut attaquer apres le deplacement, le score augmente
+                        if (bestAttackScore > 0) {
+                            moveScore += bestAttackScore * 0.9;
+                        }
+
+                        actions.push({
+                            type: 'move',
+                            unit: unit,
+                            x: cell.x,
+                            y: cell.y,
+                            cost: cell.cost,
+                            score: moveScore,
+                            followUpAttack: bestAttackTarget
+                        });
+                    }
+                } else if (unit.movementLeft > 0 && unit.hasActed) {
+                    // Unite qui a deja agi mais peut encore se deplacer - ne devrait pas arriver
+                    // car hasActed empeche le deplacement, mais au cas ou
+                }
+            }
+
+            return actions;
+        }
+
+        // === SCORE INVOCATION (ameliore) ===
+        function aiScoreSummon(char, cell, player, enemy, phase) {
+            let score = 8;
+            const available = player.effectifMax - player.effectifUsed;
+            const cellHeight = gameState.board[cell.y][cell.x].height;
+
+            // === URGENCE: Cristaux menaces ===
+            const criticalThreat = aiGetCriticalCrystalThreat(player, enemy);
+            if (criticalThreat) {
+                // Invoquer un defenseur pres du cristal menace
+                const dist = Math.abs(cell.x - criticalThreat.crystal.x) + Math.abs(cell.y - criticalThreat.crystal.y);
+                if (dist <= 2) {
+                    score += 60;
+                    // Bonus si peut tuer la menace
+                    const distToThreat = Math.abs(cell.x - criticalThreat.enemy.x) + Math.abs(cell.y - criticalThreat.enemy.y);
+                    if (distToThreat <= char.attack.range && criticalThreat.enemy.currentHP <= char.attack.damage) {
+                        score += 80;
+                    }
+                }
+            }
+
+            // === PROXIMITEE CRISTAUX ENNEMIS ===
+            for (const crystal of enemy.crystals) {
+                if (crystal.hp <= 0) continue;
+                const dist = Math.abs(cell.x - crystal.x) + Math.abs(cell.y - crystal.y);
+                score += Math.max(0, 12 - dist * 2);
+
+                // Bonus si peut attaquer le cristal au prochain tour
+                if (dist <= char.attack.range + char.movement) {
+                    score += 25;
+                }
+                // Mega bonus si peut attaquer le cristal immediatement (prochain tour)
+                if (dist <= char.attack.range) {
+                    const crystalHeight = gameState.board[crystal.y][crystal.x].height;
+                    if ((char.ignoreHeight || cellHeight === crystalHeight) &&
+                        hasLineOfSight(cell.x, cell.y, crystal.x, crystal.y)) {
+                        score += 40;
+                    }
+                }
+            }
+
+            // === PROTECTION CRISTAUX ===
+            const threats = aiCountThreatsToOurCrystals(player, enemy);
+            if (threats > 0) {
+                for (const crystal of player.crystals) {
+                    if (crystal.hp <= 0) continue;
+                    const dist = Math.abs(cell.x - crystal.x) + Math.abs(cell.y - crystal.y);
+                    if (dist <= 3) {
+                        score += 15;
+                        if (char.hp >= 4) score += 10; // Unites tanky pour defendre
+                    }
+                }
+            }
+
+            // === DANGER: eviter de se faire tuer au spawn ===
+            for (const eu of enemy.units) {
+                const dist = Math.abs(cell.x - eu.x) + Math.abs(cell.y - eu.y);
+                if (dist <= eu.character.attack.range + eu.character.movement) {
+                    if (char.hp <= eu.character.attack.damage) {
+                        score -= 25;
+                    }
+                }
+            }
+
+            // === STRATEGIE D'EFFECTIF ===
+            // Phase early: preferer des unites pas cheres pour le tempo
+            if (phase === 'early') {
+                if (char.power <= 2) score += 12;
+                if (char.power >= 5) score -= 8;
+            }
+            // Phase mid: equilibre
+            if (phase === 'mid') {
+                score += (char.attack.damage * 2 + char.hp) / char.power * 3;
+            }
+            // Phase late: unites puissantes pour finir
+            if (phase === 'late') {
+                if (char.attack.damage >= 3) score += 15;
+                score += char.attack.damage * 5;
+            }
+
+            // Ne pas gaspiller tout l'effectif sur des petites unites
+            if (available >= 6 && char.power <= 2 && player.units.length >= 3) {
+                score -= 15;
+            }
+
+            // === SYNERGIES DE PERSONNAGES ===
+            // Ecureuil: excellent avec hauteur, longue portee
+            if (char.id === 'ecureuil') {
+                if (cellHeight > 0) score += 15;
+                score += 5; // Bonus portee
+            }
+            // Souris: bonne en early pour le harcelement
+            if (char.id === 'souris' && phase === 'early') {
+                score += 8;
+            }
+            // Canard: bonus si eau a proximite
+            if (char.id === 'canard') {
+                for (let dy = -3; dy <= 3; dy++) {
+                    for (let dx = -3; dx <= 3; dx++) {
+                        const wx = cell.x + dx;
+                        const wy = cell.y + dy;
+                        if (wx >= 0 && wx < BOARD_SIZE && wy >= 0 && wy < BOARD_SIZE) {
+                            if (gameState.board[wy][wx].type === 'water') score += 3;
+                        }
+                    }
+                }
+            }
+            // Sanglier: bonus si ennemis regroupes
+            if (char.id === 'sanglier') {
+                const clustered = aiCountClusteredEnemies(enemy);
+                score += clustered * 12;
+            }
+
+            return score;
+        }
+
+        // === SCORE ATTAQUE (ameliore) ===
+        function aiScoreAttack(unit, cell, player, enemy, phase) {
+            let score = 20;
+            const targetCell = gameState.board[cell.y][cell.x];
+            const damage = unit.character.attack.damage;
+
+            // === URGENCE DEFENSIVE: cristal a 1 coup de mourir ===
+            const criticalThreat = aiGetCriticalCrystalThreat(player, enemy);
+            if (criticalThreat) {
+                // Bonus massif si on attaque l'unite menacante
+                if (targetCell.unit && targetCell.unit === criticalThreat.enemy) {
+                    score += 200;
+                    if (targetCell.unit.currentHP <= damage) score += 100;
+                }
+            }
+
+            // === VICTOIRE: Detruire cristal ===
+            if (targetCell.crystal && targetCell.crystal.player === 1) {
+                score += 150;
+                if (targetCell.crystal.hp <= damage) {
+                    score += 500; // VICTOIRE!
+                }
+                if (targetCell.crystal.hp <= damage * 2) {
+                    score += 80;
+                }
+                return score; // Toujours prioritaire
+            }
+
+            // === ATTAQUER UNITES ENNEMIES ===
+            if (targetCell.unit && targetCell.unit.player === 1) {
+                const target = targetCell.unit;
+                score += 25;
+
+                // Kill confirm: eliminer l'unite
+                if (target.currentHP <= damage) {
+                    score += 70 + target.character.power * 20;
+                    if (target.character.attack.damage >= 3) score += 25;
+                    // Bonus renard: heal on kill
+                    if (unit.character.healOnKill) score += 15;
+
+                    // Anti-overkill: reduire le score si on gaspille des degats
+                    const wasted = damage - target.currentHP;
+                    if (wasted > 0) score -= wasted * 10;
+                } else {
+                    const damageRatio = damage / target.character.hp;
+                    score += damageRatio * 25;
+                }
+
+                // Focus fire: cibler les unites deja blessees
+                if (target.currentHP < target.character.hp) {
+                    const missingHP = target.character.hp - target.currentHP;
+                    score += missingHP * 8;
+                    if (target.currentHP <= damage) {
+                        score += 40; // Kill!
+                    }
+                }
+
+                // Unite menacant nos cristaux
+                for (const crystal of player.crystals) {
+                    if (crystal.hp <= 0) continue;
+                    const dist = Math.abs(target.x - crystal.x) + Math.abs(target.y - crystal.y);
+                    if (dist <= target.character.attack.range) {
+                        score += 70;
+                        if (crystal.hp <= target.character.attack.damage) {
+                            score += 120;
+                        }
+                    } else if (dist <= target.character.attack.range + target.character.movement) {
+                        score += 30;
+                    }
+                }
+
+                // Cibler les unites a fort impact
+                if (target.character.power >= 5) score += 20;
+
+                // Sanglier AOE: compter toutes les cibles touchees (meme hauteur)
+                if (unit.character.attack.pattern === 'adjacent_aoe') {
+                    const aoeHeight = gameState.board[unit.y][unit.x].height;
+                    const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+                    let totalTargets = 0;
+                    for (const dir of directions) {
+                        const nx = unit.x + dir.dx;
+                        const ny = unit.y + dir.dy;
+                        if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+                        const c = gameState.board[ny][nx];
+                        if (c.height !== aoeHeight) continue;
+                        if (c.unit && c.unit.player !== unit.player) {
+                            totalTargets++;
+                            if (c.unit.currentHP <= damage) score += 50;
+                        }
+                        if (c.crystal && c.crystal.player !== unit.player) {
+                            totalTargets++;
+                            score += 60;
+                        }
+                    }
+                    score += totalTargets * 30;
+                }
+
+                // Renard pierce: compter les cibles perforantes (meme hauteur)
+                if (unit.character.attack.pattern === 'pierce') {
+                    const pierceHeight = gameState.board[unit.y][unit.x].height;
+                    const highlightedCell = gameState.highlightedCells.find(c => c.x === cell.x && c.y === cell.y);
+                    const dir = highlightedCell && highlightedCell.dir ? highlightedCell.dir : {dx: cell.x - unit.x, dy: cell.y - unit.y};
+                    for (let i = 1; i <= unit.character.attack.pierceRange; i++) {
+                        const px = cell.x + dir.dx * i;
+                        const py = cell.y + dir.dy * i;
+                        if (px < 0 || px >= BOARD_SIZE || py < 0 || py >= BOARD_SIZE) break;
+                        const pc = gameState.board[py][px];
+                        if (pc.type === 'obstacle' || pc.type === 'obstacle_tall') break;
+                        if (pc.height !== pierceHeight) continue;
+                        if (pc.unit && pc.unit.player !== unit.player) {
+                            score += 35;
+                            if (pc.unit.currentHP <= damage) score += 50;
+                        }
+                        if (pc.crystal && pc.crystal.player !== unit.player) {
+                            score += 80;
+                        }
+                    }
+                }
+            }
+
+            return score;
+        }
+
+        // === SCORE ATTAQUE SIMULEE (pour combo move+attack) ===
+        function aiScoreSimulatedAttack(unit, atk, player, enemy, phase) {
+            let score = 0;
+            const damage = unit.character.attack.damage;
+
+            if (atk.isAoe && atk.allTargets) {
+                for (const t of atk.allTargets) {
+                    if (t.isCrystal) {
+                        score += 80;
+                        if (t.target.hp <= damage) score += 300;
+                    } else {
+                        score += 30;
+                        if (t.target.currentHP <= damage) score += 60 + t.target.character.power * 15;
+                    }
+                }
+                return score;
+            }
+
+            if (atk.isCrystal) {
+                score += 100;
+                if (atk.target.hp <= damage) score += 400;
+                return score;
+            }
+
+            if (atk.target && atk.target.currentHP !== undefined) {
+                score += 25;
+                if (atk.target.currentHP <= damage) {
+                    score += 60 + atk.target.character.power * 15;
+                    // Anti-overkill
+                    const wasted = damage - atk.target.currentHP;
+                    if (wasted > 0) score -= wasted * 8;
+                }
+                // Focus fire
+                if (atk.target.currentHP < atk.target.character.hp) {
+                    score += (atk.target.character.hp - atk.target.currentHP) * 5;
+                }
+                // Menace cristal
+                for (const crystal of player.crystals) {
+                    if (crystal.hp <= 0) continue;
+                    const dist = Math.abs(atk.target.x - crystal.x) + Math.abs(atk.target.y - crystal.y);
+                    if (dist <= atk.target.character.attack.range) score += 50;
+                }
+            }
+
+            // Pierce targets
+            if (atk.pierceTargets && atk.pierceTargets.length > 1) {
+                score += (atk.pierceTargets.length - 1) * 25;
+            }
+
+            return score;
+        }
+
+        // === SCORE DEPLACEMENT (ameliore avec combo) ===
+        function aiScoreMove(unit, cell, player, enemy, phase) {
+            let score = 2;
+            const cellHeight = gameState.board[cell.y][cell.x].height;
+            const currentDist = aiGetMinDistToCrystals(unit.x, unit.y, enemy.crystals);
+            const newDist = aiGetMinDistToCrystals(cell.x, cell.y, enemy.crystals);
+
+            // === OFFENSIVE ===
+            if (newDist < currentDist) {
+                score += (currentDist - newDist) * 8;
+            }
+
+            // Arriver a portee d'attaque d'un cristal
+            for (const crystal of enemy.crystals) {
+                if (crystal.hp <= 0) continue;
+                const dist = Math.abs(cell.x - crystal.x) + Math.abs(cell.y - crystal.y);
+                const crystalHeight = gameState.board[crystal.y][crystal.x].height;
+                const ignoreH = unit.character.ignoreHeight || false;
+
+                if (dist <= unit.character.attack.range && (ignoreH || cellHeight === crystalHeight)) {
+                    if (hasLineOfSight(cell.x, cell.y, crystal.x, crystal.y)) {
+                        score += 60;
+                        if (crystal.hp <= unit.character.attack.damage) score += 40;
+                    }
+                }
+            }
+
+            // === DEFENSIVE ===
+            const criticalDefense = aiGetCriticalCrystalThreat(player, enemy);
+            if (criticalDefense) {
+                // Bonus massif de defense si cristal menace
+                const crystalAboutToDie = criticalDefense.crystal.hp <= criticalDefense.enemy.character.attack.damage;
+                const urgencyBonus = crystalAboutToDie ? 200 : 50;
+
+                const distToThreat = Math.abs(cell.x - criticalDefense.enemy.x) + Math.abs(cell.y - criticalDefense.enemy.y);
+                const threatHeight = gameState.board[criticalDefense.enemy.y][criticalDefense.enemy.x].height;
+                const ignoreH = unit.character.ignoreHeight || false;
+                if (distToThreat <= unit.character.attack.range && (ignoreH || cellHeight === threatHeight)) {
+                    if (hasLineOfSight(cell.x, cell.y, criticalDefense.enemy.x, criticalDefense.enemy.y)) {
+                        score += 90 + urgencyBonus;
+                        if (criticalDefense.enemy.currentHP <= unit.character.attack.damage) {
+                            score += 60;
+                        }
+                    }
+                }
+                // Se placer sur le chemin
+                const distToCrystal = Math.abs(cell.x - criticalDefense.crystal.x) + Math.abs(cell.y - criticalDefense.crystal.y);
+                if (distToCrystal <= 2) score += 30 + (crystalAboutToDie ? 80 : 0);
+            }
+
+            // Se placer entre ennemis et cristaux
+            for (const crystal of player.crystals) {
+                if (crystal.hp <= 0) continue;
+                for (const eu of enemy.units) {
+                    const eDist = Math.abs(eu.x - crystal.x) + Math.abs(eu.y - crystal.y);
+                    const nDist = Math.abs(cell.x - crystal.x) + Math.abs(cell.y - crystal.y);
+                    const nDistE = Math.abs(cell.x - eu.x) + Math.abs(cell.y - eu.y);
+                    if (nDist < eDist && nDistE <= eDist) {
+                        score += 15;
+                    }
+                }
+            }
+
+            // === SURVIE ===
+            let dangerCount = 0;
+            let totalIncomingDamage = 0;
+            for (const eu of enemy.units) {
+                const dist = Math.abs(cell.x - eu.x) + Math.abs(cell.y - eu.y);
+                const eHeight = gameState.board[eu.y][eu.x].height;
+                const ignoreH = eu.character.ignoreHeight || false;
+
+                if (dist <= eu.character.attack.range && (ignoreH || cellHeight === eHeight)) {
+                    if (hasLineOfSight(cell.x, cell.y, eu.x, eu.y)) {
+                        dangerCount++;
+                        totalIncomingDamage += eu.character.attack.damage;
+                    }
+                }
+            }
+
+            // Penalite forte si on peut mourir
+            if (totalIncomingDamage >= unit.currentHP) {
+                score -= 50;
+            } else if (dangerCount > 1) {
+                score -= dangerCount * 12;
+            }
+
+            // Souris: preferer les positions de fuite (cases ouvertes autour)
+            if (unit.character.id === 'souris') {
+                let exits = 0;
+                const dirs = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+                for (const d of dirs) {
+                    const ex = cell.x + d.dx;
+                    const ey = cell.y + d.dy;
+                    if (ex >= 0 && ex < BOARD_SIZE && ey >= 0 && ey < BOARD_SIZE) {
+                        const ec = gameState.board[ey][ex];
+                        if (!ec.unit && !ec.crystal && ec.type !== 'obstacle' && ec.type !== 'obstacle_tall') exits++;
+                    }
+                }
+                score += exits * 2;
+            }
+
+            // Canard: bonus pour aller sur l'eau (soin)
+            if (unit.character.canMoveOnWater) {
+                const cellType = gameState.board[cell.y][cell.x].type;
+                if (cellType === 'water') {
+                    // Verifier si allies a proximite pourraient beneficier du soin
+                    const dirs = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+                    for (const d of dirs) {
+                        const ax = cell.x + d.dx;
+                        const ay = cell.y + d.dy;
+                        if (ax >= 0 && ax < BOARD_SIZE && ay >= 0 && ay < BOARD_SIZE) {
+                            const ac = gameState.board[ay][ax];
+                            if (ac.unit && ac.unit.player === unit.player && ac.unit.currentHP < ac.unit.character.hp) {
+                                score += 20;
+                            }
+                        }
+                    }
+                    score += 5;
+                }
+            }
+
+            // Hauteur avantageuse (pour ecureuil surtout)
+            if (cellHeight > 0) {
+                score += cellHeight * 3;
+                if (unit.character.ignoreHeight) score += cellHeight * 5;
+            }
+
+            return score;
+        }
+
+        // === FONCTIONS UTILITAIRES IA ===
+        function aiCountThreatsToOurCrystals(player, enemy) {
+            let threats = 0;
+            for (const crystal of player.crystals) {
+                if (crystal.hp <= 0) continue;
+                for (const eu of enemy.units) {
+                    const dist = Math.abs(eu.x - crystal.x) + Math.abs(eu.y - crystal.y);
+                    if (dist <= eu.character.attack.range + eu.character.movement) {
+                        threats++;
+                    }
+                }
+            }
+            return threats;
+        }
+
+        function aiCountClusteredEnemies(enemy) {
+            let maxCluster = 0;
+            for (const unit of enemy.units) {
+                let nearby = 0;
+                for (const other of enemy.units) {
+                    if (unit === other) continue;
+                    const dist = Math.abs(unit.x - other.x) + Math.abs(unit.y - other.y);
+                    if (dist <= 2) nearby++;
+                }
+                maxCluster = Math.max(maxCluster, nearby);
+            }
+            return maxCluster;
+        }
+
+        function aiIsUnitThreateningCrystals(unit, crystals) {
+            for (const crystal of crystals) {
+                if (crystal.hp <= 0) continue;
+                const dist = Math.abs(unit.x - crystal.x) + Math.abs(unit.y - crystal.y);
+                if (dist <= unit.character.attack.range + unit.character.movement) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function aiGetCriticalCrystalThreat(player, enemy) {
+            // Trouver la menace la plus urgente
+            let worstThreat = null;
+            let worstScore = -1;
+            for (const crystal of player.crystals) {
+                if (crystal.hp <= 0) continue;
+                for (const eu of enemy.units) {
+                    const dist = Math.abs(eu.x - crystal.x) + Math.abs(eu.y - crystal.y);
+                    if (dist <= eu.character.attack.range) {
+                        const urgency = eu.character.attack.damage * 10 - crystal.hp;
+                        if (urgency > worstScore) {
+                            worstScore = urgency;
+                            worstThreat = { crystal: crystal, enemy: eu };
+                        }
+                    }
+                    // Menace au prochain tour
+                    else if (dist <= eu.character.attack.range + eu.character.movement) {
+                        const urgency = eu.character.attack.damage * 3 - crystal.hp;
+                        if (urgency > worstScore && crystal.hp <= eu.character.attack.damage * 2) {
+                            worstScore = urgency;
+                            worstThreat = { crystal: crystal, enemy: eu };
+                        }
+                    }
+                }
+            }
+            return worstThreat;
+        }
+
+        function aiGetMinDistToCrystals(x, y, crystals) {
+            let minDist = Infinity;
+            for (const crystal of crystals) {
+                if (crystal.hp <= 0) continue;
+                const dist = Math.abs(x - crystal.x) + Math.abs(y - crystal.y);
+                if (dist < minDist) minDist = dist;
+            }
+            return minDist;
+        }
+
+        // === EXECUTION DES ACTIONS ===
+        function aiExecuteAction(action) {
+            clearSelection();
+            switch (action.type) {
+                case 'summon':
+                    gameState.selectedCharacter = action.character;
+                    setTimeout(() => {
+                        summonUnit(action.x, action.y, () => {
+                            gameState.aiThinking = false;
+                            setTimeout(() => aiTakeTurn(), 300);
+                        });
+                    }, 200);
+                    break;
+
+                case 'move':
+                    gameState.selectedUnit = action.unit;
+                    gameState.highlightedCells = [{x: action.x, y: action.y, cost: action.cost}];
+                    setTimeout(() => {
+                        moveUnit(action.x, action.y, () => {
+                            gameState.aiThinking = false;
+                            setTimeout(() => aiTakeTurn(), 300);
+                        });
+                    }, 200);
+                    break;
+
+                case 'attack':
+                    gameState.selectedUnit = action.unit;
+                    // Conserver les infos de direction pour pierce/charge
+                    const atkCells = getAttackCells(action.unit);
+                    const matchingCell = atkCells.find(c => c.x === action.x && c.y === action.y);
+                    gameState.highlightedCells = matchingCell ? [matchingCell] : [{x: action.x, y: action.y}];
+                    setTimeout(() => {
+                        attackTarget(action.x, action.y, () => {
+                            gameState.aiThinking = false;
+                            if (gameState.phase === 'game_over') return;
+                            setTimeout(() => aiTakeTurn(), 300);
+                        });
+                    }, 200);
+                    break;
+            }
+        }
+
+        // === PLACEMENT CRISTAL IA (ameliore) ===
+        function aiPlaceCrystal() {
+            let bestPos = null;
+            let bestScore = -Infinity;
+
+            for (let y = 0; y < BOARD_SIZE; y++) {
+                for (let x = 0; x < BOARD_SIZE; x++) {
+                    const cell = gameState.board[y][x];
+                    if (cell.type !== 'normal' || cell.crystal) continue;
+
+                    let score = 0;
+
+                    // Preferer les coins et bords (hard to reach)
+                    const distFromCenter = Math.abs(x - 5.5) + Math.abs(y - 5.5);
+                    score += distFromCenter * 3;
+
+                    // Preferer le cote du joueur 2 (bas droite)
+                    score += (x + y) * 1.5;
+
+                    // Eviter le centre
+                    if (x > 3 && x < 8 && y > 3 && y < 8) score -= 10;
+
+                    // Bonus pres des obstacles (protection naturelle)
+                    for (let dy2 = -2; dy2 <= 2; dy2++) {
+                        for (let dx2 = -2; dx2 <= 2; dx2++) {
+                            const ox = x + dx2;
+                            const oy = y + dy2;
+                            if (ox >= 0 && ox < BOARD_SIZE && oy >= 0 && oy < BOARD_SIZE) {
+                                const oCell = gameState.board[oy][ox];
+                                if (oCell.type === 'obstacle' || oCell.type === 'obstacle_tall') score += 3;
+                                if (oCell.type === 'water') score += 2;
+                                if (oCell.height > 0) score += 1;
+                            }
+                        }
+                    }
+
+                    // Verifier qu'il y a assez de cases de spawn autour
+                    let spawnSpaces = 0;
+                    for (let dy2 = -1; dy2 <= 1; dy2++) {
+                        for (let dx2 = -1; dx2 <= 1; dx2++) {
+                            if (dx2 === 0 && dy2 === 0) continue;
+                            const sx = x + dx2;
+                            const sy = y + dy2;
+                            if (sx >= 0 && sx < BOARD_SIZE && sy >= 0 && sy < BOARD_SIZE) {
+                                const sCell = gameState.board[sy][sx];
+                                if (sCell.type === 'normal' && !sCell.crystal) spawnSpaces++;
+                            }
+                        }
+                    }
+                    if (spawnSpaces < 3) score -= 15;
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestPos = {x, y};
+                    }
+                }
+            }
+
+            if (bestPos) {
+                gameState.players[2].pendingCrystalPos = bestPos;
+                setTimeout(() => {
+                    revealCrystals();
+                }, AI_DELAY);
+            }
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        document.getElementById('btnConfirmCrystal').addEventListener('click', confirmCrystalPlacement);
+        document.getElementById('btnHandoverConfirm').addEventListener('click', confirmHandover);
+        document.getElementById('btnSummon').addEventListener('click', startSummon);
+        document.getElementById('btnMove').addEventListener('click', startMove);
+        document.getElementById('btnAttack').addEventListener('click', startAttack);
+        document.getElementById('btnCancel').addEventListener('click', cancelAction);
+        document.getElementById('btnEndTurn').addEventListener('click', endTurn);
+
+        document.getElementById('btnMode2Players').addEventListener('click', () => {
+            gameState.gameMode = '2players';
+            gameState.players[2].isAI = false;
+            startMapEditor();
+        });
+
+        document.getElementById('btnModeVsAI').addEventListener('click', () => {
+            gameState.gameMode = 'vsAI';
+            gameState.players[2].isAI = true;
+            startMapEditor();
+        });
+
+        function startMapEditor() {
+            document.getElementById('gameModeOverlay').classList.add('hidden');
+            addMessage('Bienvenue dans l\'Arene Tactique!', 'system');
+            addMessage('Configurez la carte ou confirmez directement pour la carte par defaut.', 'system');
+            initDefaultBoardData();
+            showMapEditor();
+        }
+
+        function startCrystalPlacement() {
+            gameState.phase = 'crystal_placement_p1';
+            renderGameBoard();
+            document.getElementById('btnConfirmCrystal').classList.remove('hidden');
+            document.getElementById('btnConfirmCrystal').disabled = true;
+            highlightValidCrystalCells();
+            addMessage('Joueur 1, placez votre cristal.', 'system');
+        }
+
+        // ==================== RESPONSIVE BOARD SCALING ====================
+        function scaleBoardForMobile() {
+            const wrapper = document.getElementById('boardWrapper');
+            const container = document.getElementById('boardContainer');
+            if (!wrapper || !container) return;
+
+            // Board native width: 12 cells * 52px stride + 20px padding + 4px border = ~648px
+            const boardNativeWidth = 12 * 52 + 20 + 4;
+            const availableWidth = container.parentElement.clientWidth;
+
+            if (availableWidth < boardNativeWidth) {
+                const scale = (availableWidth - 10) / boardNativeWidth;
+                wrapper.style.transform = `scale(${scale})`;
+                wrapper.style.transformOrigin = 'top center';
+                // Set container height to scaled board height so content below flows correctly
+                const boardNativeHeight = boardNativeWidth;
+                container.style.height = (boardNativeHeight * scale) + 'px';
+            } else {
+                wrapper.style.transform = '';
+                container.style.height = '';
+            }
+        }
+
+        window.addEventListener('resize', scaleBoardForMobile);
+        // Also scale when orientation changes on mobile
+        window.addEventListener('orientationchange', () => {
+            setTimeout(scaleBoardForMobile, 100);
+        });
+
+        // ==================== INITIALISATION ====================
+        function init() {
+            // Attendre la selection du mode de jeu
+            addMessage('Choisissez votre mode de jeu.', 'system');
+            // Initial responsive scaling
+            setTimeout(scaleBoardForMobile, 50);
+        }
+
+        init();
+    </script>
+</body>
+</html>

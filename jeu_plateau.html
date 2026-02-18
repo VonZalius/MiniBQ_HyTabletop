@@ -482,10 +482,21 @@
         }
 
         .character-card .on-field-count {
-            font-size: 0.8em;
-            color: #aaa;
-            text-align: right;
-            margin-top: 5px;
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #ffd700;
+            text-align: center;
+            margin-top: 6px;
+            padding: 3px 8px;
+            border-radius: 5px;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.35);
+        }
+
+        .character-card.disabled .on-field-count {
+            color: #e05a5a;
+            background: rgba(224, 90, 90, 0.1);
+            border-color: rgba(224, 90, 90, 0.35);
         }
 
         .action-panel {
@@ -1283,16 +1294,15 @@
 
             /* Message log mobile */
             .message-log {
-                position: fixed;
-                bottom: 5px;
-                left: 5px;
-                right: 5px;
+                position: static;
+                margin: 8px auto;
+                width: calc(100% - 16px);
                 max-width: none;
-                max-height: 100px;
+                max-height: 90px;
                 padding: 8px;
                 font-size: 0.75em;
                 border-radius: 8px;
-                z-index: 500;
+                z-index: auto;
             }
 
             /* Phase banner mobile */
@@ -1543,6 +1553,11 @@
             <div class="editor-options">
                 <label><input type="checkbox" id="editorSymmetry" checked> Symetrie (miroir)</label>
                 <label>PV des cristaux: <input type="number" id="editorCrystalHP" min="1" max="20" value="5" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+                <label style="flex-direction: column; align-items: flex-start; gap: 4px;">
+                    <span style="color: #ffd700; font-weight: bold; font-size: 0.9em;">Limite d'unites :</span>
+                    <label style="margin: 0;"><input type="radio" name="unitLimitMode" id="unitLimitModeField" value="field" checked> Max simultane sur le terrain</label>
+                    <label style="margin: 0;"><input type="radio" name="unitLimitMode" id="unitLimitModeTotal" value="total"> Max invocations totales par partie</label>
+                </label>
             </div>
             <div class="editor-actions">
                 <button class="btn-reset-map" onclick="resetMap()">Reinitialiser</button>
@@ -1615,10 +1630,10 @@
                 attack: {
                     name: 'Charge',
                     damage: 2,
-                    range: 2,
+                    range: 3,
                     type: 'melee',
                     pattern: 'charge',
-                    chargeDistance: 2
+                    chargeDistance: 3
                 },
                 passive: null,
                 icon: '🐰'
@@ -1710,6 +1725,7 @@
                     crystals: [],
                     pendingCrystalPos: null,
                     units: [],
+                    summonedCounts: {},
                     isAI: false
                 },
                 2: {
@@ -1718,12 +1734,14 @@
                     crystals: [],
                     pendingCrystalPos: null,
                     units: [],
+                    summonedCounts: {},
                     isAI: false
                 }
             },
 
             board: [],
             crystalHP: 5,
+            unitLimitMode: 'field', // 'field' = max simultané sur terrain, 'total' = max invocations totales par partie
             selectedUnit: null,
             selectedCharacter: null,
             actionMode: null,
@@ -1961,6 +1979,12 @@
             // Lire les PV des cristaux depuis l'editeur
             const crystalHPInput = document.getElementById('editorCrystalHP');
             gameState.crystalHP = parseInt(crystalHPInput.value) || 5;
+            // Lire le mode de limite d'unites
+            const unitLimitModeSelected = document.querySelector('input[name="unitLimitMode"]:checked');
+            gameState.unitLimitMode = unitLimitModeSelected ? unitLimitModeSelected.value : 'field';
+            // Reinitialiser les compteurs d'invocations totales
+            gameState.players[1].summonedCounts = {};
+            gameState.players[2].summonedCounts = {};
             // Clear units and crystals from board data (clean slate)
             for (let y = 0; y < BOARD_SIZE; y++) {
                 for (let x = 0; x < BOARD_SIZE; x++) {
@@ -2286,10 +2310,18 @@
                 return;
             }
 
-            const onField = player.units.filter(u => u.character.id === characterId).length;
-            if (onField >= char.maxOnField) {
-                addMessage(`Maximum de ${char.name} deja sur le terrain!`, 'system');
-                return;
+            if (gameState.unitLimitMode === 'total') {
+                const totalSummoned = player.summonedCounts[char.id] || 0;
+                if (totalSummoned >= char.maxOnField) {
+                    addMessage(`Limite d'invocations de ${char.name} atteinte pour cette partie!`, 'system');
+                    return;
+                }
+            } else {
+                const onField = player.units.filter(u => u.character.id === characterId).length;
+                if (onField >= char.maxOnField) {
+                    addMessage(`Maximum de ${char.name} deja sur le terrain!`, 'system');
+                    return;
+                }
             }
 
             gameState.selectedCharacter = char;
@@ -2404,6 +2436,9 @@
 
             player.units.push(unit);
             player.effectifUsed += char.power;
+            if (gameState.unitLimitMode === 'total') {
+                player.summonedCounts[char.id] = (player.summonedCounts[char.id] || 0) + 1;
+            }
             gameState.board[y][x].unit = unit;
 
             // Animation d'invocation
@@ -2727,38 +2762,44 @@
                 return cells;
             }
 
-            // Charge du Lapin: cible a exactement chargeDistance en ligne droite (meme hauteur)
+            // Charge du Lapin: cible a 1, 2 ou 3 cases en ligne droite (dash vers elle, meme hauteur)
             if (attack.pattern === 'charge') {
                 const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
-                const dist = attack.chargeDistance;
                 for (const dir of directions) {
-                    const targetX = unit.x + dir.dx * dist;
-                    const targetY = unit.y + dir.dy * dist;
-                    if (targetX < 0 || targetX >= BOARD_SIZE || targetY < 0 || targetY >= BOARD_SIZE) continue;
-                    const targetCell = gameState.board[targetY][targetX];
-                    if (!ignoreHeight && targetCell.height !== unitHeight) continue;
-                    // Verifier que le chemin est libre (cases intermediaires)
-                    let pathClear = true;
-                    for (let i = 1; i < dist; i++) {
-                        const mx = unit.x + dir.dx * i;
-                        const my = unit.y + dir.dy * i;
-                        const midCell = gameState.board[my][mx];
-                        if (midCell.unit || midCell.crystal || midCell.type === 'obstacle' || midCell.type === 'obstacle_tall') {
-                            pathClear = false;
+                    for (let dist = 1; dist <= attack.chargeDistance; dist++) {
+                        const targetX = unit.x + dir.dx * dist;
+                        const targetY = unit.y + dir.dy * dist;
+                        if (targetX < 0 || targetX >= BOARD_SIZE || targetY < 0 || targetY >= BOARD_SIZE) break;
+                        const targetCell = gameState.board[targetY][targetX];
+                        if (!ignoreHeight && targetCell.height !== unitHeight) break; // hauteur differente bloque le dash
+                        // Verifier que les cases intermediaires sont libres
+                        let pathClear = true;
+                        for (let i = 1; i < dist; i++) {
+                            const mx = unit.x + dir.dx * i;
+                            const my = unit.y + dir.dy * i;
+                            const midCell = gameState.board[my][mx];
+                            if (midCell.unit || midCell.crystal || midCell.type === 'obstacle' || midCell.type === 'obstacle_tall') {
+                                pathClear = false;
+                                break;
+                            }
+                            if (midCell.type === 'water' && !unit.character.canMoveOnWater) {
+                                pathClear = false;
+                                break;
+                            }
+                        }
+                        if (!pathClear) break; // Chemin bloque, inutile de chercher plus loin
+                        // Cible trouvee: ennemi ou cristal ennemi
+                        if (targetCell.unit && targetCell.unit.player !== unit.player) {
+                            cells.push({x: targetX, y: targetY, dir: dir, chargeDist: dist});
+                            break; // Une seule cible par direction
+                        }
+                        if (targetCell.crystal && targetCell.crystal.player !== unit.player) {
+                            cells.push({x: targetX, y: targetY, dir: dir, chargeDist: dist});
                             break;
                         }
-                        if (midCell.type === 'water' && !unit.character.canMoveOnWater) {
-                            pathClear = false;
-                            break;
-                        }
-                    }
-                    if (!pathClear) continue;
-                    // La cible doit etre un ennemi ou cristal ennemi
-                    if (targetCell.unit && targetCell.unit.player !== unit.player) {
-                        cells.push({x: targetX, y: targetY, dir: dir});
-                    }
-                    if (targetCell.crystal && targetCell.crystal.player !== unit.player) {
-                        cells.push({x: targetX, y: targetY, dir: dir});
+                        // Case occupee par autre chose (allie, obstacle) : bloque
+                        if (targetCell.unit || targetCell.crystal || targetCell.type === 'obstacle' || targetCell.type === 'obstacle_tall') break;
+                        // Case vide : on continue de chercher plus loin
                     }
                 }
                 return cells;
@@ -2905,18 +2946,37 @@
                 return;
             }
 
-            // === LAPIN CHARGE ===
+            // === LAPIN CHARGE (dash 1-3 cases en ligne droite) ===
             if (attack.pattern === 'charge') {
                 const highlightedCell = gameState.highlightedCells.find(c => c.x === x && c.y === y);
                 const dir = highlightedCell ? highlightedCell.dir : {dx: Math.sign(x - unit.x), dy: Math.sign(y - unit.y)};
+                // Distance reelle de la charge (stockee dans la cellule surlignee)
+                const chargeDist = (highlightedCell && highlightedCell.chargeDist)
+                    ? highlightedCell.chargeDist
+                    : Math.max(Math.abs(x - unit.x), Math.abs(y - unit.y));
                 // Le lapin se deplace a la case juste avant la cible
                 const chargeX = x - dir.dx;
                 const chargeY = y - dir.dy;
                 const damage = attack.damage;
 
-                // Animer le deplacement du lapin
+                // Cas distance 1: cible adjacente, pas de deplacement
+                if (chargeDist === 1) {
+                    playAttackAnimation(unit.x, unit.y, x, y, attack, () => {
+                        if (targetCell.unit) {
+                            applyDamageToUnit(targetCell.unit, damage, unit);
+                            showDamageNumber(x, y, damage, false);
+                        } else if (targetCell.crystal) {
+                            applyDamageToCrystal(targetCell.crystal, damage);
+                            showDamageNumber(x, y, damage, false);
+                        }
+                        finishAttack(unit, callback);
+                    });
+                    return;
+                }
+
+                // Dash (2 ou 3 cases): animer le deplacement puis attaquer
                 const chargePath = [{x: unit.x, y: unit.y}];
-                for (let i = 1; i <= attack.chargeDistance - 1; i++) {
+                for (let i = 1; i <= chargeDist - 1; i++) {
                     chargePath.push({x: unit.x + dir.dx * i, y: unit.y + dir.dy * i});
                 }
 
@@ -3389,8 +3449,10 @@
             if (summonCells.length > 0) {
                 for (const char of CHARACTERS) {
                     if (char.power <= available) {
-                        const onField = player.units.filter(u => u.character.id === char.id).length;
-                        if (onField < char.maxOnField) {
+                        const limitReached = gameState.unitLimitMode === 'total'
+                            ? (player.summonedCounts[char.id] || 0) >= char.maxOnField
+                            : player.units.filter(u => u.character.id === char.id).length >= char.maxOnField;
+                        if (!limitReached) {
                             return true; // On peut invoquer au moins un personnage
                         }
                     }
@@ -3586,7 +3648,10 @@
             CHARACTERS.forEach(char => {
                 const onField = player.units.filter(u => u.character.id === char.id).length;
                 const available = player.effectifMax - player.effectifUsed;
-                const canSummon = char.power <= available && onField < char.maxOnField;
+                const limitReached = gameState.unitLimitMode === 'total'
+                    ? (player.summonedCounts[char.id] || 0) >= char.maxOnField
+                    : onField >= char.maxOnField;
+                const canSummon = char.power <= available && !limitReached;
 
                 const card = document.createElement('div');
                 card.className = 'character-card';
@@ -3614,7 +3679,7 @@
                         ${char.attack.pattern === 'adjacent_aoe' ? ' (Zone adjacente)' : ''}
                     </div>
                     ${char.passive ? `<div class="char-passive">* ${char.passive.name}: ${char.passive.description}</div>` : ''}
-                    <div class="on-field-count">Sur le terrain: ${onField}/${char.maxOnField}</div>
+                    <div class="on-field-count">${gameState.unitLimitMode === 'total' ? `Invoques: ${player.summonedCounts[char.id] || 0}/${char.maxOnField}` : `Sur le terrain: ${onField}/${char.maxOnField}`}</div>
                 `;
 
                 if (canSummon) {
@@ -3711,7 +3776,7 @@
                 case 'summon': return `Invoque ${action.character.name}`;
                 case 'move': return `Deplace ${action.unit.character.name}`;
                 case 'attack': return `${action.unit.character.name} attaque`;
-                case 'moveAttack': return `${action.unit.character.name} avance et attaque`;
+                case 'moveAttack': return `${action.unit.character.name} charge et attaque!`;
                 default: return 'Action';
             }
         }
@@ -3763,29 +3828,34 @@
             // Canard sur eau = soin, pas d'attaque offensive
             if (unit.character.waterHeal && onWater) return results;
 
-            // Charge du lapin (meme hauteur)
+            // Charge du lapin: cible a 1, 2 ou 3 cases en ligne droite (meme hauteur)
             if (attack.pattern === 'charge') {
                 const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
                 for (const dir of directions) {
-                    const tx = fromX + dir.dx * attack.chargeDistance;
-                    const ty = fromY + dir.dy * attack.chargeDistance;
-                    if (tx < 0 || tx >= BOARD_SIZE || ty < 0 || ty >= BOARD_SIZE) continue;
-                    const tc = gameState.board[ty][tx];
-                    if (!ignoreHeight && tc.height !== unitHeight) continue;
-                    let pathClear = true;
-                    for (let i = 1; i < attack.chargeDistance; i++) {
-                        const mx = fromX + dir.dx * i;
-                        const my = fromY + dir.dy * i;
-                        const mc = gameState.board[my][mx];
-                        if (mc.unit || mc.crystal || mc.type === 'obstacle' || mc.type === 'obstacle_tall') { pathClear = false; break; }
-                        if (mc.type === 'water' && !unit.character.canMoveOnWater) { pathClear = false; break; }
-                    }
-                    if (!pathClear) continue;
-                    if (tc.unit && tc.unit.player !== unit.player) {
-                        results.push({x: tx, y: ty, target: tc.unit, isCrystal: false, dir: dir});
-                    }
-                    if (tc.crystal && tc.crystal.player !== unit.player) {
-                        results.push({x: tx, y: ty, target: tc.crystal, isCrystal: true, dir: dir});
+                    for (let dist = 1; dist <= attack.chargeDistance; dist++) {
+                        const tx = fromX + dir.dx * dist;
+                        const ty = fromY + dir.dy * dist;
+                        if (tx < 0 || tx >= BOARD_SIZE || ty < 0 || ty >= BOARD_SIZE) break;
+                        const tc = gameState.board[ty][tx];
+                        if (!ignoreHeight && tc.height !== unitHeight) break;
+                        let pathClear = true;
+                        for (let i = 1; i < dist; i++) {
+                            const mx = fromX + dir.dx * i;
+                            const my = fromY + dir.dy * i;
+                            const mc = gameState.board[my][mx];
+                            if (mc.unit || mc.crystal || mc.type === 'obstacle' || mc.type === 'obstacle_tall') { pathClear = false; break; }
+                            if (mc.type === 'water' && !unit.character.canMoveOnWater) { pathClear = false; break; }
+                        }
+                        if (!pathClear) break;
+                        if (tc.unit && tc.unit.player !== unit.player) {
+                            results.push({x: tx, y: ty, target: tc.unit, isCrystal: false, dir: dir, chargeDist: dist});
+                            break;
+                        }
+                        if (tc.crystal && tc.crystal.player !== unit.player) {
+                            results.push({x: tx, y: ty, target: tc.crystal, isCrystal: true, dir: dir, chargeDist: dist});
+                            break;
+                        }
+                        if (tc.unit || tc.crystal || tc.type === 'obstacle' || tc.type === 'obstacle_tall') break;
                     }
                 }
                 return results;
@@ -3871,13 +3941,16 @@
 
             // === INVOCATIONS ===
             const summonCells = getSummonCells();
-            if (summonCells.length > 0) {
+            const skipSummon = aiShouldSaveEffectif(player, enemy, phase);
+            if (!skipSummon && summonCells.length > 0) {
                 const available = player.effectifMax - player.effectifUsed;
 
                 for (const char of CHARACTERS) {
                     if (char.power > available) continue;
-                    const onField = player.units.filter(u => u.character.id === char.id).length;
-                    if (onField >= char.maxOnField) continue;
+                    const aiLimitReached = gameState.unitLimitMode === 'total'
+                        ? (player.summonedCounts[char.id] || 0) >= char.maxOnField
+                        : player.units.filter(u => u.character.id === char.id).length >= char.maxOnField;
+                    if (aiLimitReached) continue;
 
                     // Evaluer chaque case d'invocation
                     let bestSummonScore = -Infinity;
@@ -3959,15 +4032,28 @@
                             moveScore += bestAttackScore * 0.9;
                         }
 
-                        actions.push({
-                            type: 'move',
-                            unit: unit,
-                            x: cell.x,
-                            y: cell.y,
-                            cost: cell.cost,
-                            score: moveScore,
-                            followUpAttack: bestAttackTarget
-                        });
+                        // Combo atomique: si attaque de valeur apres deplacement, creer une action moveAttack
+                        if (bestAttackTarget && bestAttackScore > 15) {
+                            actions.push({
+                                type: 'moveAttack',
+                                unit: unit,
+                                x: cell.x,
+                                y: cell.y,
+                                cost: cell.cost,
+                                attackTarget: bestAttackTarget,
+                                score: moveScore + bestAttackScore * 0.05 // leger bonus pour l'atomicite
+                            });
+                        } else {
+                            actions.push({
+                                type: 'move',
+                                unit: unit,
+                                x: cell.x,
+                                y: cell.y,
+                                cost: cell.cost,
+                                score: moveScore,
+                                followUpAttack: bestAttackTarget
+                            });
+                        }
                     }
                 } else if (unit.movementLeft > 0 && unit.hasActed) {
                     // Unite qui a deja agi mais peut encore se deplacer - ne devrait pas arriver
@@ -3976,6 +4062,55 @@
             }
 
             return actions;
+        }
+
+        // === VALEUR INTRINSÈQUE D'UNE UNITE ===
+        function aiComputeUnitValue(char) {
+            return char.attack.damage * 3.5 + char.hp * 1.5 + char.movement * 0.4;
+        }
+
+        // === FAUT-IL ECONOMISER L'EFFECTIF CE TOUR? ===
+        function aiShouldSaveEffectif(player, enemy, phase) {
+            if (phase === 'late') return false;
+            if (aiGetCriticalCrystalThreat(player, enemy)) return false;
+
+            const available = player.effectifMax - player.effectifUsed;
+
+            // Toujours invoquer si aucune unite active sur le terrain
+            const activeUnits = player.units.filter(u => !u.justSummoned);
+            if (activeUnits.length === 0) return false;
+
+            // Chercher les unites abordables apres exactement 1 tour d'attente
+            const almostAffordable = CHARACTERS.filter(c => {
+                if (c.power - available !== 1) return false;
+                const limitReached = gameState.unitLimitMode === 'total'
+                    ? (player.summonedCounts[c.id] || 0) >= c.maxOnField
+                    : player.units.filter(u => u.character.id === c.id).length >= c.maxOnField;
+                return !limitReached;
+            });
+            if (almostAffordable.length === 0) return false;
+
+            // Valeur de la meilleure unite presque accessible
+            const bestTargetValue = almostAffordable.reduce(
+                (best, c) => Math.max(best, aiComputeUnitValue(c)), 0
+            );
+
+            // Valeur de la meilleure unite accessible maintenant
+            const bestNowValue = CHARACTERS.filter(c => {
+                if (c.power > available) return false;
+                const limitReached = gameState.unitLimitMode === 'total'
+                    ? (player.summonedCounts[c.id] || 0) >= c.maxOnField
+                    : player.units.filter(u => u.character.id === c.id).length >= c.maxOnField;
+                return !limitReached;
+            }).reduce((best, c) => Math.max(best, aiComputeUnitValue(c)), 0);
+
+            // Economiser seulement si la cible vaut nettement plus
+            if (bestTargetValue <= bestNowValue * 1.65) return false;
+
+            // En phase mid, 70% de chance d'economiser si c'est justifie
+            if (phase === 'mid') return Math.random() < 0.70;
+            // En phase early, 50% (plus risque de rester sans unite)
+            return Math.random() < 0.50;
         }
 
         // === SCORE INVOCATION (ameliore) ===
@@ -4089,6 +4224,52 @@
             if (char.id === 'sanglier') {
                 const clustered = aiCountClusteredEnemies(enemy);
                 score += clustered * 12;
+            }
+
+            // === RAPPORT VALEUR/COUT: privilegier l'efficacite par point d'effectif ===
+            const myValue = aiComputeUnitValue(char);
+            score += (myValue / char.power) * 4;
+
+            // === VARIETE: bruit aleatoire pour eviter les patterns repetitifs ===
+            score += (Math.random() - 0.5) * 16;
+
+            // === PRIORITE: ne pas invoquer si attaque decisive possible sans bouger ===
+            // (l'invocation ne vaut pas autant si on peut already gagner)
+            if (phase === 'late') {
+                const attackScore = player.units.reduce((best, u) => {
+                    if (u.justSummoned || u.hasActed) return best;
+                    const atkCells = getAttackCells(u);
+                    for (const ac of atkCells) {
+                        const tc = gameState.board[ac.y][ac.x];
+                        if (tc.crystal && tc.crystal.player === 1 && tc.crystal.hp <= u.character.attack.damage) {
+                            return Math.max(best, 9999);
+                        }
+                    }
+                    return best;
+                }, 0);
+                if (attackScore >= 9999) score -= 200; // Une unite peut deja gagner, invoquer est inutile
+            }
+
+            // === ECONOMIE: conserver de l'effectif si on est en avance ===
+            const ourCount = player.units.length;
+            const theirCount = enemy.units.length;
+            if (ourCount > theirCount + 2 && available >= 6) {
+                score -= 10; // On a deja beaucoup d'unites, pas urgent d'invoquer
+            }
+
+            // === LAPIN: preferer les cases avec chemin degage pour la charge ===
+            if (char.id === 'lapin') {
+                const dirs = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+                for (const dir of dirs) {
+                    for (let i = 1; i <= char.attack.chargeDistance; i++) {
+                        const tx = cell.x + dir.dx * i;
+                        const ty = cell.y + dir.dy * i;
+                        if (tx < 0 || tx >= BOARD_SIZE || ty < 0 || ty >= BOARD_SIZE) break;
+                        const tc = gameState.board[ty][tx];
+                        if (tc.unit && tc.unit.player !== 2) { score += 20; break; }
+                        if (tc.crystal && tc.crystal.player !== 2) { score += 25; break; }
+                    }
+                }
             }
 
             return score;
@@ -4212,6 +4393,29 @@
                         }
                     }
                 }
+
+                // === RISQUE CONTRE-ATTAQUE: la cible survit et peut riposter ===
+                if (targetCell.unit.currentHP > damage) {
+                    const riposteEnemies = enemy.units.filter(eu => {
+                        const d = Math.abs(eu.x - unit.x) + Math.abs(eu.y - unit.y);
+                        const eHeight = gameState.board[eu.y][eu.x].height;
+                        const unitHeight2 = gameState.board[unit.y][unit.x].height;
+                        return d <= eu.character.attack.range && (eu.character.ignoreHeight || eHeight === unitHeight2);
+                    });
+                    if (riposteEnemies.length > 0) {
+                        const totalIncoming = riposteEnemies.reduce((s, eu) => s + eu.character.attack.damage, 0);
+                        if (totalIncoming >= unit.currentHP) {
+                            score -= 35; // On mourrait apres cette attaque non-letale
+                        } else {
+                            score -= totalIncoming * 2;
+                        }
+                    }
+                }
+            }
+
+            // === BONUS FINISSEUR: cristal ennemi a bas HP ===
+            if (targetCell.crystal && targetCell.crystal.hp <= 2 && targetCell.crystal.player === 1) {
+                score += 80 + (3 - targetCell.crystal.hp) * 40;
             }
 
             return score;
@@ -4237,7 +4441,8 @@
 
             if (atk.isCrystal) {
                 score += 100;
-                if (atk.target.hp <= damage) score += 400;
+                if (atk.target.hp <= damage) score += 500;
+                else if (atk.target.hp <= 2) score += 150; // Cristal presque mort
                 return score;
             }
 
@@ -4353,6 +4558,30 @@
                 score -= 50;
             } else if (dangerCount > 1) {
                 score -= dangerCount * 12;
+            }
+
+            // === RETRAITE: unite blessee cherche la securite ===
+            if (unit.currentHP <= Math.ceil(unit.character.hp * 0.35)) {
+                for (const eu of enemy.units) {
+                    const newDistToEnemy = Math.abs(cell.x - eu.x) + Math.abs(cell.y - eu.y);
+                    const oldDistToEnemy = Math.abs(unit.x - eu.x) + Math.abs(unit.y - eu.y);
+                    if (newDistToEnemy > oldDistToEnemy) score += 18;
+                    else if (newDistToEnemy < oldDistToEnemy) score -= 12;
+                }
+            }
+
+            // === FINISSEUR: cristal ennemi a bas HP ===
+            for (const crystal of enemy.crystals) {
+                if (crystal.hp <= 0) continue;
+                if (crystal.hp <= 2) {
+                    const distToDying = Math.abs(cell.x - crystal.x) + Math.abs(cell.y - crystal.y);
+                    score += Math.max(0, 20 - distToDying * 4) + 25;
+                    const ignoreH = unit.character.ignoreHeight || false;
+                    const crystalHeight = gameState.board[crystal.y][crystal.x].height;
+                    if (distToDying <= unit.character.attack.range && (ignoreH || cellHeight === crystalHeight)) {
+                        score += 80;
+                    }
+                }
             }
 
             // Souris: preferer les positions de fuite (cases ouvertes autour)
@@ -4516,13 +4745,49 @@
                         });
                     }, 200);
                     break;
+
+                case 'moveAttack':
+                    // Combo atomique: deplacement puis attaque en sequence
+                    gameState.selectedUnit = action.unit;
+                    gameState.highlightedCells = [{x: action.x, y: action.y, cost: action.cost}];
+                    setTimeout(() => {
+                        moveUnit(action.x, action.y, () => {
+                            if (gameState.phase === 'game_over') { gameState.aiThinking = false; return; }
+                            const atk = action.attackTarget;
+                            const targetBoardCell = gameState.board[atk.y][atk.x];
+                            // Verifier que la cible est toujours valide
+                            const hasEnemy = (targetBoardCell.unit && targetBoardCell.unit.player !== 2) ||
+                                             (targetBoardCell.crystal && targetBoardCell.crystal.player !== 2);
+                            if (!hasEnemy) {
+                                gameState.aiThinking = false;
+                                setTimeout(() => aiTakeTurn(), 300);
+                                return;
+                            }
+                            gameState.selectedUnit = action.unit;
+                            const comboAtkCells = getAttackCells(action.unit);
+                            const comboMatchCell = comboAtkCells.find(c => c.x === atk.x && c.y === atk.y);
+                            if (!comboMatchCell) {
+                                gameState.aiThinking = false;
+                                setTimeout(() => aiTakeTurn(), 300);
+                                return;
+                            }
+                            gameState.highlightedCells = [comboMatchCell];
+                            setTimeout(() => {
+                                attackTarget(atk.x, atk.y, () => {
+                                    gameState.aiThinking = false;
+                                    if (gameState.phase === 'game_over') return;
+                                    setTimeout(() => aiTakeTurn(), 300);
+                                });
+                            }, 200);
+                        });
+                    }, 200);
+                    break;
             }
         }
 
-        // === PLACEMENT CRISTAL IA (ameliore) ===
+        // === PLACEMENT CRISTAL IA (randomise + contextuel) ===
         function aiPlaceCrystal() {
-            let bestPos = null;
-            let bestScore = -Infinity;
+            const candidates = [];
 
             for (let y = 0; y < BOARD_SIZE; y++) {
                 for (let x = 0; x < BOARD_SIZE; x++) {
@@ -4531,31 +4796,34 @@
 
                     let score = 0;
 
-                    // Preferer les coins et bords (hard to reach)
+                    // Preference moderee pour le cote du joueur 2 (bas du plateau)
+                    score += y * 1.6;
+
+                    // Eviter le centre mais pas de biais extreme vers les coins
                     const distFromCenter = Math.abs(x - 5.5) + Math.abs(y - 5.5);
-                    score += distFromCenter * 3;
+                    if (distFromCenter < 2) score -= 30;
+                    else if (distFromCenter < 4) score -= 8;
+                    else score += distFromCenter * 1.0;
 
-                    // Preferer le cote du joueur 2 (bas droite)
-                    score += (x + y) * 1.5;
-
-                    // Eviter le centre
-                    if (x > 3 && x < 8 && y > 3 && y < 8) score -= 10;
-
-                    // Bonus pres des obstacles (protection naturelle)
+                    // Bonus terrain a proximite (protection naturelle), pondere par distance
                     for (let dy2 = -2; dy2 <= 2; dy2++) {
                         for (let dx2 = -2; dx2 <= 2; dx2++) {
+                            if (dx2 === 0 && dy2 === 0) continue;
                             const ox = x + dx2;
                             const oy = y + dy2;
-                            if (ox >= 0 && ox < BOARD_SIZE && oy >= 0 && oy < BOARD_SIZE) {
-                                const oCell = gameState.board[oy][ox];
-                                if (oCell.type === 'obstacle' || oCell.type === 'obstacle_tall') score += 3;
-                                if (oCell.type === 'water') score += 2;
-                                if (oCell.height > 0) score += 1;
-                            }
+                            if (ox < 0 || ox >= BOARD_SIZE || oy < 0 || oy >= BOARD_SIZE) continue;
+                            const oCell = gameState.board[oy][ox];
+                            // Plus proche = meilleure protection
+                            const prox = 3 - Math.max(Math.abs(dx2), Math.abs(dy2)); // 2 si adjacent, 1 si 2 cases
+                            if (oCell.type === 'obstacle_tall') score += 9 * prox;
+                            else if (oCell.type === 'obstacle') score += 5 * prox;
+                            else if (oCell.type === 'water') score += 4 * prox;
+                            else if (oCell.height === 2) score += 3 * prox;
+                            else if (oCell.height === 1) score += 1.5 * prox;
                         }
                     }
 
-                    // Verifier qu'il y a assez de cases de spawn autour
+                    // Cases de spawn disponibles autour du cristal
                     let spawnSpaces = 0;
                     for (let dy2 = -1; dy2 <= 1; dy2++) {
                         for (let dx2 = -1; dx2 <= 1; dx2++) {
@@ -4568,21 +4836,40 @@
                             }
                         }
                     }
-                    if (spawnSpaces < 3) score -= 15;
+                    if (spawnSpaces < 2) continue; // Position inutilisable
+                    score += spawnSpaces * 3;
+                    if (spawnSpaces < 3) score -= 12;
 
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestPos = {x, y};
-                    }
+                    // Bruit aleatoire pour la variete (±15% de la plage typique)
+                    score += (Math.random() - 0.5) * 18;
+
+                    candidates.push({x, y, score});
                 }
             }
 
-            if (bestPos) {
-                gameState.players[2].pendingCrystalPos = bestPos;
-                setTimeout(() => {
-                    revealCrystals();
-                }, AI_DELAY);
+            if (candidates.length === 0) return;
+
+            // Trier et selectionner parmi les meilleurs avec une probabilite ponderee
+            candidates.sort((a, b) => b.score - a.score);
+            const topN = Math.min(7, candidates.length);
+            const top = candidates.slice(0, topN);
+
+            // Poids quadratiques: les premiers ont beaucoup plus de chances mais pas exclusivement
+            const minScore = top[top.length - 1].score;
+            const weights = top.map(c => Math.pow(Math.max(0.5, c.score - minScore + 6), 2));
+            const totalWeight = weights.reduce((s, w) => s + w, 0);
+
+            let rand = Math.random() * totalWeight;
+            let chosen = top[0];
+            for (let i = 0; i < top.length; i++) {
+                rand -= weights[i];
+                if (rand <= 0) { chosen = top[i]; break; }
             }
+
+            gameState.players[2].pendingCrystalPos = chosen;
+            setTimeout(() => {
+                revealCrystals();
+            }, AI_DELAY);
         }
 
         // ==================== EVENT LISTENERS ====================

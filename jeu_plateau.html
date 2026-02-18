@@ -124,7 +124,37 @@
 
         .board-wrapper {
             position: relative;
-            transform-origin: top center;
+            transform-origin: top left;
+            margin-top: 22px;
+            margin-left: 26px;
+        }
+
+        .coord-label {
+            position: absolute;
+            font-size: 11px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.4);
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-select: none;
+            z-index: 5;
+        }
+
+        .character-card.ai-hidden-card {
+            background: rgba(35, 35, 55, 0.8);
+            border-color: rgba(80, 80, 110, 0.4);
+            cursor: default;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .character-card.ai-hidden-card .char-header {
+            justify-content: center;
         }
 
         .board {
@@ -1445,6 +1475,14 @@
                     <span>Effectif disponible:</span>
                     <span id="p1EffectifAvailable">1</span>
                 </div>
+                <div class="stat">
+                    <span>Deck:</span>
+                    <span id="p1DeckCount">0</span>
+                </div>
+                <div class="stat">
+                    <span>Main:</span>
+                    <span id="p1HandCount">0</span>
+                </div>
                 <div class="crystals-display">
                     <span>Cristaux:</span>
                     <div class="crystal-icon" id="p1Crystal1">5</div>
@@ -1466,6 +1504,14 @@
                     <span>Effectif disponible:</span>
                     <span id="p2EffectifAvailable">1</span>
                 </div>
+                <div class="stat">
+                    <span>Deck:</span>
+                    <span id="p2DeckCount">0</span>
+                </div>
+                <div class="stat">
+                    <span>Main:</span>
+                    <span id="p2HandCount">0</span>
+                </div>
                 <div class="crystals-display">
                     <span>Cristaux:</span>
                     <div class="crystal-icon player2-icon" id="p2Crystal1">5</div>
@@ -1484,6 +1530,7 @@
                 <div class="board-wrapper" id="boardWrapper">
                     <div class="board" id="board"></div>
                     <div class="animation-layer" id="animationLayer"></div>
+                    <div id="coordLayer"></div>
                 </div>
             </div>
 
@@ -1553,11 +1600,8 @@
             <div class="editor-options">
                 <label><input type="checkbox" id="editorSymmetry" checked> Symetrie (miroir)</label>
                 <label>PV des cristaux: <input type="number" id="editorCrystalHP" min="1" max="20" value="5" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
-                <label style="flex-direction: column; align-items: flex-start; gap: 4px;">
-                    <span style="color: #ffd700; font-weight: bold; font-size: 0.9em;">Limite d'unites :</span>
-                    <label style="margin: 0;"><input type="radio" name="unitLimitMode" id="unitLimitModeField" value="field" checked> Max simultane sur le terrain</label>
-                    <label style="margin: 0;"><input type="radio" name="unitLimitMode" id="unitLimitModeTotal" value="total"> Max invocations totales par partie</label>
-                </label>
+                <label>Cartes initiales en main: <input type="number" id="editorInitialHandSize" min="1" max="10" value="4" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+                <label>Max cartes en main (0=&#x221e;): <input type="number" id="editorMaxHandSize" min="0" max="20" value="0" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
             </div>
             <div class="editor-actions">
                 <button class="btn-reset-map" onclick="resetMap()">Reinitialiser</button>
@@ -1725,7 +1769,8 @@
                     crystals: [],
                     pendingCrystalPos: null,
                     units: [],
-                    summonedCounts: {},
+                    deck: [],
+                    hand: [],
                     isAI: false
                 },
                 2: {
@@ -1734,14 +1779,16 @@
                     crystals: [],
                     pendingCrystalPos: null,
                     units: [],
-                    summonedCounts: {},
+                    deck: [],
+                    hand: [],
                     isAI: false
                 }
             },
 
             board: [],
             crystalHP: 5,
-            unitLimitMode: 'field', // 'field' = max simultané sur terrain, 'total' = max invocations totales par partie
+            initialHandSize: 4,
+            maxHandSize: 0, // 0 = illimite
             selectedUnit: null,
             selectedCharacter: null,
             actionMode: null,
@@ -1805,8 +1852,36 @@
                     boardEl.appendChild(cellEl);
                 }
             }
+            renderCoordinates();
             // Responsive scaling after board render
             setTimeout(scaleBoardForMobile, 10);
+        }
+
+        function renderCoordinates() {
+            const layer = document.getElementById('coordLayer');
+            layer.innerHTML = '';
+            const letters = 'ABCDEFGHIJKL';
+            const CELL = 52; // 50px + 2px gap
+            const PAD = 10;  // board padding
+
+            // Lettres en haut (colonnes A-L)
+            for (let x = 0; x < BOARD_SIZE; x++) {
+                const el = document.createElement('div');
+                el.className = 'coord-label';
+                el.textContent = letters[x];
+                el.style.left = (PAD + x * CELL + 15) + 'px'; // center 20px label in 50px cell
+                el.style.top = '-22px';
+                layer.appendChild(el);
+            }
+            // Chiffres a gauche (lignes 1-12)
+            for (let y = 0; y < BOARD_SIZE; y++) {
+                const el = document.createElement('div');
+                el.className = 'coord-label';
+                el.textContent = (y + 1).toString();
+                el.style.top = (PAD + y * CELL + 15) + 'px';
+                el.style.left = '-26px';
+                layer.appendChild(el);
+            }
         }
 
         function initBoard() {
@@ -1979,12 +2054,9 @@
             // Lire les PV des cristaux depuis l'editeur
             const crystalHPInput = document.getElementById('editorCrystalHP');
             gameState.crystalHP = parseInt(crystalHPInput.value) || 5;
-            // Lire le mode de limite d'unites
-            const unitLimitModeSelected = document.querySelector('input[name="unitLimitMode"]:checked');
-            gameState.unitLimitMode = unitLimitModeSelected ? unitLimitModeSelected.value : 'field';
-            // Reinitialiser les compteurs d'invocations totales
-            gameState.players[1].summonedCounts = {};
-            gameState.players[2].summonedCounts = {};
+            // Lire les parametres de deck
+            gameState.initialHandSize = parseInt(document.getElementById('editorInitialHandSize').value) || 4;
+            gameState.maxHandSize = parseInt(document.getElementById('editorMaxHandSize').value) || 0;
             // Clear units and crystals from board data (clean slate)
             for (let y = 0; y < BOARD_SIZE; y++) {
                 for (let x = 0; x < BOARD_SIZE; x++) {
@@ -1994,6 +2066,36 @@
             }
             addMessage('Carte confirmee!', 'system');
             startCrystalPlacement();
+        }
+
+        // ==================== SYSTEME DE DECK ====================
+        // Nombre de cartes par creature dans le deck (24 au total)
+        const DECK_COUNTS = { souris: 6, ecureuil: 6, lapin: 4, canard: 4, renard: 2, sanglier: 2 };
+
+        function createDeck() {
+            let deck = [];
+            for (const char of CHARACTERS) {
+                const count = DECK_COUNTS[char.id] || 0;
+                for (let i = 0; i < count; i++) {
+                    deck.push(char.id);
+                }
+            }
+            // Melange Fisher-Yates
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            return deck;
+        }
+
+        function drawCards(playerNum, count) {
+            const player = gameState.players[playerNum];
+            const maxHand = gameState.maxHandSize;
+            for (let i = 0; i < count; i++) {
+                if (player.deck.length === 0) break;
+                if (maxHand > 0 && player.hand.length >= maxHand) break;
+                player.hand.push(player.deck.pop());
+            }
         }
 
         function highlightValidCrystalCells() {
@@ -2227,6 +2329,14 @@
             document.getElementById('btnCancel').classList.remove('hidden');
             document.getElementById('btnEndTurn').classList.remove('hidden');
 
+            // Initialiser les decks et piocher les mains initiales
+            for (const p of [1, 2]) {
+                gameState.players[p].deck = createDeck();
+                gameState.players[p].hand = [];
+            }
+            drawCards(1, gameState.initialHandSize);
+            drawCards(2, gameState.initialHandSize);
+
             showPhaseBanner('La partie commence!<br>Tour du Joueur 1');
             updateUI();
             addMessage('Les cristaux sont places! La partie commence.', 'system');
@@ -2310,18 +2420,9 @@
                 return;
             }
 
-            if (gameState.unitLimitMode === 'total') {
-                const totalSummoned = player.summonedCounts[char.id] || 0;
-                if (totalSummoned >= char.maxOnField) {
-                    addMessage(`Limite d'invocations de ${char.name} atteinte pour cette partie!`, 'system');
-                    return;
-                }
-            } else {
-                const onField = player.units.filter(u => u.character.id === characterId).length;
-                if (onField >= char.maxOnField) {
-                    addMessage(`Maximum de ${char.name} deja sur le terrain!`, 'system');
-                    return;
-                }
+            if (!player.hand.includes(char.id)) {
+                addMessage(`Pas de carte ${char.name} dans votre main!`, 'system');
+                return;
             }
 
             gameState.selectedCharacter = char;
@@ -2436,9 +2537,9 @@
 
             player.units.push(unit);
             player.effectifUsed += char.power;
-            if (gameState.unitLimitMode === 'total') {
-                player.summonedCounts[char.id] = (player.summonedCounts[char.id] || 0) + 1;
-            }
+            // Retirer la carte jouee de la main
+            const handIdx = player.hand.indexOf(char.id);
+            if (handIdx !== -1) player.hand.splice(handIdx, 1);
             gameState.board[y][x].unit = unit;
 
             // Animation d'invocation
@@ -3448,13 +3549,8 @@
             const summonCells = getSummonCells();
             if (summonCells.length > 0) {
                 for (const char of CHARACTERS) {
-                    if (char.power <= available) {
-                        const limitReached = gameState.unitLimitMode === 'total'
-                            ? (player.summonedCounts[char.id] || 0) >= char.maxOnField
-                            : player.units.filter(u => u.character.id === char.id).length >= char.maxOnField;
-                        if (!limitReached) {
-                            return true; // On peut invoquer au moins un personnage
-                        }
+                    if (char.power <= available && player.hand.includes(char.id)) {
+                        return true; // On peut invoquer au moins un personnage
                     }
                 }
             }
@@ -3518,6 +3614,9 @@
                 }
             }
 
+            // Piocher 1 carte au debut du tour
+            drawCards(gameState.currentPlayer, 1);
+
             gameState.players[gameState.currentPlayer].units.forEach(unit => {
                 unit.movementLeft = unit.character.movement;
                 unit.hasActed = false;
@@ -3580,6 +3679,14 @@
                 document.getElementById(`p${player}EffectifUsed`).textContent = p.effectifUsed;
                 document.getElementById(`p${player}EffectifMax`).textContent = p.effectifMax;
                 document.getElementById(`p${player}EffectifAvailable`).textContent = p.effectifMax - p.effectifUsed;
+                // Masquer les infos de deck/main de l'IA
+                if (p.isAI) {
+                    document.getElementById(`p${player}DeckCount`).textContent = '?';
+                    document.getElementById(`p${player}HandCount`).textContent = '?';
+                } else {
+                    document.getElementById(`p${player}DeckCount`).textContent = p.deck.length;
+                    document.getElementById(`p${player}HandCount`).textContent = p.hand.length;
+                }
             }
         }
 
@@ -3642,16 +3749,36 @@
             const player = gameState.players[gameState.currentPlayer];
 
             document.getElementById('rosterPlayerName').textContent = `Joueur ${gameState.currentPlayer}`;
-
             rosterList.innerHTML = '';
 
-            CHARACTERS.forEach(char => {
-                const onField = player.units.filter(u => u.character.id === char.id).length;
-                const available = player.effectifMax - player.effectifUsed;
-                const limitReached = gameState.unitLimitMode === 'total'
-                    ? (player.summonedCounts[char.id] || 0) >= char.maxOnField
-                    : onField >= char.maxOnField;
-                const canSummon = char.power <= available && !limitReached;
+            // Si c'est l'IA, masquer le contenu des cartes
+            if (player.isAI) {
+                for (let i = 0; i < player.hand.length; i++) {
+                    const card = document.createElement('div');
+                    card.className = 'character-card ai-hidden-card';
+                    card.innerHTML = `<div class="char-header"><span class="char-name">⬛ ???</span></div>`;
+                    rosterList.appendChild(card);
+                }
+                return;
+            }
+
+            // Main vide
+            if (player.hand.length === 0) {
+                const empty = document.createElement('div');
+                empty.style.cssText = 'color:rgba(255,255,255,0.4);text-align:center;padding:15px;font-size:0.9em;';
+                empty.textContent = 'Aucune carte en main';
+                rosterList.appendChild(empty);
+                return;
+            }
+
+            const available = player.effectifMax - player.effectifUsed;
+
+            // Une carte par entree dans la main
+            player.hand.forEach((charId) => {
+                const char = CHARACTERS.find(c => c.id === charId);
+                if (!char) return;
+
+                const canSummon = char.power <= available;
 
                 const card = document.createElement('div');
                 card.className = 'character-card';
@@ -3679,7 +3806,6 @@
                         ${char.attack.pattern === 'adjacent_aoe' ? ' (Zone adjacente)' : ''}
                     </div>
                     ${char.passive ? `<div class="char-passive">* ${char.passive.name}: ${char.passive.description}</div>` : ''}
-                    <div class="on-field-count">${gameState.unitLimitMode === 'total' ? `Invoques: ${player.summonedCounts[char.id] || 0}/${char.maxOnField}` : `Sur le terrain: ${onField}/${char.maxOnField}`}</div>
                 `;
 
                 if (canSummon) {
@@ -3947,10 +4073,7 @@
 
                 for (const char of CHARACTERS) {
                     if (char.power > available) continue;
-                    const aiLimitReached = gameState.unitLimitMode === 'total'
-                        ? (player.summonedCounts[char.id] || 0) >= char.maxOnField
-                        : player.units.filter(u => u.character.id === char.id).length >= char.maxOnField;
-                    if (aiLimitReached) continue;
+                    if (!player.hand.includes(char.id)) continue;
 
                     // Evaluer chaque case d'invocation
                     let bestSummonScore = -Infinity;
@@ -4083,10 +4206,7 @@
             // Chercher les unites abordables apres exactement 1 tour d'attente
             const almostAffordable = CHARACTERS.filter(c => {
                 if (c.power - available !== 1) return false;
-                const limitReached = gameState.unitLimitMode === 'total'
-                    ? (player.summonedCounts[c.id] || 0) >= c.maxOnField
-                    : player.units.filter(u => u.character.id === c.id).length >= c.maxOnField;
-                return !limitReached;
+                return player.hand.includes(c.id);
             });
             if (almostAffordable.length === 0) return false;
 
@@ -4098,10 +4218,7 @@
             // Valeur de la meilleure unite accessible maintenant
             const bestNowValue = CHARACTERS.filter(c => {
                 if (c.power > available) return false;
-                const limitReached = gameState.unitLimitMode === 'total'
-                    ? (player.summonedCounts[c.id] || 0) >= c.maxOnField
-                    : player.units.filter(u => u.character.id === c.id).length >= c.maxOnField;
-                return !limitReached;
+                return player.hand.includes(c.id);
             }).reduce((best, c) => Math.max(best, aiComputeUnitValue(c)), 0);
 
             // Economiser seulement si la cible vaut nettement plus
@@ -4918,12 +5035,13 @@
 
             // Board native width: 12 cells * 52px stride + 20px padding + 4px border = ~648px
             const boardNativeWidth = 12 * 52 + 20 + 4;
-            const availableWidth = container.parentElement.clientWidth;
+            const coordMargin = 26; // margin-left pour les labels de coordonnees
+            const availableWidth = container.parentElement.clientWidth - coordMargin;
 
             if (availableWidth < boardNativeWidth) {
                 const scale = (availableWidth - 10) / boardNativeWidth;
                 wrapper.style.transform = `scale(${scale})`;
-                wrapper.style.transformOrigin = 'top center';
+                wrapper.style.transformOrigin = 'top left';
                 // Set container height to scaled board height so content below flows correctly
                 const boardNativeHeight = boardNativeWidth;
                 container.style.height = (boardNativeHeight * scale) + 'px';

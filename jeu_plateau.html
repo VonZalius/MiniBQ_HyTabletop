@@ -1771,14 +1771,23 @@
             </div>
             <div class="editor-options">
                 <label><input type="checkbox" id="editorSymmetry" checked> Symetrie (miroir)</label>
-                <label>PV des cristaux: <input type="number" id="editorCrystalHP" min="1" max="20" value="5" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
-                <label>Cartes initiales en main: <input type="number" id="editorInitialHandSize" min="1" max="10" value="4" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
-                <label>Max cartes en main (0=&#x221e;): <input type="number" id="editorMaxHandSize" min="0" max="20" value="0" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+                <label>PV des cristaux: <input type="number" id="editorCrystalHP" min="1" max="20" value="10" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+                <label>Cartes initiales en main: <input type="number" id="editorInitialHandSize" min="1" max="10" value="3" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+                <label>Max cartes en main (0=&#x221e;): <input type="number" id="editorMaxHandSize" min="0" max="20" value="5" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+                <label>Effectif max par joueur: <input type="number" id="editorMaxEffectif" min="1" max="30" value="12" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
             </div>
             <div class="editor-actions">
                 <button class="btn-reset-map" onclick="resetMap()">Reinitialiser</button>
                 <button class="btn-confirm-map" onclick="confirmMapEditor()">Confirmer la carte</button>
             </div>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="discardOverlay">
+        <div class="modal" style="max-width:520px;width:90%;">
+            <h2 style="color:var(--gold);margin-bottom:8px;">Main pleine !</h2>
+            <p id="discardText" style="margin-bottom:16px;color:rgba(255,255,255,0.75);font-size:0.95em;">Vous avez pioché une 6ème carte. Choisissez-en une à défausser.</p>
+            <div id="discardList" style="display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow-y:auto;padding-right:4px;"></div>
         </div>
     </div>
 
@@ -1958,9 +1967,10 @@
             },
 
             board: [],
-            crystalHP: 5,
-            initialHandSize: 4,
-            maxHandSize: 0, // 0 = illimite
+            crystalHP: 10,
+            initialHandSize: 3,
+            maxHandSize: 5, // 0 = illimite
+            maxEffectif: 12,
             selectedUnit: null,
             selectedCharacter: null,
             actionMode: null,
@@ -2225,10 +2235,12 @@
             document.getElementById('mapEditorOverlay').classList.add('hidden');
             // Lire les PV des cristaux depuis l'editeur
             const crystalHPInput = document.getElementById('editorCrystalHP');
-            gameState.crystalHP = parseInt(crystalHPInput.value) || 5;
+            gameState.crystalHP = parseInt(crystalHPInput.value) || 10;
             // Lire les parametres de deck
-            gameState.initialHandSize = parseInt(document.getElementById('editorInitialHandSize').value) || 4;
-            gameState.maxHandSize = parseInt(document.getElementById('editorMaxHandSize').value) || 0;
+            gameState.initialHandSize = parseInt(document.getElementById('editorInitialHandSize').value) || 3;
+            const rawMax = parseInt(document.getElementById('editorMaxHandSize').value);
+            gameState.maxHandSize = isNaN(rawMax) ? 5 : rawMax;
+            gameState.maxEffectif = parseInt(document.getElementById('editorMaxEffectif').value) || 12;
             // Clear units and crystals from board data (clean slate)
             for (let y = 0; y < BOARD_SIZE; y++) {
                 for (let x = 0; x < BOARD_SIZE; x++) {
@@ -2263,11 +2275,74 @@
         function drawCards(playerNum, count) {
             const player = gameState.players[playerNum];
             const maxHand = gameState.maxHandSize;
+            let overdrew = false;
             for (let i = 0; i < count; i++) {
                 if (player.deck.length === 0) break;
-                if (maxHand > 0 && player.hand.length >= maxHand) break;
+                if (maxHand > 0 && player.hand.length >= maxHand) {
+                    // Main pleine : piocher quand meme (surpioche -> maxHand+1 cartes)
+                    player.hand.push(player.deck.pop());
+                    overdrew = true;
+                    break;
+                }
                 player.hand.push(player.deck.pop());
             }
+            return overdrew;
+        }
+
+        function showDiscardOverlay(playerNum, callback) {
+            const player = gameState.players[playerNum];
+            const overlay = document.getElementById('discardOverlay');
+            const discardList = document.getElementById('discardList');
+            discardList.innerHTML = '';
+
+            const overMax = player.hand.length;
+            document.getElementById('discardText').textContent =
+                `Vous avez ${overMax} cartes en main (maximum : ${gameState.maxHandSize}). Choisissez une carte à défausser.`;
+
+            // Construire une copie snapshot de la main pour les indices stables
+            const handSnapshot = player.hand.map((charId, idx) => ({ charId, idx }));
+
+            handSnapshot.forEach(({ charId, idx }) => {
+                const char = CHARACTERS.find(c => c.id === charId);
+                if (!char) return;
+
+                const damageDisplay = char.attack.damage > 0 ? char.attack.damage : '+' + Math.abs(char.attack.damage);
+
+                const card = document.createElement('div');
+                card.className = 'character-card';
+                card.style.cursor = 'pointer';
+                card.innerHTML = `
+                    <div class="char-header">
+                        <span class="char-name">[${char.icon}] ${char.name}</span>
+                        <span class="char-power">${char.power} P</span>
+                    </div>
+                    <div class="char-stats">
+                        <span>PV: ${char.hp}</span>
+                        <span>PM: ${char.movement}</span>
+                        <span>Deg: ${damageDisplay}</span>
+                    </div>
+                    <div class="char-ability">
+                        <strong>${char.attack.name}</strong> - Portee: ${char.attack.range}
+                        ${char.attack.pattern === 'charge' ? ' (Charge)' : ''}
+                        ${char.attack.pattern === 'pierce' ? ' (Perforation)' : ''}
+                        ${char.attack.pattern === 'adjacent_aoe' ? ' (Zone adjacente)' : ''}
+                    </div>
+                    ${char.passive ? `<div class="char-passive">* ${char.passive.name}: ${char.passive.description}</div>` : ''}
+                    <div style="margin-top:6px;font-size:0.8em;color:rgba(201,162,39,0.8);text-align:right;">Cliquer pour défausser</div>
+                `;
+
+                card.addEventListener('click', () => {
+                    // Retrouver l'index actuel de cette entree (en cas de doublons, on retire la 1ere occurrence a cet idx)
+                    player.hand.splice(idx, 1);
+                    overlay.classList.add('hidden');
+                    addMessage(`Joueur ${playerNum} défausse ${char.name}.`, `player${playerNum}`);
+                    callback();
+                });
+
+                discardList.appendChild(card);
+            });
+
+            overlay.classList.remove('hidden');
         }
 
         function highlightValidCrystalCells() {
@@ -3781,13 +3856,13 @@
             // SAUF pour J1 au tour 1 (premier tour de la partie)
             if (!(gameState.turn === 1 && gameState.currentPlayer === 1)) {
                 const player = gameState.players[gameState.currentPlayer];
-                if (player.effectifMax < 12) {
+                if (player.effectifMax < gameState.maxEffectif) {
                     player.effectifMax++;
                 }
             }
 
-            // Piocher 1 carte au debut du tour
-            drawCards(gameState.currentPlayer, 1);
+            // Piocher 1 carte au debut du tour (surpioche si main pleine)
+            const overdrew = drawCards(gameState.currentPlayer, 1);
 
             gameState.players[gameState.currentPlayer].units.forEach(unit => {
                 unit.movementLeft = unit.character.movement;
@@ -3800,18 +3875,31 @@
 
             gameState.actionTaken = false;
 
-            showPhaseBanner(`Tour ${gameState.turn}<br>Joueur ${gameState.currentPlayer}`);
-            updateUI();
-            addMessage(`Tour du Joueur ${gameState.currentPlayer}`, `player${gameState.currentPlayer}`);
+            const finalizeTurnStart = () => {
+                showPhaseBanner(`Tour ${gameState.turn}<br>Joueur ${gameState.currentPlayer}`);
+                updateUI();
+                addMessage(`Tour du Joueur ${gameState.currentPlayer}`, `player${gameState.currentPlayer}`);
 
-            // Verifier si le nouveau joueur peut faire quelque chose
-            if (!canDoAnything()) {
-                addMessage('Aucune action possible ce tour!', 'system');
-            }
+                // Verifier si le nouveau joueur peut faire quelque chose
+                if (!canDoAnything()) {
+                    addMessage('Aucune action possible ce tour!', 'system');
+                }
 
-            // Si c'est le tour de l'IA, la faire jouer
-            if (gameState.players[gameState.currentPlayer].isAI) {
-                setTimeout(() => aiTakeTurn(), AI_DELAY);
+                // Si c'est le tour de l'IA, la faire jouer
+                if (gameState.players[gameState.currentPlayer].isAI) {
+                    setTimeout(() => aiTakeTurn(), AI_DELAY);
+                }
+            };
+
+            if (overdrew && !gameState.players[gameState.currentPlayer].isAI) {
+                // Joueur humain : afficher le choix de defausse
+                showDiscardOverlay(gameState.currentPlayer, finalizeTurnStart);
+            } else {
+                if (overdrew) {
+                    // IA : defausser automatiquement la derniere carte piochee
+                    gameState.players[gameState.currentPlayer].hand.pop();
+                }
+                finalizeTurnStart();
             }
         }
 

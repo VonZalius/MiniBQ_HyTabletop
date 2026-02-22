@@ -1598,6 +1598,169 @@
             }
         }
 
+        /* ==================== HEX BOARD ==================== */
+        /* Board size computed from HEX_BOARD_SIDE=8: W=570px, H=506px */
+        #board.hex-board {
+            position: relative;
+            background: #070c05;
+            display: block;
+            padding: 0;
+            gap: 0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow:
+                0 0 80px rgba(0,0,0,0.85),
+                0 0 0 2px rgba(80,65,25,0.3),
+                inset 0 0 50px rgba(0,0,0,0.55);
+        }
+
+        .hex-cell {
+            position: absolute;
+            width: 38px;
+            height: 44px;
+            /* Clip-path with 2% inset to reveal thin dark gap between cells */
+            clip-path: polygon(50% 2%, 98% 26%, 98% 74%, 50% 98%, 2% 74%, 2% 26%);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            transition: filter 0.15s ease;
+        }
+
+        @media (hover: hover) {
+            .hex-cell:hover { filter: brightness(1.18); z-index: 10; }
+        }
+
+        /* Terrain colors matching the square board palette */
+        .hex-cell.height-0 {
+            background: linear-gradient(145deg, #2d5a3d 0%, #1e4a2e 40%, #1a3d25 100%);
+        }
+        .hex-cell.height-1 {
+            background: linear-gradient(145deg, #4a8c5e 0%, #3d7a4e 50%, #2d6a3e 100%);
+        }
+        .hex-cell.height-2 {
+            background: linear-gradient(145deg, #6bab82 0%, #5a9a70 50%, #4a8a60 100%);
+        }
+        .hex-cell.water {
+            background: linear-gradient(145deg, #2196f3 0%, #1976d2 40%, #0d47a1 100%);
+            animation: hex-water-shimmer 3s ease-in-out infinite;
+        }
+        .hex-cell.obstacle {
+            background: linear-gradient(145deg, #6b6b6b 0%, #4a4a4a 30%, #383838 60%, #2a2a2a 100%);
+            cursor: not-allowed;
+        }
+        .hex-cell.obstacle-tall {
+            background: linear-gradient(145deg, #7a7a7a 0%, #5a5a5a 30%, #484848 60%, #363636 100%);
+            cursor: not-allowed;
+        }
+
+        /* Water animation — filter only, no transform (scale breaks clip-path shape) */
+        @keyframes hex-water-shimmer {
+            0%, 100% { filter: brightness(0.88); }
+            50%       { filter: brightness(1.12); }
+        }
+
+        /* Highlights use drop-shadow (clip-path clips box-shadow) */
+        .hex-cell.highlight-move {
+            filter: brightness(1.35) drop-shadow(0 0 5px #4aff4a) drop-shadow(0 0 10px rgba(74,255,74,0.5));
+        }
+        .hex-cell.highlight-attack {
+            filter: brightness(1.25) drop-shadow(0 0 5px #ff4a4a) drop-shadow(0 0 10px rgba(255,74,74,0.5));
+        }
+        .hex-cell.highlight-summon {
+            filter: brightness(1.35) drop-shadow(0 0 5px #ffd700) drop-shadow(0 0 10px rgba(255,215,0,0.5));
+        }
+        .hex-cell.highlight-crystal {
+            filter: brightness(1.4) drop-shadow(0 0 6px #00ffff) drop-shadow(0 0 12px rgba(0,255,255,0.6));
+            animation: crystal-pulse-hex 1.2s ease-in-out infinite;
+        }
+        .hex-cell.selected-crystal {
+            filter: brightness(1.5) drop-shadow(0 0 8px #ffd700) drop-shadow(0 0 14px rgba(255,215,0,0.7));
+        }
+        @keyframes crystal-pulse-hex {
+            0%,100% { filter: brightness(1.4) drop-shadow(0 0 6px #00ffff) drop-shadow(0 0 12px rgba(0,255,255,0.6)); }
+            50%      { filter: brightness(1.65) drop-shadow(0 0 10px #00ffff) drop-shadow(0 0 18px rgba(0,255,255,0.85)); }
+        }
+
+        /* Units in hex mode — sized for 38×44 hex cells */
+        #board.hex-board .unit {
+            width: 30px;
+            height: 30px;
+            position: absolute;
+            top: 7px;     /* (44 - 30) / 2 */
+            left: 4px;    /* (38 - 30) / 2 */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-direction: column;
+            z-index: 10;
+            pointer-events: none;
+        }
+        #board.hex-board .unit .unit-emoji {
+            font-size: 14px;
+            top: -2px;
+        }
+        #board.hex-board .unit .hp-bar {
+            width: 26px;
+            height: 3px;
+            bottom: 2px;
+        }
+        #board.hex-board .crystal {
+            width: 28px;
+            height: 28px;
+            left: 5px;   /* (38 - 28) / 2 */
+            top: 8px;    /* (44 - 28) / 2 */
+            font-size: 11px;
+        }
+
+        /* Hex editor board */
+        .hex-editor-board {
+            position: relative;
+            display: inline-block;
+        }
+        .hex-editor-cell {
+            position: absolute;
+            clip-path: polygon(50% 2%, 98% 26%, 98% 74%, 50% 98%, 2% 74%, 2% 26%);
+            cursor: crosshair;
+            transition: filter 0.1s;
+        }
+        .hex-editor-cell:hover { filter: brightness(1.5); }
+        .hex-editor-cell.ec-plain { background: #3a6b2a; }
+        .hex-editor-cell.ec-hill { background: #6a9a4a; }
+        .hex-editor-cell.ec-mountain { background: #9ac06a; }
+        .hex-editor-cell.ec-water { background: #2060a0; }
+        .hex-editor-cell.ec-rock { background: #5a5048; }
+        .hex-editor-cell.ec-wall { background: #3a3040; }
+
+        /* Map type toggle in editor */
+        .map-type-toggle {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+        .map-type-btn {
+            padding: 8px 22px;
+            border-radius: 8px;
+            border: 1px solid rgba(130,100,40,0.4);
+            background: rgba(0,0,0,0.4);
+            color: var(--text-secondary);
+            font-family: 'Cinzel', serif;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .map-type-btn.active {
+            border-color: var(--gold);
+            background: rgba(201,162,39,0.18);
+            color: var(--gold-light);
+            box-shadow: 0 0 10px rgba(201,162,39,0.3);
+        }
+
+
         /* Very small phones */
         @media (max-width: 380px) {
             .player-panel h2 {
@@ -1754,9 +1917,14 @@
         </div>
     </div>
 
+
     <div class="overlay hidden" id="mapEditorOverlay">
         <div class="map-editor-modal">
             <h2>Editeur de Carte</h2>
+            <div class="map-type-toggle">
+                <button class="map-type-btn active" id="btnMapSquare" onclick="setMapType('square')">⬜ Grille carrée</button>
+                <button class="map-type-btn" id="btnMapHex" onclick="setMapType('hex')">⬡ Hexagone</button>
+            </div>
             <div class="editor-container">
                 <div class="editor-palette">
                     <h4>Terrain</h4>
@@ -1879,7 +2047,7 @@
                 },
                 passive: {
                     name: 'Aquatique',
-                    description: 'Se deplace sur l\'eau. Sur l\'eau, soigne 1 PV adjacent'
+                    description: 'Se deplace sur l\'eau. Sur l\'eau, soigne 2 PV a un allie adjacent ou attaque normalement'
                 },
                 canMoveOnWater: true,
                 waterHeal: true,
@@ -1930,6 +2098,114 @@
             }
         ];
 
+        // ==================== HEX BOARD CONSTANTS ====================
+        const HEX_BOARD_SIDE = 8;    // cells per edge of the big hexagon (inclusive)
+        const HEX_W = 38;            // hex cell pixel width  (≈ sqrt(3)*22), must be even
+        const HEX_H = 44;            // hex cell pixel height (= 2*22), must be even
+        const HEX_VSPACE = 33;       // vertical spacing between hex rows (= 0.75*44)
+        const HEX_S = HEX_BOARD_SIDE - 1; // max axial coordinate (7 for side=8)
+        // Board div dimensions in hex mode (side=8 → 570×506px)
+        const HEX_BOARD_W = 2 * HEX_S * HEX_W + HEX_W;
+        const HEX_BOARD_H = 2 * HEX_S * HEX_VSPACE + HEX_H;
+        // Pixel offset of axial (0,0) cell center inside the board div (exact integers since HEX_W/H are even)
+        const HEX_OX = HEX_S * HEX_W + HEX_W / 2; // 285
+        const HEX_OY = HEX_S * HEX_VSPACE + HEX_H / 2; // 253
+
+        // Editor hex constants (smaller cells)
+        const EHEX_W = 22;
+        const EHEX_H = 26;
+        const EHEX_VSPACE = 19;
+        const EHEX_OX = HEX_S * EHEX_W + Math.round(EHEX_W / 2);
+        const EHEX_OY = HEX_S * EHEX_VSPACE + Math.round(EHEX_H / 2);
+        const HEX_EDITOR_W = 2 * HEX_S * EHEX_W + EHEX_W;
+        const HEX_EDITOR_H = 2 * HEX_S * EHEX_VSPACE + EHEX_H;
+
+        // ==================== BOARD ABSTRACTION LAYER ====================
+        function isHexMode() { return gameState.mapType === 'hex'; }
+
+        function getBoardDim() {
+            return isHexMode() ? (2 * HEX_BOARD_SIDE - 1) : BOARD_SIZE;
+        }
+
+        // Convert array indices (col, row) to axial (q, r) in hex mode
+        function idxToAxial(x, y) { return { q: x - HEX_S, r: y - HEX_S }; }
+        function axialToIdx(q, r) { return { x: q + HEX_S, y: r + HEX_S }; }
+
+        function isValidCell(x, y) {
+            if (isHexMode()) {
+                const q = x - HEX_S, r = y - HEX_S;
+                return Math.abs(q) <= HEX_S && Math.abs(r) <= HEX_S && Math.abs(q + r) <= HEX_S;
+            }
+            return x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE;
+        }
+
+        function getCellAt(x, y) {
+            if (!isValidCell(x, y)) return null;
+            return gameState.board[y][x] || null;
+        }
+
+        // Cardinal directions: 4 for square, 6 for hex
+        function getDirections() {
+            if (isHexMode()) {
+                return [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1},{dx:1,dy:-1},{dx:-1,dy:1}];
+            }
+            return [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+        }
+
+        // Cell-to-cell distance (Manhattan for square, hex distance for hex)
+        function cellDistance(x1, y1, x2, y2) {
+            if (isHexMode()) {
+                const q1 = x1 - HEX_S, r1 = y1 - HEX_S;
+                const q2 = x2 - HEX_S, r2 = y2 - HEX_S;
+                return (Math.abs(q1 - q2) + Math.abs(r1 - r2) + Math.abs(q1 + r1 - q2 - r2)) / 2;
+            }
+            return Math.abs(x1 - x2) + Math.abs(y1 - y2);
+        }
+
+        // Pixel center of a cell (for animations) — relative to board div top-left
+        // All values are exact integers: HEX_W=38 (even), HEX_H=44 (even), HEX_W/2=19, HEX_H/2=22
+        function hexCellCenter(x, y) {
+            const q = x - HEX_S, r = y - HEX_S;
+            return {
+                px: q * HEX_W + r * (HEX_W / 2) + HEX_OX,
+                py: r * HEX_VSPACE + HEX_OY
+            };
+        }
+
+        // Pixel top-left of a hex cell div within board div
+        function hexCellTopLeft(x, y) {
+            const c = hexCellCenter(x, y);
+            return { left: c.px - HEX_W / 2, top: c.py - HEX_H / 2 };
+        }
+
+        // Hex Line of Sight: cube-coordinate interpolation
+        function hexRound(fq, fr) {
+            const fs = -fq - fr;
+            let q = Math.round(fq), r = Math.round(fr), s = Math.round(fs);
+            const dq = Math.abs(q - fq), dr = Math.abs(r - fr), ds = Math.abs(s - fs);
+            if (dq > dr && dq > ds) q = -r - s;
+            else if (dr > ds) r = -q - s;
+            return { q, r };
+        }
+
+        function hasHexLineOfSight(x1, y1, x2, y2, ignoreHeightBlocking) {
+            const n = cellDistance(x1, y1, x2, y2);
+            if (n === 0) return true;
+            const q1 = x1 - HEX_S, r1 = y1 - HEX_S;
+            const q2 = x2 - HEX_S, r2 = y2 - HEX_S;
+            const originCell = getCellAt(x1, y1);
+            const originHeight = originCell ? originCell.height : 0;
+            for (let i = 1; i < n; i++) {
+                const t = i / n;
+                const { q, r } = hexRound(q1 + (q2 - q1) * t, r1 + (r2 - r1) * t);
+                const cell = getCellAt(q + HEX_S, r + HEX_S);
+                if (!cell) return false;
+                if (cell.type === 'obstacle_tall') return false;
+                if (!ignoreHeightBlocking && cell.height > originHeight) return false;
+            }
+            return true;
+        }
+
         // ==================== ETAT DU JEU ====================
         const BOARD_SIZE = 12;
         const AI_DELAY = 600; // Delai entre les actions de l'IA (ms)
@@ -1937,6 +2213,7 @@
         let gameState = {
             phase: 'mode_selection', // mode_selection, crystal_placement_p1, crystal_placement_p2, playing, game_over
             gameMode: '2players', // '2players' ou 'vsAI'
+            mapType: 'square',   // 'square' or 'hex'
             turn: 1,
             currentPlayer: 1,
             actionTaken: false,
@@ -1979,46 +2256,43 @@
 
         // ==================== INITIALISATION DU PLATEAU ====================
         function initDefaultBoardData() {
+            if (isHexMode()) {
+                initHexBoardData();
+                return;
+            }
             gameState.board = [];
             for (let y = 0; y < BOARD_SIZE; y++) {
                 gameState.board[y] = [];
                 for (let x = 0; x < BOARD_SIZE; x++) {
-                    const cell = {
-                        x: x,
-                        y: y,
-                        height: 0,
-                        type: 'normal',
-                        unit: null,
-                        crystal: null
-                    };
+                    gameState.board[y][x] = { x, y, height: 0, type: 'normal', unit: null, crystal: null };
+                }
+            }
+        }
 
-                    // Variations de terrain symetriques
-                    if ((x === 3 && y === 3) || (x === 8 && y === 8) ||
-                        (x === 3 && y === 8) || (x === 8 && y === 3)) {
-                        cell.height = 1;
+        function initHexBoardData() {
+            const dim = 2 * HEX_BOARD_SIDE - 1; // 15 for side=8
+            gameState.board = [];
+            for (let y = 0; y < dim; y++) {
+                gameState.board[y] = [];
+                for (let x = 0; x < dim; x++) {
+                    if (isValidCell(x, y)) {
+                        gameState.board[y][x] = { x, y, height: 0, type: 'normal', unit: null, crystal: null };
+                    } else {
+                        gameState.board[y][x] = null;
                     }
-                    if ((x === 5 && y === 5) || (x === 6 && y === 6)) {
-                        cell.height = 2;
-                    }
-                    if ((x === 5 && y === 2) || (x === 6 && y === 9) ||
-                        (x === 2 && y === 5) || (x === 9 && y === 6)) {
-                        cell.type = 'water';
-                    }
-                    if ((x === 2 && y === 2) || (x === 9 && y === 9)) {
-                        cell.type = 'obstacle';
-                    }
-                    if ((x === 5 && y === 6) || (x === 6 && y === 5)) {
-                        cell.type = 'obstacle_tall';
-                    }
-
-                    gameState.board[y][x] = cell;
                 }
             }
         }
 
         function renderGameBoard() {
+            if (isHexMode()) {
+                renderHexBoard();
+                return;
+            }
             const boardEl = document.getElementById('board');
             boardEl.innerHTML = '';
+            boardEl.className = 'board';
+            boardEl.style.cssText = '';
 
             for (let y = 0; y < BOARD_SIZE; y++) {
                 for (let x = 0; x < BOARD_SIZE; x++) {
@@ -2035,7 +2309,42 @@
                 }
             }
             renderCoordinates();
-            // Responsive scaling after board render
+            const animLayer = document.getElementById('animationLayer');
+            animLayer.style.top = '10px';
+            animLayer.style.left = '10px';
+            setTimeout(scaleBoardForMobile, 10);
+        }
+
+        function renderHexBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            boardEl.className = 'board hex-board';
+            boardEl.style.width = HEX_BOARD_W + 'px';
+            boardEl.style.height = HEX_BOARD_H + 'px';
+
+            const animLayer = document.getElementById('animationLayer');
+            animLayer.style.top = '0px';
+            animLayer.style.left = '0px';
+
+            const dim = 2 * HEX_BOARD_SIDE - 1;
+            for (let y = 0; y < dim; y++) {
+                for (let x = 0; x < dim; x++) {
+                    const cell = gameState.board[y][x];
+                    if (!cell) continue;
+                    const cellEl = document.createElement('div');
+                    cellEl.className = `hex-cell height-${cell.height}`;
+                    if (cell.type !== 'normal') cellEl.classList.add(cell.type.replace('_', '-'));
+                    cellEl.dataset.x = x;
+                    cellEl.dataset.y = y;
+                    const {left, top} = hexCellTopLeft(x, y);
+                    cellEl.style.left = left + 'px';
+                    cellEl.style.top = top + 'px';
+                    cellEl.addEventListener('click', () => onCellClick(x, y));
+                    boardEl.appendChild(cellEl);
+                }
+            }
+            // No coordinate layer for hex (too complex)
+            document.getElementById('coordLayer').innerHTML = '';
             setTimeout(scaleBoardForMobile, 10);
         }
 
@@ -2084,11 +2393,21 @@
             if (btn) btn.classList.add('active');
         }
 
+        function setMapType(type) {
+            gameState.mapType = type;
+            document.getElementById('btnMapSquare').classList.toggle('active', type === 'square');
+            document.getElementById('btnMapHex').classList.toggle('active', type === 'hex');
+            initDefaultBoardData();
+            initEditorBoard();
+        }
+
         function showMapEditor() {
-            // Initialiser les donnees par defaut si pas encore fait
             if (gameState.board.length === 0) {
                 initDefaultBoardData();
             }
+            // Sync toggle buttons to current mapType
+            document.getElementById('btnMapSquare').classList.toggle('active', !isHexMode());
+            document.getElementById('btnMapHex').classList.toggle('active', isHexMode());
             document.getElementById('mapEditorOverlay').classList.remove('hidden');
             initEditorBoard();
         }
@@ -2096,6 +2415,15 @@
         function initEditorBoard() {
             const editorBoard = document.getElementById('editorBoard');
             editorBoard.innerHTML = '';
+
+            if (isHexMode()) {
+                initHexEditorBoard(editorBoard);
+                return;
+            }
+
+            // Square editor board
+            editorBoard.style.cssText = '';
+            editorBoard.className = 'editor-board';
 
             for (let y = 0; y < BOARD_SIZE; y++) {
                 for (let x = 0; x < BOARD_SIZE; x++) {
@@ -2156,14 +2484,55 @@
             });
         }
 
+        function initHexEditorBoard(container) {
+            container.style.cssText = `position:relative;width:${HEX_EDITOR_W}px;height:${HEX_EDITOR_H}px;display:inline-block;`;
+            container.className = 'hex-editor-board';
+            const dim = 2 * HEX_BOARD_SIDE - 1;
+            for (let y = 0; y < dim; y++) {
+                for (let x = 0; x < dim; x++) {
+                    const cell = getCellAt(x, y);
+                    if (!cell) continue;
+                    const cellEl = document.createElement('div');
+                    cellEl.className = 'hex-editor-cell';
+                    cellEl.dataset.x = x;
+                    cellEl.dataset.y = y;
+                    // Pixel position using editor hex constants
+                    const q = x - HEX_S, r = y - HEX_S;
+                    const left = Math.round(q * EHEX_W + r * EHEX_W / 2 + EHEX_OX - EHEX_W / 2);
+                    const top = Math.round(r * EHEX_VSPACE + EHEX_OY - EHEX_H / 2);
+                    cellEl.style.left = left + 'px';
+                    cellEl.style.top = top + 'px';
+                    cellEl.style.width = EHEX_W + 'px';
+                    cellEl.style.height = EHEX_H + 'px';
+                    updateEditorCellAppearance(cellEl, cell);
+                    cellEl.addEventListener('mousedown', (e) => { e.preventDefault(); editorState.painting = true; paintCell(x, y); });
+                    cellEl.addEventListener('mouseenter', () => { if (editorState.painting) paintCell(x, y); });
+                    cellEl.addEventListener('mouseup', () => { editorState.painting = false; });
+                    cellEl.addEventListener('touchstart', (e) => { e.preventDefault(); editorState.painting = true; paintCell(x, y); }, {passive:false});
+                    cellEl.addEventListener('touchend', () => { editorState.painting = false; });
+                    container.appendChild(cellEl);
+                }
+            }
+            container.addEventListener('mouseleave', () => { editorState.painting = false; });
+            container.addEventListener('touchmove', (e) => {
+                if (!editorState.painting) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (el && el.classList.contains('hex-editor-cell')) {
+                    paintCell(parseInt(el.dataset.x), parseInt(el.dataset.y));
+                }
+            }, {passive:false});
+        }
+
         function paintCell(x, y) {
             const terrain = editorState.selectedTerrain;
             applyCellTerrain(x, y, terrain);
 
             // Symetrie
             if (document.getElementById('editorSymmetry').checked) {
-                const mx = BOARD_SIZE - 1 - x;
-                const my = BOARD_SIZE - 1 - y;
+                const mirrorPos = getMirrorPosition(x, y);
+                const mx = mirrorPos.x, my = mirrorPos.y;
                 if (mx !== x || my !== y) {
                     applyCellTerrain(mx, my, terrain);
                 }
@@ -2171,7 +2540,8 @@
         }
 
         function applyCellTerrain(x, y, terrain) {
-            const cell = gameState.board[y][x];
+            const cell = getCellAt(x, y);
+            if (!cell) return;
             switch (terrain) {
                 case 'plain':
                     cell.type = 'normal';
@@ -2199,12 +2569,14 @@
                     break;
             }
             // Update the editor cell appearance
-            const cellEl = document.querySelector(`.editor-cell[data-x="${x}"][data-y="${y}"]`);
+            const editorSel = isHexMode() ? `.hex-editor-cell[data-x="${x}"][data-y="${y}"]` : `.editor-cell[data-x="${x}"][data-y="${y}"]`;
+            const cellEl = document.querySelector(editorSel);
             if (cellEl) updateEditorCellAppearance(cellEl, cell);
         }
 
         function updateEditorCellAppearance(cellEl, cell) {
-            cellEl.className = 'editor-cell';
+            const baseClass = cellEl.classList.contains('hex-editor-cell') ? 'hex-editor-cell' : 'editor-cell';
+            cellEl.className = baseClass;
             if (cell.type === 'water') {
                 cellEl.classList.add('ec-water');
                 cellEl.textContent = '';
@@ -2242,10 +2614,11 @@
             gameState.maxHandSize = isNaN(rawMax) ? 5 : rawMax;
             gameState.maxEffectif = parseInt(document.getElementById('editorMaxEffectif').value) || 12;
             // Clear units and crystals from board data (clean slate)
-            for (let y = 0; y < BOARD_SIZE; y++) {
-                for (let x = 0; x < BOARD_SIZE; x++) {
-                    gameState.board[y][x].unit = null;
-                    gameState.board[y][x].crystal = null;
+            const dim = getBoardDim();
+            for (let y = 0; y < dim; y++) {
+                for (let x = 0; x < dim; x++) {
+                    const c = getCellAt(x, y);
+                    if (c) { c.unit = null; c.crystal = null; }
                 }
             }
             addMessage('Carte confirmee!', 'system');
@@ -2346,29 +2719,28 @@
         }
 
         function highlightValidCrystalCells() {
-            document.querySelectorAll('.cell').forEach(cellEl => {
+            const selector = isHexMode() ? '.hex-cell' : '.cell';
+            document.querySelectorAll(selector).forEach(cellEl => {
                 const x = parseInt(cellEl.dataset.x);
                 const y = parseInt(cellEl.dataset.y);
-                const cell = gameState.board[y][x];
-
-                if (cell.type === 'normal' && !cell.crystal) {
+                const cell = getCellAt(x, y);
+                if (cell && cell.type === 'normal' && !cell.crystal) {
                     cellEl.classList.add('highlight-crystal');
                 }
             });
         }
 
         function clearCrystalHighlights() {
-            document.querySelectorAll('.cell').forEach(cellEl => {
+            document.querySelectorAll('.cell, .hex-cell').forEach(cellEl => {
                 cellEl.classList.remove('highlight-crystal', 'selected-crystal');
             });
         }
 
         // ==================== GESTION DES CLICS ====================
         function onCellClick(x, y) {
-            // Bloquer les interactions pendant les animations
             if (gameState.animating) return;
-
-            const cell = gameState.board[y][x];
+            const cell = getCellAt(x, y);
+            if (!cell) return;
 
             // Phase de placement de cristaux
             if (gameState.phase === 'crystal_placement_p1' || gameState.phase === 'crystal_placement_p2') {
@@ -2434,7 +2806,7 @@
 
         // ==================== PLACEMENT DES CRISTAUX ====================
         function handleCrystalPlacement(x, y) {
-            const cell = gameState.board[y][x];
+            const cell = getCellAt(x, y);
 
             if (cell.type !== 'normal') {
                 addMessage('Case invalide! Choisissez une case de terrain normal.', 'system');
@@ -2528,6 +2900,11 @@
         }
 
         function getMirrorPosition(x, y) {
+            if (isHexMode()) {
+                // Axial mirror: (q,r) → (-q,-r), then back to array index
+                const q = x - HEX_S, r = y - HEX_S;
+                return { x: -q + HEX_S, y: -r + HEX_S };
+            }
             return {
                 x: BOARD_SIZE - 1 - x,
                 y: BOARD_SIZE - 1 - y
@@ -2536,15 +2913,16 @@
 
         function placeCrystal(x, y, player) {
             // Verifier si la case est deja occupee par un cristal
-            if (gameState.board[y][x].crystal) {
+            const startCell = getCellAt(x, y);
+            if (startCell && startCell.crystal) {
                 // Trouver une case adjacente libre
-                const directions = [{dx:0,dy:1},{dx:1,dy:0},{dx:0,dy:-1},{dx:-1,dy:0}];
+                const directions = getDirections();
                 for (const dir of directions) {
                     const nx = x + dir.dx;
                     const ny = y + dir.dy;
-                    if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
-                        const cell = gameState.board[ny][nx];
-                        if (cell.type === 'normal' && !cell.crystal) {
+                    if (true) {
+                        const cell = getCellAt(nx, ny);
+                        if (cell && cell.type === 'normal' && !cell.crystal) {
                             x = nx;
                             y = ny;
                             break;
@@ -2561,7 +2939,8 @@
             };
 
             gameState.players[player].crystals.push(crystal);
-            gameState.board[y][x].crystal = crystal;
+            const crystalCell = getCellAt(x, y);
+            if (crystalCell) crystalCell.crystal = crystal;
             renderCrystal(crystal);
         }
 
@@ -2631,7 +3010,8 @@
         }
 
         function getCellElement(x, y) {
-            return document.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+            const sel = isHexMode() ? '.hex-cell' : '.cell';
+            return document.querySelector(`${sel}[data-x="${x}"][data-y="${y}"]`);
         }
 
         // ==================== SELECTION ET ACTIONS ====================
@@ -2706,14 +3086,14 @@
             cells.forEach(pos => {
                 const cellEl = getCellElement(pos.x, pos.y);
                 if (cellEl) {
-                    cellEl.classList.add(`highlight-${type}`);
+                    cellEl.classList.add(`highlight-${pos.isHeal ? 'summon' : type}`);
                 }
             });
         }
 
         function clearHighlights() {
             gameState.highlightedCells = [];
-            document.querySelectorAll('.cell').forEach(cell => {
+            document.querySelectorAll('.cell, .hex-cell').forEach(cell => {
                 cell.classList.remove('highlight-move', 'highlight-attack', 'highlight-summon');
             });
         }
@@ -2739,25 +3119,29 @@
             const player = gameState.players[gameState.currentPlayer];
             const cells = [];
 
+            // Get the set of neighbor offsets to check
+            const dirs = isHexMode()
+                ? getDirections()
+                : (() => {
+                    const d = [];
+                    for (let dy = -1; dy <= 1; dy++)
+                        for (let dx = -1; dx <= 1; dx++)
+                            if (dx !== 0 || dy !== 0) d.push({dx, dy});
+                    return d;
+                })();
+
             player.crystals.forEach(crystal => {
                 if (crystal.hp <= 0) return;
 
-                for (let dy = -1; dy <= 1; dy++) {
-                    for (let dx = -1; dx <= 1; dx++) {
-                        if (dx === 0 && dy === 0) continue;
-
-                        const nx = crystal.x + dx;
-                        const ny = crystal.y + dy;
-
-                        if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
-
-                        const cell = gameState.board[ny][nx];
-                        if (cell.type !== 'normal') continue;
-                        if (cell.unit || cell.crystal) continue;
-
-                        if (!cells.some(c => c.x === nx && c.y === ny)) {
-                            cells.push({x: nx, y: ny});
-                        }
+                for (const dir of dirs) {
+                    const nx = crystal.x + dir.dx;
+                    const ny = crystal.y + dir.dy;
+                    const cell = getCellAt(nx, ny);
+                    if (!cell) continue;
+                    if (cell.type !== 'normal') continue;
+                    if (cell.unit || cell.crystal) continue;
+                    if (!cells.some(c => c.x === nx && c.y === ny)) {
+                        cells.push({x: nx, y: ny});
                     }
                 }
             });
@@ -2787,7 +3171,7 @@
             // Retirer la carte jouee de la main
             const handIdx = player.hand.indexOf(char.id);
             if (handIdx !== -1) player.hand.splice(handIdx, 1);
-            gameState.board[y][x].unit = unit;
+            getCellAt(x, y).unit = unit;
 
             // Animation d'invocation
             playSummonAnimation(x, y, () => {
@@ -2838,11 +3222,11 @@
         }
 
         function getCellPosition(x, y) {
-            // Calculer la position en pixels d'une case
-            return {
-                x: x * 52 + 26, // 50px + 2px gap, centre de la case
-                y: y * 52 + 26
-            };
+            if (isHexMode()) {
+                const c = hexCellCenter(x, y);
+                return { x: c.px, y: c.py };
+            }
+            return { x: x * 52 + 26, y: y * 52 + 26 };
         }
 
         // ==================== DEPLACEMENT ====================
@@ -2865,22 +3249,14 @@
             while (queue.length > 0) {
                 const current = queue.shift();
 
-                const directions = [
-                    {dx: 0, dy: -1},
-                    {dx: 0, dy: 1},
-                    {dx: -1, dy: 0},
-                    {dx: 1, dy: 0}
-                ];
-
-                for (const dir of directions) {
+                for (const dir of getDirections()) {
                     const nx = current.x + dir.dx;
                     const ny = current.y + dir.dy;
                     const key = `${nx},${ny}`;
 
-                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
-
-                    const targetCell = gameState.board[ny][nx];
-                    const currentCell = gameState.board[current.y][current.x];
+                    const targetCell = getCellAt(nx, ny);
+                    if (!targetCell) continue;
+                    const currentCell = getCellAt(current.x, current.y);
 
                     if (targetCell.type === 'obstacle' || targetCell.type === 'obstacle_tall') continue;
                     if (targetCell.type === 'water' && !unit.character.canMoveOnWater) continue;
@@ -2935,35 +3311,38 @@
             gameState.animating = true;
 
             // Retirer de l'ancienne case dans les donnees
-            gameState.board[unit.y][unit.x].unit = null;
+            getCellAt(unit.x, unit.y).unit = null;
 
             const unitEl = document.getElementById(`unit-${unit.id}`);
             if (unitEl) {
                 const board = document.getElementById('board');
 
-                // Calculer position initiale (10px = board padding)
-                const cellSize = 52; // 50px + 2px gap
-                const startX = unit.x * cellSize + 5 + 10; // 5px centrage + 10px padding
-                const startY = unit.y * cellSize + 5 + 10;
+                let startX, startY;
+                if (isHexMode()) {
+                    const tl = hexCellTopLeft(unit.x, unit.y);
+                    const unitSize = 30;
+                    startX = tl.left + Math.round((HEX_W - unitSize) / 2);
+                    startY = tl.top + Math.round((HEX_H - unitSize) / 2);
+                } else {
+                    const cellSize = 52;
+                    startX = unit.x * cellSize + 5 + 10;
+                    startY = unit.y * cellSize + 5 + 10;
+                }
 
-                // Deplacer l'unite vers le board pour l'animation
                 unitEl.style.position = 'absolute';
                 unitEl.style.left = startX + 'px';
                 unitEl.style.top = startY + 'px';
                 unitEl.style.zIndex = '100';
                 board.appendChild(unitEl);
-
                 unitEl.classList.add('moving');
 
                 animateMovementPath(unitEl, unit, path, 1, () => {
-                    // Supprimer l'element anime
                     unitEl.remove();
 
-                    // Mettre a jour les donnees finales
                     unit.x = x;
                     unit.y = y;
                     unit.movementLeft -= targetCell.cost;
-                    gameState.board[y][x].unit = unit;
+                    getCellAt(x, y).unit = unit;
 
                     // Re-rendre l'unite dans sa nouvelle cellule
                     renderUnit(unit);
@@ -2998,21 +3377,15 @@
                     return current.path;
                 }
 
-                const directions = [
-                    {dx: 0, dy: -1}, {dx: 0, dy: 1},
-                    {dx: -1, dy: 0}, {dx: 1, dy: 0}
-                ];
-
-                for (const dir of directions) {
+                for (const dir of getDirections()) {
                     const nx = current.x + dir.dx;
                     const ny = current.y + dir.dy;
                     const key = `${nx},${ny}`;
 
-                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
+                    const targetCell = getCellAt(nx, ny);
+                    if (!targetCell) continue;
                     if (visited.has(key)) continue;
-
-                    const targetCell = gameState.board[ny][nx];
-                    const currentCell = gameState.board[current.y][current.x];
+                    const currentCell = getCellAt(current.x, current.y);
 
                     if (targetCell.type === 'obstacle' || targetCell.type === 'obstacle_tall') continue;
                     if (targetCell.type === 'water' && !(unit && unit.character && unit.character.canMoveOnWater)) continue;
@@ -3044,27 +3417,35 @@
             const pos = path[index];
             const layer = document.getElementById('animationLayer');
 
-            // Position en pixels (10px = board padding)
-            const cellSize = 52;
-            const pixelX = pos.x * cellSize + 5 + 10;
-            const pixelY = pos.y * cellSize + 5 + 10;
+            let pixelX, pixelY, trailX, trailY;
+            if (isHexMode()) {
+                const unitSize = 30;
+                const tl = hexCellTopLeft(pos.x, pos.y);
+                pixelX = tl.left + Math.round((HEX_W - unitSize) / 2);
+                pixelY = tl.top + Math.round((HEX_H - unitSize) / 2);
+                const c = hexCellCenter(pos.x, pos.y);
+                trailX = c.px - 10;
+                trailY = c.py - 10;
+            } else {
+                const cellSize = 52;
+                pixelX = pos.x * cellSize + 5 + 10;
+                pixelY = pos.y * cellSize + 5 + 10;
+                trailX = pos.x * cellSize + 15;
+                trailY = pos.y * cellSize + 15;
+            }
 
-            // Creer une trainee sur la position precedente
             if (index > 0) {
                 const trail = document.createElement('div');
                 trail.className = 'move-trail';
-                const prevPos = path[index - 1];
-                trail.style.left = (prevPos.x * cellSize + 15) + 'px';
-                trail.style.top = (prevPos.y * cellSize + 15) + 'px';
+                trail.style.left = trailX + 'px';
+                trail.style.top = trailY + 'px';
                 layer.appendChild(trail);
                 setTimeout(() => trail.remove(), 500);
             }
 
-            // Animer le deplacement avec transition CSS
             unitEl.style.left = pixelX + 'px';
             unitEl.style.top = pixelY + 'px';
 
-            // Continuer au prochain point
             setTimeout(() => {
                 animateMovementPath(unitEl, unit, path, index + 1, callback);
             }, 150);
@@ -3091,91 +3472,70 @@
         function getAttackCells(unit) {
             const attack = unit.character.attack;
             const cells = [];
-            const unitHeight = gameState.board[unit.y][unit.x].height;
-            const ignoreHeight = unit.character.ignoreHeight || false;
-            const unitOnWater = gameState.board[unit.y][unit.x].type === 'water';
+            const unitCell = getCellAt(unit.x, unit.y);
+            const unitHeight = unitCell ? unitCell.height : 0;
+            const ignoreHeight = unit.character.ignoreHeight || (unit.character.waterHeal && unitCell && unitCell.type === 'water') || false;
+            const unitOnWater = unitCell && unitCell.type === 'water';
+            const dirs = getDirections();
 
-            // Canard sur l'eau: mode soin (cible allies adjacents)
+            // Canard sur l'eau: ajoute les allies adjacents comme cibles de soin
+            // (les ennemis sont ajoutes par la logique standard ci-dessous)
             if (unit.character.waterHeal && unitOnWater) {
-                const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
-                for (const dir of directions) {
-                    const nx = unit.x + dir.dx;
-                    const ny = unit.y + dir.dy;
-                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
-                    const targetCell = gameState.board[ny][nx];
-                    if (targetCell.unit && targetCell.unit.player === unit.player && targetCell.unit !== unit) {
-                        cells.push({x: nx, y: ny});
+                for (const dir of dirs) {
+                    const nx = unit.x + dir.dx, ny = unit.y + dir.dy;
+                    const targetCell = getCellAt(nx, ny);
+                    if (targetCell && targetCell.unit && targetCell.unit.player === unit.player && targetCell.unit !== unit) {
+                        cells.push({x: nx, y: ny, isHeal: true});
                     }
                 }
-                return cells;
+                // Fall through to standard attack logic to also add enemy targets
             }
 
-            // Charge du Lapin: cible a 1, 2 ou 3 cases en ligne droite (dash vers elle, meme hauteur)
+            // Charge du Lapin: cible en ligne droite (meme hauteur)
             if (attack.pattern === 'charge') {
-                const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
-                for (const dir of directions) {
+                for (const dir of dirs) {
                     for (let dist = 1; dist <= attack.chargeDistance; dist++) {
                         const targetX = unit.x + dir.dx * dist;
                         const targetY = unit.y + dir.dy * dist;
-                        if (targetX < 0 || targetX >= BOARD_SIZE || targetY < 0 || targetY >= BOARD_SIZE) break;
-                        const targetCell = gameState.board[targetY][targetX];
-                        if (!ignoreHeight && targetCell.height !== unitHeight) break; // hauteur differente bloque le dash
-                        // Verifier que les cases intermediaires sont libres
+                        const targetCell = getCellAt(targetX, targetY);
+                        if (!targetCell) break;
+                        if (!ignoreHeight && targetCell.height !== unitHeight) break;
                         let pathClear = true;
                         for (let i = 1; i < dist; i++) {
-                            const mx = unit.x + dir.dx * i;
-                            const my = unit.y + dir.dy * i;
-                            const midCell = gameState.board[my][mx];
-                            if (midCell.unit || midCell.crystal || midCell.type === 'obstacle' || midCell.type === 'obstacle_tall') {
-                                pathClear = false;
-                                break;
-                            }
-                            if (midCell.type === 'water' && !unit.character.canMoveOnWater) {
-                                pathClear = false;
-                                break;
-                            }
+                            const midCell = getCellAt(unit.x + dir.dx * i, unit.y + dir.dy * i);
+                            if (!midCell || midCell.unit || midCell.crystal || midCell.type === 'obstacle' || midCell.type === 'obstacle_tall') { pathClear = false; break; }
+                            if (midCell.type === 'water' && !unit.character.canMoveOnWater) { pathClear = false; break; }
                         }
-                        if (!pathClear) break; // Chemin bloque, inutile de chercher plus loin
-                        // Cible trouvee: ennemi ou cristal ennemi
+                        if (!pathClear) break;
                         if (targetCell.unit && targetCell.unit.player !== unit.player) {
-                            cells.push({x: targetX, y: targetY, dir: dir, chargeDist: dist});
-                            break; // Une seule cible par direction
+                            cells.push({x: targetX, y: targetY, dir: dir, chargeDist: dist}); break;
                         }
                         if (targetCell.crystal && targetCell.crystal.player !== unit.player) {
-                            cells.push({x: targetX, y: targetY, dir: dir, chargeDist: dist});
-                            break;
+                            cells.push({x: targetX, y: targetY, dir: dir, chargeDist: dist}); break;
                         }
-                        // Case occupee par autre chose (allie, obstacle) : bloque
                         if (targetCell.unit || targetCell.crystal || targetCell.type === 'obstacle' || targetCell.type === 'obstacle_tall') break;
-                        // Case vide : on continue de chercher plus loin
                     }
                 }
                 return cells;
             }
 
-            // Sanglier AOE: cible les 4 cases cardinales adjacentes (meme hauteur seulement)
+            // Sanglier AOE: toutes les cases adjacentes de meme hauteur
             if (attack.pattern === 'adjacent_aoe') {
-                const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
                 let hasTarget = false;
-                for (const dir of directions) {
-                    const nx = unit.x + dir.dx;
-                    const ny = unit.y + dir.dy;
-                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
-                    const targetCell = gameState.board[ny][nx];
-                    if (targetCell.height !== unitHeight) continue;
+                for (const dir of dirs) {
+                    const nx = unit.x + dir.dx, ny = unit.y + dir.dy;
+                    const targetCell = getCellAt(nx, ny);
+                    if (!targetCell || targetCell.height !== unitHeight) continue;
                     if ((targetCell.unit && targetCell.unit.player !== unit.player) ||
                         (targetCell.crystal && targetCell.crystal.player !== unit.player)) {
                         hasTarget = true;
                     }
                 }
-                // Si au moins une cible, montrer les cases adjacentes de meme hauteur
                 if (hasTarget) {
-                    for (const dir of directions) {
-                        const nx = unit.x + dir.dx;
-                        const ny = unit.y + dir.dy;
-                        if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
-                        const targetCell = gameState.board[ny][nx];
-                        if (targetCell.height !== unitHeight) continue;
+                    for (const dir of dirs) {
+                        const nx = unit.x + dir.dx, ny = unit.y + dir.dy;
+                        const targetCell = getCellAt(nx, ny);
+                        if (!targetCell || targetCell.height !== unitHeight) continue;
                         if (targetCell.type !== 'obstacle' && targetCell.type !== 'obstacle_tall') {
                             cells.push({x: nx, y: ny});
                         }
@@ -3184,19 +3544,14 @@
                 return cells;
             }
 
-            // Renard pierce: attaque adjacente + dommage derriere (meme hauteur seulement)
+            // Renard pierce: attaque adjacente + dommage derriere
             if (attack.pattern === 'pierce') {
-                const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
-                for (const dir of directions) {
-                    const nx = unit.x + dir.dx;
-                    const ny = unit.y + dir.dy;
-                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
-                    const targetCell = gameState.board[ny][nx];
-                    if (targetCell.height !== unitHeight) continue;
-                    if (targetCell.unit && targetCell.unit.player !== unit.player) {
-                        cells.push({x: nx, y: ny, dir: dir});
-                    }
-                    if (targetCell.crystal && targetCell.crystal.player !== unit.player) {
+                for (const dir of dirs) {
+                    const nx = unit.x + dir.dx, ny = unit.y + dir.dy;
+                    const targetCell = getCellAt(nx, ny);
+                    if (!targetCell || targetCell.height !== unitHeight) continue;
+                    if ((targetCell.unit && targetCell.unit.player !== unit.player) ||
+                        (targetCell.crystal && targetCell.crystal.player !== unit.player)) {
                         cells.push({x: nx, y: ny, dir: dir});
                     }
                 }
@@ -3204,29 +3559,36 @@
             }
 
             // Attaque standard (single, melee/ranged)
-            for (let dy = -attack.range; dy <= attack.range; dy++) {
-                for (let dx = -attack.range; dx <= attack.range; dx++) {
-                    if (dx === 0 && dy === 0) continue;
-
-                    const distance = Math.abs(dx) + Math.abs(dy);
-                    if (distance > attack.range) continue;
-
-                    const nx = unit.x + dx;
-                    const ny = unit.y + dy;
-
-                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
-
-                    const targetCell = gameState.board[ny][nx];
-
-                    // Ecureuil ignore la hauteur
-                    if (!ignoreHeight && targetCell.height !== unitHeight) continue;
-                    if (!hasLineOfSight(unit.x, unit.y, nx, ny, ignoreHeight)) continue;
-
-                    if (targetCell.unit && targetCell.unit.player !== unit.player) {
-                        cells.push({x: nx, y: ny});
+            if (isHexMode()) {
+                // Enumerate cells within hex distance range
+                for (let dq = -attack.range; dq <= attack.range; dq++) {
+                    for (let dr = Math.max(-attack.range, -dq - attack.range); dr <= Math.min(attack.range, -dq + attack.range); dr++) {
+                        if (dq === 0 && dr === 0) continue;
+                        const nx = unit.x + dq, ny = unit.y + dr;
+                        const targetCell = getCellAt(nx, ny);
+                        if (!targetCell) continue;
+                        if (!ignoreHeight && targetCell.height !== unitHeight) continue;
+                        if (!hasLineOfSight(unit.x, unit.y, nx, ny, ignoreHeight)) continue;
+                        if ((targetCell.unit && targetCell.unit.player !== unit.player) ||
+                            (targetCell.crystal && targetCell.crystal.player !== unit.player)) {
+                            cells.push({x: nx, y: ny});
+                        }
                     }
-                    if (targetCell.crystal && targetCell.crystal.player !== unit.player) {
-                        cells.push({x: nx, y: ny});
+                }
+            } else {
+                for (let dy = -attack.range; dy <= attack.range; dy++) {
+                    for (let dx = -attack.range; dx <= attack.range; dx++) {
+                        if (dx === 0 && dy === 0) continue;
+                        if (Math.abs(dx) + Math.abs(dy) > attack.range) continue;
+                        const nx = unit.x + dx, ny = unit.y + dy;
+                        const targetCell = getCellAt(nx, ny);
+                        if (!targetCell) continue;
+                        if (!ignoreHeight && targetCell.height !== unitHeight) continue;
+                        if (!hasLineOfSight(unit.x, unit.y, nx, ny, ignoreHeight)) continue;
+                        if ((targetCell.unit && targetCell.unit.player !== unit.player) ||
+                            (targetCell.crystal && targetCell.crystal.player !== unit.player)) {
+                            cells.push({x: nx, y: ny});
+                        }
                     }
                 }
             }
@@ -3235,64 +3597,58 @@
         }
 
         function hasLineOfSight(x1, y1, x2, y2, ignoreHeightBlocking) {
+            if (isHexMode()) return hasHexLineOfSight(x1, y1, x2, y2, ignoreHeightBlocking);
+
             const dx = x2 - x1;
             const dy = y2 - y1;
             const steps = Math.max(Math.abs(dx), Math.abs(dy));
-
             if (steps === 0) return true;
 
             const xStep = dx / steps;
             const yStep = dy / steps;
-
-            const originHeight = gameState.board[y1][x1].height;
+            const originCell = getCellAt(x1, y1);
+            const originHeight = originCell ? originCell.height : 0;
 
             for (let i = 1; i < steps; i++) {
                 const checkX = Math.round(x1 + xStep * i);
                 const checkY = Math.round(y1 + yStep * i);
-
-                if (checkX < 0 || checkX >= BOARD_SIZE || checkY < 0 || checkY >= BOARD_SIZE) {
-                    return false;
-                }
-
-                const cell = gameState.board[checkY][checkX];
-
+                const cell = getCellAt(checkX, checkY);
+                if (!cell) return false;
                 if (cell.type === 'obstacle_tall') return false;
                 if (!ignoreHeightBlocking && cell.height > originHeight) return false;
             }
-
             return true;
         }
 
         function attackTarget(x, y, callback) {
             const unit = gameState.selectedUnit;
             const attack = unit.character.attack;
-            const targetCell = gameState.board[y][x];
-            const unitOnWater = gameState.board[unit.y][unit.x].type === 'water';
+            const targetCell = getCellAt(x, y);
+            const unitOnWater = getCellAt(unit.x, unit.y) && getCellAt(unit.x, unit.y).type === 'water';
 
             // Desactiver les interactions pendant l'animation
             gameState.animating = true;
 
-            // === CANARD SUR L'EAU: MODE SOIN ===
-            if (unit.character.waterHeal && unitOnWater) {
+            // === CANARD SUR L'EAU: SOIN SI ALLIE, ATTAQUE SINON ===
+            if (unit.character.waterHeal && unitOnWater && targetCell.unit && targetCell.unit.player === unit.player) {
                 const healAttack = {damage: -1, pattern: 'single', range: 1};
                 playAttackAnimation(unit.x, unit.y, x, y, healAttack, () => {
-                    if (targetCell.unit) {
-                        const ally = targetCell.unit;
-                        ally.currentHP = Math.min(ally.character.hp, ally.currentHP + 1);
-                        showDamageNumber(x, y, 1, true);
-                        addMessage(`${unit.character.name} soigne ${ally.character.name} de 1 PV!`, `player${unit.player}`);
-                        const allyEl = document.getElementById(`unit-${ally.id}`);
-                        if (allyEl) {
-                            const hpFill = allyEl.querySelector('.hp-fill');
-                            if (hpFill) hpFill.style.width = `${(ally.currentHP / ally.character.hp) * 100}%`;
-                            allyEl.classList.add('healing');
-                            setTimeout(() => allyEl.classList.remove('healing'), 600);
-                        }
+                    const ally = targetCell.unit;
+                    ally.currentHP = Math.min(ally.character.hp, ally.currentHP + 2);
+                    showDamageNumber(x, y, 2, true);
+                    addMessage(`${unit.character.name} soigne ${ally.character.name} de 2 PV!`, `player${unit.player}`);
+                    const allyEl = document.getElementById(`unit-${ally.id}`);
+                    if (allyEl) {
+                        const hpFill = allyEl.querySelector('.hp-fill');
+                        if (hpFill) hpFill.style.width = `${(ally.currentHP / ally.character.hp) * 100}%`;
+                        allyEl.classList.add('healing');
+                        setTimeout(() => allyEl.classList.remove('healing'), 600);
                     }
                     finishAttack(unit, callback);
                 });
                 return;
             }
+            // If waterHeal + onWater but targeting an enemy/crystal: fall through to standard attack
 
             // === LAPIN CHARGE (dash 1-3 cases en ligne droite) ===
             if (attack.pattern === 'charge') {
@@ -3301,7 +3657,7 @@
                 // Distance reelle de la charge (stockee dans la cellule surlignee)
                 const chargeDist = (highlightedCell && highlightedCell.chargeDist)
                     ? highlightedCell.chargeDist
-                    : Math.max(Math.abs(x - unit.x), Math.abs(y - unit.y));
+                    : cellDistance(x, y, unit.x, unit.y);
                 // Le lapin se deplace a la case juste avant la cible
                 const chargeX = x - dir.dx;
                 const chargeY = y - dir.dy;
@@ -3329,7 +3685,8 @@
                 }
 
                 // Retirer l'unite de l'ancienne case
-                gameState.board[unit.y][unit.x].unit = null;
+                const oldCell = getCellAt(unit.x, unit.y);
+                if (oldCell) oldCell.unit = null;
                 const unitEl = document.getElementById(`unit-${unit.id}`);
                 if (unitEl) {
                     const board = document.getElementById('board');
@@ -3345,7 +3702,7 @@
                         unitEl.remove();
                         unit.x = chargeX;
                         unit.y = chargeY;
-                        gameState.board[chargeY][chargeX].unit = unit;
+                        getCellAt(chargeX, chargeY).unit = unit;
                         renderUnit(unit);
 
                         // Appliquer les degats a la cible
@@ -3369,24 +3726,15 @@
             // === SANGLIER AOE ADJACENT ===
             if (attack.pattern === 'adjacent_aoe') {
                 const damage = attack.damage;
-                const attackerHeight = gameState.board[unit.y][unit.x].height;
-                // Animation sur les 4 directions
+                const attackerCell = getCellAt(unit.x, unit.y);
+                const attackerHeight = attackerCell ? attackerCell.height : 0;
                 playAttackAnimation(unit.x, unit.y, x, y, {...attack, pattern: 'aoe'}, () => {
-                    const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
-                    for (const dir of directions) {
-                        const nx = unit.x + dir.dx;
-                        const ny = unit.y + dir.dy;
-                        if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
-                        const cell = gameState.board[ny][nx];
-                        if (cell.height !== attackerHeight) continue;
-                        if (cell.unit && cell.unit.player !== unit.player) {
-                            applyDamageToUnit(cell.unit, damage, unit);
-                            showDamageNumber(nx, ny, damage, false);
-                        }
-                        if (cell.crystal && cell.crystal.player !== unit.player) {
-                            applyDamageToCrystal(cell.crystal, damage);
-                            showDamageNumber(nx, ny, damage, false);
-                        }
+                    for (const dir of getDirections()) {
+                        const nx = unit.x + dir.dx, ny = unit.y + dir.dy;
+                        const cell = getCellAt(nx, ny);
+                        if (!cell || cell.height !== attackerHeight) continue;
+                        if (cell.unit && cell.unit.player !== unit.player) { applyDamageToUnit(cell.unit, damage, unit); showDamageNumber(nx, ny, damage, false); }
+                        if (cell.crystal && cell.crystal.player !== unit.player) { applyDamageToCrystal(cell.crystal, damage); showDamageNumber(nx, ny, damage, false); }
                     }
                     finishAttack(unit, callback);
                 });
@@ -3396,35 +3744,22 @@
             // === RENARD PIERCE ===
             if (attack.pattern === 'pierce') {
                 const damage = attack.damage;
-                const attackerHeight = gameState.board[unit.y][unit.x].height;
+                const attackerCell = getCellAt(unit.x, unit.y);
+                const attackerHeight = attackerCell ? attackerCell.height : 0;
                 const highlightedCell = gameState.highlightedCells.find(c => c.x === x && c.y === y);
-                const dir = highlightedCell ? highlightedCell.dir : {dx: x - unit.x, dy: y - unit.y};
+                const dir = highlightedCell ? highlightedCell.dir : {dx: Math.sign(x - unit.x), dy: Math.sign(y - unit.y)};
 
                 playAttackAnimation(unit.x, unit.y, x, y, attack, () => {
-                    // Degats sur la cible principale
-                    if (targetCell.unit) {
-                        applyDamageToUnit(targetCell.unit, damage, unit);
-                        showDamageNumber(x, y, damage, false);
-                    } else if (targetCell.crystal) {
-                        applyDamageToCrystal(targetCell.crystal, damage);
-                        showDamageNumber(x, y, damage, false);
-                    }
-                    // Degats sur les 2 cases derriere (meme hauteur seulement)
+                    if (targetCell.unit) { applyDamageToUnit(targetCell.unit, damage, unit); showDamageNumber(x, y, damage, false); }
+                    else if (targetCell.crystal) { applyDamageToCrystal(targetCell.crystal, damage); showDamageNumber(x, y, damage, false); }
                     for (let i = 1; i <= attack.pierceRange; i++) {
-                        const px = x + dir.dx * i;
-                        const py = y + dir.dy * i;
-                        if (px < 0 || px >= BOARD_SIZE || py < 0 || py >= BOARD_SIZE) break;
-                        const pierceCell = gameState.board[py][px];
+                        const px = x + dir.dx * i, py = y + dir.dy * i;
+                        const pierceCell = getCellAt(px, py);
+                        if (!pierceCell) break;
                         if (pierceCell.type === 'obstacle' || pierceCell.type === 'obstacle_tall') break;
                         if (pierceCell.height !== attackerHeight) continue;
-                        if (pierceCell.unit && pierceCell.unit.player !== unit.player) {
-                            applyDamageToUnit(pierceCell.unit, damage, unit);
-                            showDamageNumber(px, py, damage, false);
-                        }
-                        if (pierceCell.crystal && pierceCell.crystal.player !== unit.player) {
-                            applyDamageToCrystal(pierceCell.crystal, damage);
-                            showDamageNumber(px, py, damage, false);
-                        }
+                        if (pierceCell.unit && pierceCell.unit.player !== unit.player) { applyDamageToUnit(pierceCell.unit, damage, unit); showDamageNumber(px, py, damage, false); }
+                        if (pierceCell.crystal && pierceCell.crystal.player !== unit.player) { applyDamageToCrystal(pierceCell.crystal, damage); showDamageNumber(px, py, damage, false); }
                     }
                     finishAttack(unit, callback);
                 });
@@ -3505,7 +3840,7 @@
 
             // Permettre de cliquer ailleurs pour ignorer le deplacement
             const skipHandler = (e) => {
-                if (!e.target.closest('.cell') || !gameState.highlightedCells.some(c => {
+                if (!e.target.closest('.cell, .hex-cell') || !gameState.highlightedCells.some(c => {
                     const el = getCellElement(c.x, c.y);
                     return el && el.contains(e.target);
                 })) {
@@ -3529,14 +3864,14 @@
                 let score = 0;
                 // S'eloigner des ennemis
                 for (const eUnit of enemy.units) {
-                    const dist = Math.abs(cell.x - eUnit.x) + Math.abs(cell.y - eUnit.y);
+                    const dist = cellDistance(cell.x, cell.y, eUnit.x, eUnit.y);
                     score += dist * 3;
                 }
                 // Se rapprocher de nos cristaux pour se mettre en securite
                 const player = gameState.players[unit.player];
                 for (const crystal of player.crystals) {
                     if (crystal.hp <= 0) continue;
-                    const dist = Math.abs(cell.x - crystal.x) + Math.abs(cell.y - crystal.y);
+                    const dist = cellDistance(cell.x, cell.y, crystal.x, crystal.y);
                     score -= dist;
                 }
                 if (score > bestScore) {
@@ -3628,9 +3963,9 @@
             layer.appendChild(impact);
 
             // Faire trembler l'unite cible
-            const targetCell = gameState.board[y][x];
-            if (targetCell.unit) {
-                const unitEl = document.getElementById(`unit-${targetCell.unit.id}`);
+            const tcForAnim = getCellAt(x, y);
+            if (tcForAnim && tcForAnim.unit) {
+                const unitEl = document.getElementById(`unit-${tcForAnim.unit.id}`);
                 if (unitEl) {
                     if (attack.damage < 0) {
                         unitEl.classList.add('healing');
@@ -3668,17 +4003,16 @@
         }
 
         function applyAoeDamage(centerX, centerY, size, damage, attacker) {
-            const attackerHeight = gameState.board[attacker.y][attacker.x].height;
+            const attackerCell = getCellAt(centerX, centerY);
+            const attackerHeight = attackerCell ? attackerCell.height : 0;
             for (let dy = -size; dy <= size; dy++) {
                 for (let dx = -size; dx <= size; dx++) {
+                    if (isHexMode() && (Math.abs(dx) + Math.abs(dy) + Math.abs(dx + dy)) / 2 > size) continue;
                     const nx = centerX + dx;
                     const ny = centerY + dy;
-
-                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
-
-                    const cell = gameState.board[ny][nx];
-                    if (cell.height !== attackerHeight) continue;
-
+                    if (!isValidCell(nx, ny)) continue;
+                    const cell = getCellAt(nx, ny);
+                    if (!cell || cell.height !== attackerHeight) continue;
                     if (cell.unit && cell.unit.player !== attacker.player) {
                         applyDamageToUnit(cell.unit, damage, attacker);
                     }
@@ -3740,7 +4074,8 @@
 
             if (crystal.hp <= 0) {
                 // Retirer le cristal de la carte
-                gameState.board[crystal.y][crystal.x].crystal = null;
+                const crystalBoardCell = getCellAt(crystal.x, crystal.y);
+                if (crystalBoardCell) crystalBoardCell.crystal = null;
                 const crystalEl = document.getElementById(`crystal-${crystal.player}-${crystalIndex}`);
                 if (crystalEl) crystalEl.remove();
             } else {
@@ -3756,7 +4091,8 @@
 
             gameState.players[unit.player].effectifUsed -= unit.character.power;
 
-            gameState.board[unit.y][unit.x].unit = null;
+            const killCell = getCellAt(unit.x, unit.y);
+            if (killCell) killCell.unit = null;
 
             const index = gameState.players[unit.player].units.indexOf(unit);
             if (index > -1) {
@@ -3911,16 +4247,29 @@
                 const aliveCrystals = gameState.players[player].crystals.filter(c => c.hp > 0).length;
                 if (aliveCrystals === 0) {
                     const winner = player === 1 ? 2 : 1;
-                    gameOver(winner);
+                    gameOver(winner, 'cristaux');
+                    return;
+                }
+            }
+            // Deuxieme condition: un joueur n'a plus de creatures, ni de cartes en main, ni dans sa pioche
+            for (let player = 1; player <= 2; player++) {
+                const p = gameState.players[player];
+                if (p.units.length === 0 && p.hand.length === 0 && p.deck.length === 0) {
+                    const winner = player === 1 ? 2 : 1;
+                    gameOver(winner, 'ressources');
                     return;
                 }
             }
         }
 
-        function gameOver(winner) {
+        function gameOver(winner, reason) {
             gameState.phase = 'game_over';
             document.getElementById('gameOverText').textContent = `Joueur ${winner} gagne!`;
-            document.getElementById('gameOverDetails').textContent = 'Tous les cristaux adverses ont ete detruits!';
+            if (reason === 'ressources') {
+                document.getElementById('gameOverDetails').textContent = "L'adversaire n'a plus de creatures, ni de cartes en main ou en pioche!";
+            } else {
+                document.getElementById('gameOverDetails').textContent = 'Tous les cristaux adverses ont ete detruits!';
+            }
             document.getElementById('gameOverOverlay').classList.remove('hidden');
         }
 
@@ -4185,10 +4534,12 @@
         // === EVALUATION DU DANGER ===
         function aiEvaluateThreatLevel(pos, enemy, ignoreHeight) {
             let threat = 0;
-            const cellHeight = gameState.board[pos.y][pos.x].height;
+            const posCell = getCellAt(pos.x, pos.y);
+            const cellHeight = posCell ? posCell.height : 0;
             for (const eu of enemy.units) {
-                const dist = Math.abs(pos.x - eu.x) + Math.abs(pos.y - eu.y);
-                const eHeight = gameState.board[eu.y][eu.x].height;
+                const dist = cellDistance(pos.x, pos.y, eu.x, eu.y);
+                const euCell = getCellAt(eu.x, eu.y);
+                const eHeight = euCell ? euCell.height : 0;
                 const canReach = dist <= eu.character.attack.range + eu.character.movement;
                 const canAttackNow = dist <= eu.character.attack.range;
                 const heightOk = ignoreHeight || eu.character.ignoreHeight || cellHeight === eHeight;
@@ -4204,41 +4555,41 @@
 
         // === SIMULER ATTAQUE DEPUIS POSITION ===
         function aiSimulateAttacksFrom(unit, fromX, fromY, enemy) {
-            // Simuler quelles attaques seraient possibles depuis cette position
             const results = [];
             const attack = unit.character.attack;
-            const unitHeight = gameState.board[fromY][fromX].height;
+            const fromCell = getCellAt(fromX, fromY);
+            const unitHeight = fromCell ? fromCell.height : 0;
             const ignoreHeight = unit.character.ignoreHeight || false;
-            const onWater = gameState.board[fromY][fromX].type === 'water';
+            const onWater = fromCell ? fromCell.type === 'water' : false;
 
-            // Canard sur eau = soin, pas d'attaque offensive
-            if (unit.character.waterHeal && onWater) return results;
+            // Canard sur l'eau peut attaquer les ennemis normalement (waterHeal = soin allie en bonus)
 
-            // Charge du lapin: cible a 1, 2 ou 3 cases en ligne droite (meme hauteur)
+            // Charge du lapin
             if (attack.pattern === 'charge') {
-                const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
-                for (const dir of directions) {
+                for (const dir of getDirections()) {
                     for (let dist = 1; dist <= attack.chargeDistance; dist++) {
                         const tx = fromX + dir.dx * dist;
                         const ty = fromY + dir.dy * dist;
-                        if (tx < 0 || tx >= BOARD_SIZE || ty < 0 || ty >= BOARD_SIZE) break;
-                        const tc = gameState.board[ty][tx];
+                        if (!isValidCell(tx, ty)) break;
+                        const tc = getCellAt(tx, ty);
+                        if (!tc) break;
                         if (!ignoreHeight && tc.height !== unitHeight) break;
                         let pathClear = true;
                         for (let i = 1; i < dist; i++) {
                             const mx = fromX + dir.dx * i;
                             const my = fromY + dir.dy * i;
-                            const mc = gameState.board[my][mx];
+                            const mc = getCellAt(mx, my);
+                            if (!mc) { pathClear = false; break; }
                             if (mc.unit || mc.crystal || mc.type === 'obstacle' || mc.type === 'obstacle_tall') { pathClear = false; break; }
                             if (mc.type === 'water' && !unit.character.canMoveOnWater) { pathClear = false; break; }
                         }
                         if (!pathClear) break;
                         if (tc.unit && tc.unit.player !== unit.player) {
-                            results.push({x: tx, y: ty, target: tc.unit, isCrystal: false, dir: dir, chargeDist: dist});
+                            results.push({x: tx, y: ty, target: tc.unit, isCrystal: false, dir, chargeDist: dist});
                             break;
                         }
                         if (tc.crystal && tc.crystal.player !== unit.player) {
-                            results.push({x: tx, y: ty, target: tc.crystal, isCrystal: true, dir: dir, chargeDist: dist});
+                            results.push({x: tx, y: ty, target: tc.crystal, isCrystal: true, dir, chargeDist: dist});
                             break;
                         }
                         if (tc.unit || tc.crystal || tc.type === 'obstacle' || tc.type === 'obstacle_tall') break;
@@ -4247,71 +4598,79 @@
                 return results;
             }
 
-            // Sanglier AOE adjacent (meme hauteur)
+            // Sanglier AOE adjacent
             if (attack.pattern === 'adjacent_aoe') {
-                const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
                 let targets = [];
-                for (const dir of directions) {
+                for (const dir of getDirections()) {
                     const nx = fromX + dir.dx;
                     const ny = fromY + dir.dy;
-                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
-                    const c = gameState.board[ny][nx];
-                    if (c.height !== unitHeight) continue;
+                    if (!isValidCell(nx, ny)) continue;
+                    const c = getCellAt(nx, ny);
+                    if (!c || c.height !== unitHeight) continue;
                     if (c.unit && c.unit.player !== unit.player) targets.push({x: nx, y: ny, target: c.unit, isCrystal: false});
                     if (c.crystal && c.crystal.player !== unit.player) targets.push({x: nx, y: ny, target: c.crystal, isCrystal: true});
                 }
                 if (targets.length > 0) {
-                    // Retourner le premier comme action declencheur, mais scorer pour tous
                     results.push({x: targets[0].x, y: targets[0].y, allTargets: targets, isAoe: true});
                 }
                 return results;
             }
 
-            // Pierce du renard (meme hauteur)
+            // Pierce du renard
             if (attack.pattern === 'pierce') {
-                const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
-                for (const dir of directions) {
+                for (const dir of getDirections()) {
                     const nx = fromX + dir.dx;
                     const ny = fromY + dir.dy;
-                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
-                    const tc = gameState.board[ny][nx];
-                    if (tc.height !== unitHeight) continue;
+                    if (!isValidCell(nx, ny)) continue;
+                    const tc = getCellAt(nx, ny);
+                    if (!tc || tc.height !== unitHeight) continue;
                     if ((tc.unit && tc.unit.player !== unit.player) || (tc.crystal && tc.crystal.player !== unit.player)) {
                         let pierceTargets = [{x: nx, y: ny, cell: tc}];
                         for (let i = 1; i <= attack.pierceRange; i++) {
                             const px = nx + dir.dx * i;
                             const py = ny + dir.dy * i;
-                            if (px < 0 || px >= BOARD_SIZE || py < 0 || py >= BOARD_SIZE) break;
-                            const pc = gameState.board[py][px];
-                            if (pc.type === 'obstacle' || pc.type === 'obstacle_tall') break;
+                            if (!isValidCell(px, py)) break;
+                            const pc = getCellAt(px, py);
+                            if (!pc || pc.type === 'obstacle' || pc.type === 'obstacle_tall') break;
                             if (pc.height !== unitHeight) continue;
                             if ((pc.unit && pc.unit.player !== unit.player) || (pc.crystal && pc.crystal.player !== unit.player)) {
                                 pierceTargets.push({x: px, y: py, cell: pc});
                             }
                         }
-                        results.push({x: nx, y: ny, target: tc.unit || tc.crystal, pierceTargets: pierceTargets, dir: dir});
+                        results.push({x: nx, y: ny, target: tc.unit || tc.crystal, pierceTargets, dir});
                     }
                 }
                 return results;
             }
 
             // Attaque standard (single)
-            for (let dy = -attack.range; dy <= attack.range; dy++) {
-                for (let dx = -attack.range; dx <= attack.range; dx++) {
-                    if (dx === 0 && dy === 0) continue;
-                    const distance = Math.abs(dx) + Math.abs(dy);
-                    if (distance > attack.range) continue;
-                    const nx = fromX + dx;
-                    const ny = fromY + dy;
-                    if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
-                    const tc = gameState.board[ny][nx];
-                    if (!ignoreHeight && tc.height !== unitHeight) continue;
-                    if (!hasLineOfSight(fromX, fromY, nx, ny)) continue;
-                    if (tc.unit && tc.unit.player !== unit.player) {
-                        results.push({x: nx, y: ny, target: tc.unit, isCrystal: false});
+            if (isHexMode()) {
+                for (let dq = -attack.range; dq <= attack.range; dq++) {
+                    for (let dr = Math.max(-attack.range, -dq - attack.range); dr <= Math.min(attack.range, -dq + attack.range); dr++) {
+                        if (dq === 0 && dr === 0) continue;
+                        const nx = fromX + dq;
+                        const ny = fromY + dr;
+                        if (!isValidCell(nx, ny)) continue;
+                        const tc = getCellAt(nx, ny);
+                        if (!tc || (!ignoreHeight && tc.height !== unitHeight)) continue;
+                        if (!hasLineOfSight(fromX, fromY, nx, ny)) continue;
+                        if (tc.unit && tc.unit.player !== unit.player) results.push({x: nx, y: ny, target: tc.unit, isCrystal: false});
+                        if (tc.crystal && tc.crystal.player !== unit.player) results.push({x: nx, y: ny, target: tc.crystal, isCrystal: true});
                     }
-                    if (tc.crystal && tc.crystal.player !== unit.player) {
-                        results.push({x: nx, y: ny, target: tc.crystal, isCrystal: true});
+                }
+            } else {
+                for (let dy = -attack.range; dy <= attack.range; dy++) {
+                    for (let dx = -attack.range; dx <= attack.range; dx++) {
+                        if (dx === 0 && dy === 0) continue;
+                        if (Math.abs(dx) + Math.abs(dy) > attack.range) continue;
+                        const nx = fromX + dx;
+                        const ny = fromY + dy;
+                        if (!isValidCell(nx, ny)) continue;
+                        const tc = getCellAt(nx, ny);
+                        if (!tc || (!ignoreHeight && tc.height !== unitHeight)) continue;
+                        if (!hasLineOfSight(fromX, fromY, nx, ny)) continue;
+                        if (tc.unit && tc.unit.player !== unit.player) results.push({x: nx, y: ny, target: tc.unit, isCrystal: false});
+                        if (tc.crystal && tc.crystal.player !== unit.player) results.push({x: nx, y: ny, target: tc.crystal, isCrystal: true});
                     }
                 }
             }
@@ -4494,17 +4853,16 @@
         function aiScoreSummon(char, cell, player, enemy, phase) {
             let score = 8;
             const available = player.effectifMax - player.effectifUsed;
-            const cellHeight = gameState.board[cell.y][cell.x].height;
+            const spawnCell = getCellAt(cell.x, cell.y);
+            const cellHeight = spawnCell ? spawnCell.height : 0;
 
             // === URGENCE: Cristaux menaces ===
             const criticalThreat = aiGetCriticalCrystalThreat(player, enemy);
             if (criticalThreat) {
-                // Invoquer un defenseur pres du cristal menace
-                const dist = Math.abs(cell.x - criticalThreat.crystal.x) + Math.abs(cell.y - criticalThreat.crystal.y);
+                const dist = cellDistance(cell.x, cell.y, criticalThreat.crystal.x, criticalThreat.crystal.y);
                 if (dist <= 2) {
                     score += 60;
-                    // Bonus si peut tuer la menace
-                    const distToThreat = Math.abs(cell.x - criticalThreat.enemy.x) + Math.abs(cell.y - criticalThreat.enemy.y);
+                    const distToThreat = cellDistance(cell.x, cell.y, criticalThreat.enemy.x, criticalThreat.enemy.y);
                     if (distToThreat <= char.attack.range && criticalThreat.enemy.currentHP <= char.attack.damage) {
                         score += 80;
                     }
@@ -4514,16 +4872,15 @@
             // === PROXIMITEE CRISTAUX ENNEMIS ===
             for (const crystal of enemy.crystals) {
                 if (crystal.hp <= 0) continue;
-                const dist = Math.abs(cell.x - crystal.x) + Math.abs(cell.y - crystal.y);
+                const dist = cellDistance(cell.x, cell.y, crystal.x, crystal.y);
                 score += Math.max(0, 12 - dist * 2);
 
-                // Bonus si peut attaquer le cristal au prochain tour
                 if (dist <= char.attack.range + char.movement) {
                     score += 25;
                 }
-                // Mega bonus si peut attaquer le cristal immediatement (prochain tour)
                 if (dist <= char.attack.range) {
-                    const crystalHeight = gameState.board[crystal.y][crystal.x].height;
+                    const crystalCell = getCellAt(crystal.x, crystal.y);
+                    const crystalHeight = crystalCell ? crystalCell.height : 0;
                     if ((char.ignoreHeight || cellHeight === crystalHeight) &&
                         hasLineOfSight(cell.x, cell.y, crystal.x, crystal.y)) {
                         score += 40;
@@ -4536,17 +4893,17 @@
             if (threats > 0) {
                 for (const crystal of player.crystals) {
                     if (crystal.hp <= 0) continue;
-                    const dist = Math.abs(cell.x - crystal.x) + Math.abs(cell.y - crystal.y);
+                    const dist = cellDistance(cell.x, cell.y, crystal.x, crystal.y);
                     if (dist <= 3) {
                         score += 15;
-                        if (char.hp >= 4) score += 10; // Unites tanky pour defendre
+                        if (char.hp >= 4) score += 10;
                     }
                 }
             }
 
             // === DANGER: eviter de se faire tuer au spawn ===
             for (const eu of enemy.units) {
-                const dist = Math.abs(cell.x - eu.x) + Math.abs(cell.y - eu.y);
+                const dist = cellDistance(cell.x, cell.y, eu.x, eu.y);
                 if (dist <= eu.character.attack.range + eu.character.movement) {
                     if (char.hp <= eu.character.attack.damage) {
                         score -= 25;
@@ -4591,8 +4948,9 @@
                     for (let dx = -3; dx <= 3; dx++) {
                         const wx = cell.x + dx;
                         const wy = cell.y + dy;
-                        if (wx >= 0 && wx < BOARD_SIZE && wy >= 0 && wy < BOARD_SIZE) {
-                            if (gameState.board[wy][wx].type === 'water') score += 3;
+                        if (isValidCell(wx, wy)) {
+                            const wc = getCellAt(wx, wy);
+                            if (wc && wc.type === 'water') score += 3;
                         }
                     }
                 }
@@ -4617,8 +4975,8 @@
                     if (u.justSummoned || u.hasActed) return best;
                     const atkCells = getAttackCells(u);
                     for (const ac of atkCells) {
-                        const tc = gameState.board[ac.y][ac.x];
-                        if (tc.crystal && tc.crystal.player === 1 && tc.crystal.hp <= u.character.attack.damage) {
+                        const tc = getCellAt(ac.x, ac.y);
+                        if (tc && tc.crystal && tc.crystal.player === 1 && tc.crystal.hp <= u.character.attack.damage) {
                             return Math.max(best, 9999);
                         }
                     }
@@ -4636,13 +4994,13 @@
 
             // === LAPIN: preferer les cases avec chemin degage pour la charge ===
             if (char.id === 'lapin') {
-                const dirs = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
-                for (const dir of dirs) {
+                for (const dir of getDirections()) {
                     for (let i = 1; i <= char.attack.chargeDistance; i++) {
                         const tx = cell.x + dir.dx * i;
                         const ty = cell.y + dir.dy * i;
-                        if (tx < 0 || tx >= BOARD_SIZE || ty < 0 || ty >= BOARD_SIZE) break;
-                        const tc = gameState.board[ty][tx];
+                        if (!isValidCell(tx, ty)) break;
+                        const tc = getCellAt(tx, ty);
+                        if (!tc) break;
                         if (tc.unit && tc.unit.player !== 2) { score += 20; break; }
                         if (tc.crystal && tc.crystal.player !== 2) { score += 25; break; }
                     }
@@ -4655,7 +5013,8 @@
         // === SCORE ATTAQUE (ameliore) ===
         function aiScoreAttack(unit, cell, player, enemy, phase) {
             let score = 20;
-            const targetCell = gameState.board[cell.y][cell.x];
+            const targetCell = getCellAt(cell.x, cell.y);
+            if (!targetCell) return -9999;
             const damage = unit.character.attack.damage;
 
             // === URGENCE DEFENSIVE: cristal a 1 coup de mourir ===
@@ -4712,7 +5071,7 @@
                 // Unite menacant nos cristaux
                 for (const crystal of player.crystals) {
                     if (crystal.hp <= 0) continue;
-                    const dist = Math.abs(target.x - crystal.x) + Math.abs(target.y - crystal.y);
+                    const dist = cellDistance(target.x, target.y, crystal.x, crystal.y);
                     if (dist <= target.character.attack.range) {
                         score += 70;
                         if (crystal.hp <= target.character.attack.damage) {
@@ -4728,15 +5087,15 @@
 
                 // Sanglier AOE: compter toutes les cibles touchees (meme hauteur)
                 if (unit.character.attack.pattern === 'adjacent_aoe') {
-                    const aoeHeight = gameState.board[unit.y][unit.x].height;
-                    const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+                    const unitCell = getCellAt(unit.x, unit.y);
+                    const aoeHeight = unitCell ? unitCell.height : 0;
                     let totalTargets = 0;
-                    for (const dir of directions) {
+                    for (const dir of getDirections()) {
                         const nx = unit.x + dir.dx;
                         const ny = unit.y + dir.dy;
-                        if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) continue;
-                        const c = gameState.board[ny][nx];
-                        if (c.height !== aoeHeight) continue;
+                        if (!isValidCell(nx, ny)) continue;
+                        const c = getCellAt(nx, ny);
+                        if (!c || c.height !== aoeHeight) continue;
                         if (c.unit && c.unit.player !== unit.player) {
                             totalTargets++;
                             if (c.unit.currentHP <= damage) score += 50;
@@ -4751,15 +5110,16 @@
 
                 // Renard pierce: compter les cibles perforantes (meme hauteur)
                 if (unit.character.attack.pattern === 'pierce') {
-                    const pierceHeight = gameState.board[unit.y][unit.x].height;
+                    const unitCell2 = getCellAt(unit.x, unit.y);
+                    const pierceHeight = unitCell2 ? unitCell2.height : 0;
                     const highlightedCell = gameState.highlightedCells.find(c => c.x === cell.x && c.y === cell.y);
                     const dir = highlightedCell && highlightedCell.dir ? highlightedCell.dir : {dx: cell.x - unit.x, dy: cell.y - unit.y};
                     for (let i = 1; i <= unit.character.attack.pierceRange; i++) {
                         const px = cell.x + dir.dx * i;
                         const py = cell.y + dir.dy * i;
-                        if (px < 0 || px >= BOARD_SIZE || py < 0 || py >= BOARD_SIZE) break;
-                        const pc = gameState.board[py][px];
-                        if (pc.type === 'obstacle' || pc.type === 'obstacle_tall') break;
+                        if (!isValidCell(px, py)) break;
+                        const pc = getCellAt(px, py);
+                        if (!pc || pc.type === 'obstacle' || pc.type === 'obstacle_tall') break;
                         if (pc.height !== pierceHeight) continue;
                         if (pc.unit && pc.unit.player !== unit.player) {
                             score += 35;
@@ -4772,11 +5132,13 @@
                 }
 
                 // === RISQUE CONTRE-ATTAQUE: la cible survit et peut riposter ===
-                if (targetCell.unit.currentHP > damage) {
+                if (targetCell && targetCell.unit && targetCell.unit.currentHP > damage) {
                     const riposteEnemies = enemy.units.filter(eu => {
-                        const d = Math.abs(eu.x - unit.x) + Math.abs(eu.y - unit.y);
-                        const eHeight = gameState.board[eu.y][eu.x].height;
-                        const unitHeight2 = gameState.board[unit.y][unit.x].height;
+                        const d = cellDistance(eu.x, eu.y, unit.x, unit.y);
+                        const euCell = getCellAt(eu.x, eu.y);
+                        const eHeight = euCell ? euCell.height : 0;
+                        const unitCellR = getCellAt(unit.x, unit.y);
+                        const unitHeight2 = unitCellR ? unitCellR.height : 0;
                         return d <= eu.character.attack.range && (eu.character.ignoreHeight || eHeight === unitHeight2);
                     });
                     if (riposteEnemies.length > 0) {
@@ -4838,7 +5200,7 @@
                 // Menace cristal
                 for (const crystal of player.crystals) {
                     if (crystal.hp <= 0) continue;
-                    const dist = Math.abs(atk.target.x - crystal.x) + Math.abs(atk.target.y - crystal.y);
+                    const dist = cellDistance(atk.target.x, atk.target.y, crystal.x, crystal.y);
                     if (dist <= atk.target.character.attack.range) score += 50;
                 }
             }
@@ -4854,7 +5216,8 @@
         // === SCORE DEPLACEMENT (ameliore avec combo) ===
         function aiScoreMove(unit, cell, player, enemy, phase) {
             let score = 2;
-            const cellHeight = gameState.board[cell.y][cell.x].height;
+            const moveCell = getCellAt(cell.x, cell.y);
+            const cellHeight = moveCell ? moveCell.height : 0;
             const currentDist = aiGetMinDistToCrystals(unit.x, unit.y, enemy.crystals);
             const newDist = aiGetMinDistToCrystals(cell.x, cell.y, enemy.crystals);
 
@@ -4866,8 +5229,9 @@
             // Arriver a portee d'attaque d'un cristal
             for (const crystal of enemy.crystals) {
                 if (crystal.hp <= 0) continue;
-                const dist = Math.abs(cell.x - crystal.x) + Math.abs(cell.y - crystal.y);
-                const crystalHeight = gameState.board[crystal.y][crystal.x].height;
+                const dist = cellDistance(cell.x, cell.y, crystal.x, crystal.y);
+                const crystalCell = getCellAt(crystal.x, crystal.y);
+                const crystalHeight = crystalCell ? crystalCell.height : 0;
                 const ignoreH = unit.character.ignoreHeight || false;
 
                 if (dist <= unit.character.attack.range && (ignoreH || cellHeight === crystalHeight)) {
@@ -4885,8 +5249,9 @@
                 const crystalAboutToDie = criticalDefense.crystal.hp <= criticalDefense.enemy.character.attack.damage;
                 const urgencyBonus = crystalAboutToDie ? 200 : 50;
 
-                const distToThreat = Math.abs(cell.x - criticalDefense.enemy.x) + Math.abs(cell.y - criticalDefense.enemy.y);
-                const threatHeight = gameState.board[criticalDefense.enemy.y][criticalDefense.enemy.x].height;
+                const distToThreat = cellDistance(cell.x, cell.y, criticalDefense.enemy.x, criticalDefense.enemy.y);
+                const threatCell = getCellAt(criticalDefense.enemy.x, criticalDefense.enemy.y);
+                const threatHeight = threatCell ? threatCell.height : 0;
                 const ignoreH = unit.character.ignoreHeight || false;
                 if (distToThreat <= unit.character.attack.range && (ignoreH || cellHeight === threatHeight)) {
                     if (hasLineOfSight(cell.x, cell.y, criticalDefense.enemy.x, criticalDefense.enemy.y)) {
@@ -4897,7 +5262,7 @@
                     }
                 }
                 // Se placer sur le chemin
-                const distToCrystal = Math.abs(cell.x - criticalDefense.crystal.x) + Math.abs(cell.y - criticalDefense.crystal.y);
+                const distToCrystal = cellDistance(cell.x, cell.y, criticalDefense.crystal.x, criticalDefense.crystal.y);
                 if (distToCrystal <= 2) score += 30 + (crystalAboutToDie ? 80 : 0);
             }
 
@@ -4905,9 +5270,9 @@
             for (const crystal of player.crystals) {
                 if (crystal.hp <= 0) continue;
                 for (const eu of enemy.units) {
-                    const eDist = Math.abs(eu.x - crystal.x) + Math.abs(eu.y - crystal.y);
-                    const nDist = Math.abs(cell.x - crystal.x) + Math.abs(cell.y - crystal.y);
-                    const nDistE = Math.abs(cell.x - eu.x) + Math.abs(cell.y - eu.y);
+                    const eDist = cellDistance(eu.x, eu.y, crystal.x, crystal.y);
+                    const nDist = cellDistance(cell.x, cell.y, crystal.x, crystal.y);
+                    const nDistE = cellDistance(cell.x, cell.y, eu.x, eu.y);
                     if (nDist < eDist && nDistE <= eDist) {
                         score += 15;
                     }
@@ -4918,8 +5283,9 @@
             let dangerCount = 0;
             let totalIncomingDamage = 0;
             for (const eu of enemy.units) {
-                const dist = Math.abs(cell.x - eu.x) + Math.abs(cell.y - eu.y);
-                const eHeight = gameState.board[eu.y][eu.x].height;
+                const dist = cellDistance(cell.x, cell.y, eu.x, eu.y);
+                const euCell2 = getCellAt(eu.x, eu.y);
+                const eHeight = euCell2 ? euCell2.height : 0;
                 const ignoreH = eu.character.ignoreHeight || false;
 
                 if (dist <= eu.character.attack.range && (ignoreH || cellHeight === eHeight)) {
@@ -4940,8 +5306,8 @@
             // === RETRAITE: unite blessee cherche la securite ===
             if (unit.currentHP <= Math.ceil(unit.character.hp * 0.35)) {
                 for (const eu of enemy.units) {
-                    const newDistToEnemy = Math.abs(cell.x - eu.x) + Math.abs(cell.y - eu.y);
-                    const oldDistToEnemy = Math.abs(unit.x - eu.x) + Math.abs(unit.y - eu.y);
+                    const newDistToEnemy = cellDistance(cell.x, cell.y, eu.x, eu.y);
+                    const oldDistToEnemy = cellDistance(unit.x, unit.y, eu.x, eu.y);
                     if (newDistToEnemy > oldDistToEnemy) score += 18;
                     else if (newDistToEnemy < oldDistToEnemy) score -= 12;
                 }
@@ -4951,10 +5317,11 @@
             for (const crystal of enemy.crystals) {
                 if (crystal.hp <= 0) continue;
                 if (crystal.hp <= 2) {
-                    const distToDying = Math.abs(cell.x - crystal.x) + Math.abs(cell.y - crystal.y);
+                    const distToDying = cellDistance(cell.x, cell.y, crystal.x, crystal.y);
                     score += Math.max(0, 20 - distToDying * 4) + 25;
                     const ignoreH = unit.character.ignoreHeight || false;
-                    const crystalHeight = gameState.board[crystal.y][crystal.x].height;
+                    const dyingCrystalCell = getCellAt(crystal.x, crystal.y);
+                    const crystalHeight = dyingCrystalCell ? dyingCrystalCell.height : 0;
                     if (distToDying <= unit.character.attack.range && (ignoreH || cellHeight === crystalHeight)) {
                         score += 80;
                     }
@@ -4964,13 +5331,12 @@
             // Souris: preferer les positions de fuite (cases ouvertes autour)
             if (unit.character.id === 'souris') {
                 let exits = 0;
-                const dirs = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
-                for (const d of dirs) {
+                for (const d of getDirections()) {
                     const ex = cell.x + d.dx;
                     const ey = cell.y + d.dy;
-                    if (ex >= 0 && ex < BOARD_SIZE && ey >= 0 && ey < BOARD_SIZE) {
-                        const ec = gameState.board[ey][ex];
-                        if (!ec.unit && !ec.crystal && ec.type !== 'obstacle' && ec.type !== 'obstacle_tall') exits++;
+                    if (isValidCell(ex, ey)) {
+                        const ec = getCellAt(ex, ey);
+                        if (ec && !ec.unit && !ec.crystal && ec.type !== 'obstacle' && ec.type !== 'obstacle_tall') exits++;
                     }
                 }
                 score += exits * 2;
@@ -4978,16 +5344,15 @@
 
             // Canard: bonus pour aller sur l'eau (soin)
             if (unit.character.canMoveOnWater) {
-                const cellType = gameState.board[cell.y][cell.x].type;
+                const duckCell = getCellAt(cell.x, cell.y);
+                const cellType = duckCell ? duckCell.type : 'normal';
                 if (cellType === 'water') {
-                    // Verifier si allies a proximite pourraient beneficier du soin
-                    const dirs = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
-                    for (const d of dirs) {
+                    for (const d of getDirections()) {
                         const ax = cell.x + d.dx;
                         const ay = cell.y + d.dy;
-                        if (ax >= 0 && ax < BOARD_SIZE && ay >= 0 && ay < BOARD_SIZE) {
-                            const ac = gameState.board[ay][ax];
-                            if (ac.unit && ac.unit.player === unit.player && ac.unit.currentHP < ac.unit.character.hp) {
+                        if (isValidCell(ax, ay)) {
+                            const ac = getCellAt(ax, ay);
+                            if (ac && ac.unit && ac.unit.player === unit.player && ac.unit.currentHP < ac.unit.character.hp) {
                                 score += 20;
                             }
                         }
@@ -5011,7 +5376,7 @@
             for (const crystal of player.crystals) {
                 if (crystal.hp <= 0) continue;
                 for (const eu of enemy.units) {
-                    const dist = Math.abs(eu.x - crystal.x) + Math.abs(eu.y - crystal.y);
+                    const dist = cellDistance(eu.x, eu.y, crystal.x, crystal.y);
                     if (dist <= eu.character.attack.range + eu.character.movement) {
                         threats++;
                     }
@@ -5026,7 +5391,7 @@
                 let nearby = 0;
                 for (const other of enemy.units) {
                     if (unit === other) continue;
-                    const dist = Math.abs(unit.x - other.x) + Math.abs(unit.y - other.y);
+                    const dist = cellDistance(unit.x, unit.y, other.x, other.y);
                     if (dist <= 2) nearby++;
                 }
                 maxCluster = Math.max(maxCluster, nearby);
@@ -5037,7 +5402,7 @@
         function aiIsUnitThreateningCrystals(unit, crystals) {
             for (const crystal of crystals) {
                 if (crystal.hp <= 0) continue;
-                const dist = Math.abs(unit.x - crystal.x) + Math.abs(unit.y - crystal.y);
+                const dist = cellDistance(unit.x, unit.y, crystal.x, crystal.y);
                 if (dist <= unit.character.attack.range + unit.character.movement) {
                     return true;
                 }
@@ -5046,13 +5411,12 @@
         }
 
         function aiGetCriticalCrystalThreat(player, enemy) {
-            // Trouver la menace la plus urgente
             let worstThreat = null;
             let worstScore = -1;
             for (const crystal of player.crystals) {
                 if (crystal.hp <= 0) continue;
                 for (const eu of enemy.units) {
-                    const dist = Math.abs(eu.x - crystal.x) + Math.abs(eu.y - crystal.y);
+                    const dist = cellDistance(eu.x, eu.y, crystal.x, crystal.y);
                     if (dist <= eu.character.attack.range) {
                         const urgency = eu.character.attack.damage * 10 - crystal.hp;
                         if (urgency > worstScore) {
@@ -5060,7 +5424,6 @@
                             worstThreat = { crystal: crystal, enemy: eu };
                         }
                     }
-                    // Menace au prochain tour
                     else if (dist <= eu.character.attack.range + eu.character.movement) {
                         const urgency = eu.character.attack.damage * 3 - crystal.hp;
                         if (urgency > worstScore && crystal.hp <= eu.character.attack.damage * 2) {
@@ -5077,7 +5440,7 @@
             let minDist = Infinity;
             for (const crystal of crystals) {
                 if (crystal.hp <= 0) continue;
-                const dist = Math.abs(x - crystal.x) + Math.abs(y - crystal.y);
+                const dist = cellDistance(x, y, crystal.x, crystal.y);
                 if (dist < minDist) minDist = dist;
             }
             return minDist;
@@ -5131,10 +5494,10 @@
                         moveUnit(action.x, action.y, () => {
                             if (gameState.phase === 'game_over') { gameState.aiThinking = false; return; }
                             const atk = action.attackTarget;
-                            const targetBoardCell = gameState.board[atk.y][atk.x];
+                            const targetBoardCell = getCellAt(atk.x, atk.y);
                             // Verifier que la cible est toujours valide
-                            const hasEnemy = (targetBoardCell.unit && targetBoardCell.unit.player !== 2) ||
-                                             (targetBoardCell.crystal && targetBoardCell.crystal.player !== 2);
+                            const hasEnemy = targetBoardCell && ((targetBoardCell.unit && targetBoardCell.unit.player !== 2) ||
+                                             (targetBoardCell.crystal && targetBoardCell.crystal.player !== 2));
                             if (!hasEnemy) {
                                 gameState.aiThinking = false;
                                 setTimeout(() => aiTakeTurn(), 300);
@@ -5165,33 +5528,35 @@
         // === PLACEMENT CRISTAL IA (randomise + contextuel) ===
         function aiPlaceCrystal() {
             const candidates = [];
+            const dim = getBoardDim();
+            const centerVal = isHexMode() ? HEX_S : 5.5;
 
-            for (let y = 0; y < BOARD_SIZE; y++) {
-                for (let x = 0; x < BOARD_SIZE; x++) {
-                    const cell = gameState.board[y][x];
-                    if (cell.type !== 'normal' || cell.crystal) continue;
+            for (let y = 0; y < dim; y++) {
+                for (let x = 0; x < dim; x++) {
+                    const cell = getCellAt(x, y);
+                    if (!cell || cell.type !== 'normal' || cell.crystal) continue;
 
                     let score = 0;
 
                     // Preference moderee pour le cote du joueur 2 (bas du plateau)
                     score += y * 1.6;
 
-                    // Eviter le centre mais pas de biais extreme vers les coins
-                    const distFromCenter = Math.abs(x - 5.5) + Math.abs(y - 5.5);
+                    // Eviter le centre
+                    const distFromCenter = cellDistance(x, y, Math.round(centerVal), Math.round(centerVal));
                     if (distFromCenter < 2) score -= 30;
                     else if (distFromCenter < 4) score -= 8;
                     else score += distFromCenter * 1.0;
 
-                    // Bonus terrain a proximite (protection naturelle), pondere par distance
+                    // Bonus terrain a proximite (protection naturelle)
                     for (let dy2 = -2; dy2 <= 2; dy2++) {
                         for (let dx2 = -2; dx2 <= 2; dx2++) {
                             if (dx2 === 0 && dy2 === 0) continue;
                             const ox = x + dx2;
                             const oy = y + dy2;
-                            if (ox < 0 || ox >= BOARD_SIZE || oy < 0 || oy >= BOARD_SIZE) continue;
-                            const oCell = gameState.board[oy][ox];
-                            // Plus proche = meilleure protection
-                            const prox = 3 - Math.max(Math.abs(dx2), Math.abs(dy2)); // 2 si adjacent, 1 si 2 cases
+                            if (!isValidCell(ox, oy)) continue;
+                            const oCell = getCellAt(ox, oy);
+                            if (!oCell) continue;
+                            const prox = 3 - Math.max(Math.abs(dx2), Math.abs(dy2));
                             if (oCell.type === 'obstacle_tall') score += 9 * prox;
                             else if (oCell.type === 'obstacle') score += 5 * prox;
                             else if (oCell.type === 'water') score += 4 * prox;
@@ -5200,20 +5565,17 @@
                         }
                     }
 
-                    // Cases de spawn disponibles autour du cristal
+                    // Cases de spawn disponibles autour du cristal (directions adjacentes)
                     let spawnSpaces = 0;
-                    for (let dy2 = -1; dy2 <= 1; dy2++) {
-                        for (let dx2 = -1; dx2 <= 1; dx2++) {
-                            if (dx2 === 0 && dy2 === 0) continue;
-                            const sx = x + dx2;
-                            const sy = y + dy2;
-                            if (sx >= 0 && sx < BOARD_SIZE && sy >= 0 && sy < BOARD_SIZE) {
-                                const sCell = gameState.board[sy][sx];
-                                if (sCell.type === 'normal' && !sCell.crystal) spawnSpaces++;
-                            }
+                    for (const dir of getDirections()) {
+                        const sx = x + dir.dx;
+                        const sy = y + dir.dy;
+                        if (isValidCell(sx, sy)) {
+                            const sCell = getCellAt(sx, sy);
+                            if (sCell && sCell.type === 'normal' && !sCell.crystal) spawnSpaces++;
                         }
                     }
-                    if (spawnSpaces < 2) continue; // Position inutilisable
+                    if (spawnSpaces < 2) continue;
                     score += spawnSpaces * 3;
                     if (spawnSpaces < 3) score -= 12;
 
@@ -5293,22 +5655,24 @@
             const container = document.getElementById('boardContainer');
             if (!wrapper || !container) return;
 
-            // Board native size: 12 cells * 52px stride + 20px padding + 4px border = 648px
-            const boardNativeSize = 12 * 52 + 20 + 4; // 648px
-            // Wrapper total size including coord margins (margin-left:26, margin-top:22)
-            const wrapperNativeW = boardNativeSize + 26; // 674px
-            const wrapperNativeH = boardNativeSize + 22; // 670px
+            let wrapperNativeW, wrapperNativeH;
+            if (isHexMode()) {
+                // Hex board native size (side=8 → 570×506px) + border + board-wrapper margins
+                wrapperNativeW = HEX_BOARD_W + 4 + 26;
+                wrapperNativeH = HEX_BOARD_H + 4 + 22;
+            } else {
+                // Board native size: 12 cells * 52px stride + 20px padding + 4px border = 648px
+                const boardNativeSize = 12 * 52 + 20 + 4;
+                wrapperNativeW = boardNativeSize + 26; // 674px
+                wrapperNativeH = boardNativeSize + 22; // 670px
+            }
 
-            // Available width = the board-container's actual client width
             const availableWidth = container.clientWidth;
 
             if (availableWidth < wrapperNativeW) {
                 const scale = (availableWidth - 4) / wrapperNativeW;
                 wrapper.style.transform = `scale(${scale})`;
-                // top center: the wrapper is centered horizontally by flex justify-content:center,
-                // so scaling from its own center keeps it centered on screen.
                 wrapper.style.transformOrigin = 'top center';
-                // Set container height to scaled visual height so content below flows correctly
                 container.style.height = (wrapperNativeH * scale) + 'px';
             } else {
                 wrapper.style.transform = '';
@@ -5322,6 +5686,7 @@
         window.addEventListener('orientationchange', () => {
             setTimeout(scaleBoardForMobile, 100);
         });
+
 
         // ==================== INITIALISATION ====================
         function init() {

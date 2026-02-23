@@ -605,6 +605,18 @@
             margin-top: 4px;
         }
 
+        .char-rarity {
+            font-size: 0.7em;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            padding: 1px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .char-rarity.commun  { background: rgba(120,120,140,0.25); color: #aab0c0; border: 1px solid rgba(160,160,180,0.3); }
+        .char-rarity.rare    { background: rgba(40,90,200,0.25);  color: #7ab0f0; border: 1px solid rgba(80,130,220,0.4); }
+        .char-rarity.epique  { background: rgba(130,40,200,0.25); color: #d080ff; border: 1px solid rgba(160,60,220,0.4); }
+
         .character-card .on-field-count {
             font-size: 0.82em;
             font-weight: 600;
@@ -1427,6 +1439,8 @@
             .board-wrapper {
                 /* transform and transform-origin set by JS */
                 flex-shrink: 0;
+                margin-left: 0;
+                margin-top: 0;
             }
 
             .roster-panel {
@@ -1629,7 +1643,11 @@
         }
 
         @media (hover: hover) {
-            .hex-cell:hover { filter: brightness(1.18); z-index: 10; }
+            .hex-cell:hover {
+                transform: scale(1.05);
+                z-index: 10;
+                filter: brightness(1.15) drop-shadow(0 0 8px rgba(255,255,255,0.28));
+            }
         }
 
         /* Terrain colors matching the square board palette */
@@ -1661,26 +1679,63 @@
             50%       { filter: brightness(1.12); }
         }
 
-        /* Highlights use drop-shadow (clip-path clips box-shadow) */
-        .hex-cell.highlight-move {
-            filter: brightness(1.35) drop-shadow(0 0 5px #4aff4a) drop-shadow(0 0 10px rgba(74,255,74,0.5));
+        /* Hex highlights — technique deux couches (sans artefact pont evenodd) :
+           - ::before remplit tout l'hexagone avec la couleur de contour
+             (le clip-path du parent le découpe à la forme hexagonale)
+           - ::after recouvre le centre avec la couleur du terrain (background:inherit)
+             => seul l'anneau de bord reste visible sur ::before
+             = même effet que box-shadow: inset du plateau carré
+           - drop-shadow sur le parent = halo extérieur (z-index:5 pour dépasser les voisins) */
+        .hex-cell.highlight-move::before,
+        .hex-cell.highlight-attack::before,
+        .hex-cell.highlight-summon::before,
+        .hex-cell.highlight-crystal::before,
+        .hex-cell.selected-crystal::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            /* Pas de clip-path ici : le clip-path du parent découpe à la forme hex */
         }
-        .hex-cell.highlight-attack {
-            filter: brightness(1.25) drop-shadow(0 0 5px #ff4a4a) drop-shadow(0 0 10px rgba(255,74,74,0.5));
+
+        .hex-cell.highlight-move::after,
+        .hex-cell.highlight-attack::after,
+        .hex-cell.highlight-summon::after,
+        .hex-cell.highlight-crystal::after,
+        .hex-cell.selected-crystal::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            /* Hexagone intérieur (~8% de marge) : recouvre le centre, laisse l'anneau visible */
+            clip-path: polygon(50% 10%, 90% 30%, 90% 70%, 50% 90%, 10% 70%, 10% 30%);
+            background: inherit; /* reprend exactement la couleur de terrain du parent */
         }
-        .hex-cell.highlight-summon {
-            filter: brightness(1.35) drop-shadow(0 0 5px #ffd700) drop-shadow(0 0 10px rgba(255,215,0,0.5));
-        }
+
+        .hex-cell.highlight-move   { filter: drop-shadow(0 0 7px rgba(74,255,74,0.65));  z-index: 5; }
+        .hex-cell.highlight-attack { filter: drop-shadow(0 0 7px rgba(255,74,74,0.65));  z-index: 5; }
+        .hex-cell.highlight-summon { filter: drop-shadow(0 0 7px rgba(255,215,0,0.65));  z-index: 5; }
+
+        .hex-cell.highlight-move::before   { background: #4aff4a; }
+        .hex-cell.highlight-attack::before { background: #ff4a4a; }
+        .hex-cell.highlight-summon::before { background: #ffd700; }
+
         .hex-cell.highlight-crystal {
-            filter: brightness(1.4) drop-shadow(0 0 6px #00ffff) drop-shadow(0 0 12px rgba(0,255,255,0.6));
-            animation: crystal-pulse-hex 1.2s ease-in-out infinite;
+            filter: drop-shadow(0 0 10px rgba(0,255,255,0.8)); /* statique : pas de repaint/frame */
+            z-index: 5;
         }
-        .hex-cell.selected-crystal {
-            filter: brightness(1.5) drop-shadow(0 0 8px #ffd700) drop-shadow(0 0 14px rgba(255,215,0,0.7));
+        .hex-cell.highlight-crystal::before {
+            background: #00ffff;
+            /* opacity animée = compositing GPU, aucun repaint même sur 100+ cases */
+            animation: crystal-border-pulse-hex 1.2s ease-in-out infinite;
         }
-        @keyframes crystal-pulse-hex {
-            0%,100% { filter: brightness(1.4) drop-shadow(0 0 6px #00ffff) drop-shadow(0 0 12px rgba(0,255,255,0.6)); }
-            50%      { filter: brightness(1.65) drop-shadow(0 0 10px #00ffff) drop-shadow(0 0 18px rgba(0,255,255,0.85)); }
+
+        .hex-cell.selected-crystal   { filter: drop-shadow(0 0 10px rgba(255,215,0,0.85)); z-index: 6; }
+        .hex-cell.selected-crystal::before { background: #ffd700; }
+
+        @keyframes crystal-border-pulse-hex {
+            0%,100% { opacity: 0.6; }
+            50%      { opacity: 1.0; }
         }
 
         /* Units in hex mode — sized for 38×44 hex cells */
@@ -1714,6 +1769,7 @@
             left: 5px;   /* (38 - 28) / 2 */
             top: 8px;    /* (44 - 28) / 2 */
             font-size: 11px;
+            z-index: 5;  /* rend au-dessus de ::after (terrain cover) */
         }
 
         /* Hex editor board */
@@ -1974,6 +2030,7 @@
             {
                 id: 'souris',
                 name: 'Souris',
+                rarity: 'commun',
                 power: 1,
                 hp: 2,
                 movement: 5,
@@ -1995,6 +2052,7 @@
             {
                 id: 'ecureuil',
                 name: 'Ecureuil',
+                rarity: 'commun',
                 power: 2,
                 hp: 2,
                 movement: 2,
@@ -2016,7 +2074,8 @@
             {
                 id: 'lapin',
                 name: 'Lapin',
-                power: 3,
+                rarity: 'rare',
+                power: 4,
                 hp: 3,
                 movement: 4,
                 maxOnField: 2,
@@ -2034,7 +2093,8 @@
             {
                 id: 'canard',
                 name: 'Canard',
-                power: 4,
+                rarity: 'rare',
+                power: 3,
                 hp: 4,
                 movement: 2,
                 maxOnField: 2,
@@ -2056,6 +2116,7 @@
             {
                 id: 'renard',
                 name: 'Renard',
+                rarity: 'epique',
                 power: 5,
                 hp: 5,
                 movement: 3,
@@ -2078,6 +2139,7 @@
             {
                 id: 'sanglier',
                 name: 'Sanglier',
+                rarity: 'epique',
                 power: 6,
                 hp: 6,
                 movement: 2,
@@ -2091,9 +2153,9 @@
                 },
                 passive: {
                     name: 'Cuir epais',
-                    description: 'Ne peut pas perdre plus de 4 PV par tour'
+                    description: 'Ne peut pas perdre plus de 3 PV par tour'
                 },
-                maxDamagePerTurn: 4,
+                maxDamagePerTurn: 3,
                 icon: '🐗'
             }
         ];
@@ -2626,13 +2688,14 @@
         }
 
         // ==================== SYSTEME DE DECK ====================
-        // Nombre de cartes par creature dans le deck (24 au total)
-        const DECK_COUNTS = { souris: 6, ecureuil: 6, lapin: 4, canard: 4, renard: 2, sanglier: 2 };
+        // Nombre de cartes par creature selon la rarete
+        // Commun: 6 cartes, Rare: 3 cartes, Epique: 2 cartes
+        const RARITY_COUNTS = { commun: 6, rare: 3, epique: 2 };
 
         function createDeck() {
             let deck = [];
             for (const char of CHARACTERS) {
-                const count = DECK_COUNTS[char.id] || 0;
+                const count = RARITY_COUNTS[char.rarity] || 0;
                 for (let i = 0; i < count; i++) {
                     deck.push(char.id);
                 }
@@ -2684,9 +2747,11 @@
                 const card = document.createElement('div');
                 card.className = 'character-card';
                 card.style.cursor = 'pointer';
+                const rarityLabelDiscard = { commun: 'Commun', rare: 'Rare', epique: 'Épique' }[char.rarity] || '';
                 card.innerHTML = `
                     <div class="char-header">
                         <span class="char-name">[${char.icon}] ${char.name}</span>
+                        <span class="char-rarity ${char.rarity || ''}">${rarityLabelDiscard}</span>
                         <span class="char-power">${char.power} P</span>
                     </div>
                     <div class="char-stats">
@@ -4252,23 +4317,43 @@
                 }
             }
             // Deuxieme condition: un joueur n'a plus de creatures, ni de cartes en main, ni dans sa pioche
+            // → calcul de score pour determiner le vainqueur
             for (let player = 1; player <= 2; player++) {
                 const p = gameState.players[player];
                 if (p.units.length === 0 && p.hand.length === 0 && p.deck.length === 0) {
-                    const winner = player === 1 ? 2 : 1;
-                    gameOver(winner, 'ressources');
+                    const scores = {};
+                    for (let pl = 1; pl <= 2; pl++) {
+                        const pp = gameState.players[pl];
+                        const crystalHP = pp.crystals.reduce((sum, c) => sum + Math.max(0, c.hp), 0);
+                        scores[pl] = crystalHP + pp.units.length + pp.hand.length + pp.deck.length;
+                    }
+                    let winner;
+                    if (scores[1] > scores[2]) {
+                        winner = 1;
+                    } else if (scores[2] > scores[1]) {
+                        winner = 2;
+                    } else {
+                        // Egalite: le joueur sans ressources perd
+                        winner = player === 1 ? 2 : 1;
+                    }
+                    gameOver(winner, 'ressources', scores);
                     return;
                 }
             }
         }
 
-        function gameOver(winner, reason) {
+        function gameOver(winner, reason, scores) {
             gameState.phase = 'game_over';
             document.getElementById('gameOverText').textContent = `Joueur ${winner} gagne!`;
             if (reason === 'ressources') {
-                document.getElementById('gameOverDetails').textContent = "L'adversaire n'a plus de creatures, ni de cartes en main ou en pioche!";
+                const loser = winner === 1 ? 2 : 1;
+                let msg = `Le Joueur ${loser} n'a plus de créatures ni de cartes. `;
+                if (scores) {
+                    msg += `Score final — J1 : ${scores[1]} | J2 : ${scores[2]}`;
+                }
+                document.getElementById('gameOverDetails').textContent = msg;
             } else {
-                document.getElementById('gameOverDetails').textContent = 'Tous les cristaux adverses ont ete detruits!';
+                document.getElementById('gameOverDetails').textContent = 'Tous les cristaux adverses ont été détruits!';
             }
             document.getElementById('gameOverOverlay').classList.remove('hidden');
         }
@@ -4288,14 +4373,8 @@
                 document.getElementById(`p${player}EffectifUsed`).textContent = p.effectifUsed;
                 document.getElementById(`p${player}EffectifMax`).textContent = p.effectifMax;
                 document.getElementById(`p${player}EffectifAvailable`).textContent = p.effectifMax - p.effectifUsed;
-                // Masquer les infos de deck/main de l'IA
-                if (p.isAI) {
-                    document.getElementById(`p${player}DeckCount`).textContent = '?';
-                    document.getElementById(`p${player}HandCount`).textContent = '?';
-                } else {
-                    document.getElementById(`p${player}DeckCount`).textContent = p.deck.length;
-                    document.getElementById(`p${player}HandCount`).textContent = p.hand.length;
-                }
+                document.getElementById(`p${player}DeckCount`).textContent = p.deck.length;
+                document.getElementById(`p${player}HandCount`).textContent = p.hand.length;
             }
         }
 
@@ -4382,8 +4461,13 @@
 
             const available = player.effectifMax - player.effectifUsed;
 
-            // Une carte par entree dans la main
-            player.hand.forEach((charId) => {
+            // Une carte par entree dans la main, triee par puissance croissante
+            const sortedHand = [...player.hand].sort((a, b) => {
+                const ca = CHARACTERS.find(c => c.id === a);
+                const cb = CHARACTERS.find(c => c.id === b);
+                return (ca ? ca.power : 0) - (cb ? cb.power : 0);
+            });
+            sortedHand.forEach((charId) => {
                 const char = CHARACTERS.find(c => c.id === charId);
                 if (!char) return;
 
@@ -4398,9 +4482,11 @@
 
                 const damageDisplay = char.attack.damage > 0 ? char.attack.damage : '+' + Math.abs(char.attack.damage);
 
+                const rarityLabel = { commun: 'Commun', rare: 'Rare', epique: 'Épique' }[char.rarity] || '';
                 card.innerHTML = `
                     <div class="char-header">
                         <span class="char-name">[${char.icon}] ${char.name}</span>
+                        <span class="char-rarity ${char.rarity || ''}">${rarityLabel}</span>
                         <span class="char-power">${char.power} P</span>
                     </div>
                     <div class="char-stats">
@@ -5657,14 +5743,15 @@
 
             let wrapperNativeW, wrapperNativeH;
             if (isHexMode()) {
-                // Hex board native size (side=8 → 570×506px) + border + board-wrapper margins
-                wrapperNativeW = HEX_BOARD_W + 4 + 26;
-                wrapperNativeH = HEX_BOARD_H + 4 + 22;
+                // Hex board native size + border (margins zeroed on mobile via CSS)
+                wrapperNativeW = HEX_BOARD_W + 4;
+                wrapperNativeH = HEX_BOARD_H + 4;
             } else {
                 // Board native size: 12 cells * 52px stride + 20px padding + 4px border = 648px
+                // (margins zeroed on mobile via CSS)
                 const boardNativeSize = 12 * 52 + 20 + 4;
-                wrapperNativeW = boardNativeSize + 26; // 674px
-                wrapperNativeH = boardNativeSize + 22; // 670px
+                wrapperNativeW = boardNativeSize; // 648px
+                wrapperNativeH = boardNativeSize; // 648px
             }
 
             const availableWidth = container.clientWidth;

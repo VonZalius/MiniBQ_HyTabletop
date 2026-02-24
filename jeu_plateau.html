@@ -328,6 +328,34 @@
             pointer-events: none;
         }
 
+        .cell.water.height-1 {
+            background: linear-gradient(to bottom, #4ac8fa 0%, #1aa3e8 40%, #0277bd 75%, #015a99 100%);
+        }
+        .cell.water.height-1::before { content: none; }
+        .cell.water.height-1::after {
+            content: '~1';
+            position: absolute;
+            bottom: 2px;
+            right: 3px;
+            font-size: 7px;
+            color: rgba(255,255,255,0.55);
+            pointer-events: none;
+        }
+
+        .cell.water.height-2 {
+            background: linear-gradient(to bottom, #7dd8ff 0%, #3ab8f5 35%, #0d8fe0 65%, #004a8c 100%);
+        }
+        .cell.water.height-2::before { content: none; }
+        .cell.water.height-2::after {
+            content: '~2';
+            position: absolute;
+            bottom: 2px;
+            right: 3px;
+            font-size: 7px;
+            color: rgba(255,255,255,0.65);
+            pointer-events: none;
+        }
+
         @keyframes water-shimmer {
             0%, 100% { filter: brightness(0.9); }
             50% { filter: brightness(1.1); }
@@ -708,6 +736,16 @@
             background: linear-gradient(155deg, #2e2018 0%, #201610 60%, #150e08 100%);
             color: #b09870;
             border: 1px solid rgba(130,100,50,0.3);
+        }
+
+        .action-btn.undo {
+            background: linear-gradient(155deg, #1e2a3a 0%, #142030 60%, #0c1620 100%);
+            color: #7ab8e8;
+            border: 1px solid rgba(60,120,180,0.35);
+        }
+        .action-btn.undo:hover:not(:disabled) {
+            background: linear-gradient(155deg, #2a3a50 0%, #1a2840 60%, #101e30 100%);
+            color: #a0d0ff;
         }
 
         .action-btn.confirm {
@@ -1253,6 +1291,8 @@
         .editor-cell.ec-hill { background: linear-gradient(145deg, #4a8c5e, #2d6a3e); box-shadow: inset 0 -3px 0 rgba(0,0,0,0.3); }
         .editor-cell.ec-mountain { background: linear-gradient(145deg, #6bab82, #4a8a60); box-shadow: inset 0 -6px 0 rgba(0,0,0,0.3); }
         .editor-cell.ec-water { background: linear-gradient(145deg, #2196f3, #0d47a1); }
+        .editor-cell.ec-water-hill { background: linear-gradient(145deg, #29b6f6, #0277bd); box-shadow: inset 0 -3px 0 rgba(0,0,0,0.35); }
+        .editor-cell.ec-water-mountain { background: linear-gradient(145deg, #4fc3f7, #0288d2); box-shadow: inset 0 -6px 0 rgba(0,0,0,0.38); }
         .editor-cell.ec-rock { background: linear-gradient(145deg, #6b6b6b, #2a2a2a); }
         .editor-cell.ec-wall { background: linear-gradient(145deg, #7a7a7a, #363636); box-shadow: inset 0 -6px 0 rgba(0,0,0,0.4); }
 
@@ -1664,6 +1704,12 @@
             background: linear-gradient(145deg, #2196f3 0%, #1976d2 40%, #0d47a1 100%);
             animation: hex-water-shimmer 3s ease-in-out infinite;
         }
+        .hex-cell.water.height-1 {
+            background: linear-gradient(to bottom, #4ac8fa 0%, #1aa3e8 40%, #0277bd 75%, #015a99 100%);
+        }
+        .hex-cell.water.height-2 {
+            background: linear-gradient(to bottom, #7dd8ff 0%, #3ab8f5 35%, #0d8fe0 65%, #004a8c 100%);
+        }
         .hex-cell.obstacle {
             background: linear-gradient(145deg, #6b6b6b 0%, #4a4a4a 30%, #383838 60%, #2a2a2a 100%);
             cursor: not-allowed;
@@ -1788,6 +1834,8 @@
         .hex-editor-cell.ec-hill { background: #6a9a4a; }
         .hex-editor-cell.ec-mountain { background: #9ac06a; }
         .hex-editor-cell.ec-water { background: #2060a0; }
+        .hex-editor-cell.ec-water-hill { background: #1a80c0; }
+        .hex-editor-cell.ec-water-mountain { background: #3298d8; }
         .hex-editor-cell.ec-rock { background: #5a5048; }
         .hex-editor-cell.ec-wall { background: #3a3040; }
 
@@ -1817,6 +1865,201 @@
         }
 
 
+        /* ==================== INFO UNITÉ SÉLECTIONNÉE (riche) ==================== */
+        .unit-info-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+        .unit-info-icon { font-size: 1.7em; line-height: 1; }
+        .unit-info-name {
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            font-size: 0.95em;
+            color: var(--text-primary);
+            letter-spacing: 0.03em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .unit-info-sub {
+            font-size: 0.76em;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+        .unit-info-hp-bar {
+            background: rgba(0,0,0,0.5);
+            border-radius: 5px;
+            height: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(80,80,80,0.4);
+            margin: 4px 0 2px;
+        }
+        .unit-info-hp-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #2dba2d, #5ef05e);
+            transition: width 0.3s ease;
+        }
+        .unit-info-hp-fill.low { background: linear-gradient(90deg, #ba4a2d, #f08050); }
+        .unit-info-hp-text {
+            font-size: 0.78em;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .unit-info-stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
+        .unit-info-stats-row span {
+            background: rgba(0,0,0,0.35);
+            border: 1px solid rgba(130,100,40,0.25);
+            padding: 3px 4px;
+            border-radius: 4px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+        .unit-info-attack {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(130,100,40,0.2);
+            padding-top: 5px;
+            font-style: italic;
+            margin-bottom: 4px;
+        }
+        .unit-info-passive {
+            font-size: 0.78em;
+            color: #88bbee;
+            font-style: italic;
+            margin-bottom: 4px;
+        }
+        .unit-info-status {
+            font-size: 0.78em;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .unit-info-status.can-act  { background:rgba(45,186,45,0.15);  color:#5ef05e;            border:1px solid rgba(45,186,45,0.3); }
+        .unit-info-status.acted    { background:rgba(140,100,0,0.15);  color:#c9a227;            border:1px solid rgba(140,100,0,0.3); }
+        .unit-info-status.new-unit { background:rgba(80,80,80,0.2);   color:var(--text-dim);    border:1px solid rgba(80,80,80,0.3); }
+        .unit-info-status.inspect  { background:rgba(186,45,45,0.12); color:var(--p2-light);    border:1px solid rgba(186,45,45,0.25); }
+
+        /* ==================== BOUTON RÈGLES ==================== */
+        .rules-btn {
+            position: fixed;
+            top: 14px;
+            right: 16px;
+            z-index: 600;
+            background: linear-gradient(145deg, rgba(12,8,3,0.94), rgba(22,14,6,0.94));
+            border: 1px solid var(--gold-dark);
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold-light);
+            font-family: 'Cinzel', serif;
+            font-size: 1.15em;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 3px 14px rgba(0,0,0,0.65);
+            transition: all 0.18s ease;
+            backdrop-filter: blur(8px);
+        }
+        .rules-btn:hover {
+            border-color: var(--gold);
+            box-shadow: 0 0 16px rgba(201,162,39,0.4), 0 3px 14px rgba(0,0,0,0.6);
+            transform: scale(1.1);
+        }
+
+        /* ==================== MODAL RÈGLES ==================== */
+        .rules-overlay { z-index: 2000 !important; }
+        .rules-modal {
+            background: linear-gradient(160deg, rgba(12,8,3,0.99) 0%, rgba(22,14,6,0.99) 100%);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 28px 32px;
+            max-width: 680px;
+            width: 92vw;
+            max-height: 85vh;
+            overflow-y: auto;
+            text-align: left;
+            box-shadow: 0 0 60px rgba(201,162,39,0.2), 0 20px 60px rgba(0,0,0,0.9);
+        }
+        .rules-modal h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.4em;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--gold-light);
+            text-align: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(160,120,50,0.4);
+        }
+        .rules-modal h3 {
+            font-family: 'Cinzel', serif;
+            font-size: 0.95em;
+            font-weight: 600;
+            color: var(--gold);
+            margin: 16px 0 5px;
+            letter-spacing: 0.04em;
+            padding-left: 8px;
+            border-left: 2px solid var(--gold-dark);
+        }
+        .rules-modal p {
+            font-size: 0.91em;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 5px;
+        }
+        .rules-modal ul { padding-left: 18px; margin-bottom: 6px; }
+        .rules-modal li {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 2px;
+        }
+        .rules-char-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(130,100,40,0.25);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+        }
+        .rules-char-icon { font-size: 1.5em; line-height: 1; min-width: 26px; text-align: center; padding-top: 2px; }
+        .rules-char-info { flex: 1; font-size: 0.87em; color: var(--text-secondary); line-height: 1.5; }
+        .rules-char-name { font-family: 'Cinzel', serif; font-weight: 600; color: var(--text-primary); }
+        .rules-close-btn {
+            display: block;
+            margin: 22px auto 0;
+            padding: 11px 36px;
+            background: linear-gradient(155deg, #b8860b 0%, #9a6e08 60%, #7a5406 100%);
+            color: #fff8e0;
+            border: 1px solid rgba(200,160,40,0.4);
+            border-radius: 9px;
+            font-family: 'Cinzel', serif;
+            font-size: 0.9em;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            text-transform: uppercase;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+        }
+        .rules-close-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
         /* Very small phones */
         @media (max-width: 380px) {
             .player-panel h2 {
@@ -1844,6 +2087,7 @@
     <div class="game-container">
         <div class="game-header">
             <h1>Arène Tactique</h1>
+            <button class="rules-btn" onclick="openRules()" title="Règles du jeu">?</button>
             <div class="instruction-banner" id="instructionBanner">
                 <h3 id="instructionTitle">Placement des Cristaux</h3>
                 <p id="instructionText">Joueur 1, cliquez sur une case pour placer votre cristal.</p>
@@ -1932,23 +2176,10 @@
                 <button class="action-btn move hidden" id="btnMove" disabled>Deplacer</button>
                 <button class="action-btn attack hidden" id="btnAttack" disabled>Attaquer</button>
                 <button class="action-btn cancel hidden" id="btnCancel" disabled>Annuler</button>
+                <button class="action-btn undo hidden" id="btnUndo" disabled>↩ Annuler action</button>
                 <button class="action-btn end-turn hidden" id="btnEndTurn">Fin de tour</button>
 
-                <div class="selected-unit-info hidden" id="selectedUnitInfo">
-                    <h4 id="selectedUnitName">-</h4>
-                    <div class="stat-row">
-                        <span>PV:</span>
-                        <span id="selectedUnitHP">-</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Deplacement restant:</span>
-                        <span id="selectedUnitMP">-</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>A agi:</span>
-                        <span id="selectedUnitActed">-</span>
-                    </div>
-                </div>
+                <div class="selected-unit-info hidden" id="selectedUnitInfo"></div>
             </div>
         </div>
     </div>
@@ -1987,7 +2218,9 @@
                     <button class="palette-btn active" data-terrain="plain" onclick="selectEditorTerrain('plain', this)">Plaine (h0)</button>
                     <button class="palette-btn" data-terrain="hill" onclick="selectEditorTerrain('hill', this)">Colline (h1)</button>
                     <button class="palette-btn" data-terrain="mountain" onclick="selectEditorTerrain('mountain', this)">Montagne (h2)</button>
-                    <button class="palette-btn" data-terrain="water" onclick="selectEditorTerrain('water', this)">Eau</button>
+                    <button class="palette-btn" data-terrain="water" onclick="selectEditorTerrain('water', this)">Eau (h0)</button>
+                    <button class="palette-btn" data-terrain="water_hill" onclick="selectEditorTerrain('water_hill', this)">Eau (h1)</button>
+                    <button class="palette-btn" data-terrain="water_mountain" onclick="selectEditorTerrain('water_mountain', this)">Eau (h2)</button>
                     <button class="palette-btn" data-terrain="rock" onclick="selectEditorTerrain('rock', this)">Rocher</button>
                     <button class="palette-btn" data-terrain="wall" onclick="selectEditorTerrain('wall', this)">Mur</button>
                 </div>
@@ -2021,6 +2254,116 @@
             <p>Choisissez votre mode de jeu</p>
             <button id="btnMode2Players">2 Joueurs (local)</button>
             <button id="btnModeVsAI">Jouer contre l'IA</button>
+            <button id="btnModeDistance">2 Joueurs (Distance)</button>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="distanceSideOverlay">
+        <div class="modal">
+            <h2>2 Joueurs (Distance)</h2>
+            <p>Vous jouez en tant que quel joueur ?</p>
+            <p style="font-size:0.85em;color:rgba(255,255,255,0.6);margin-top:-8px;">Durant le tour adverse, simulez ses actions selon ce qu'il vous communique.</p>
+            <button id="btnSideP1">Je suis Joueur 1</button>
+            <button id="btnSideP2">Je suis Joueur 2</button>
+        </div>
+    </div>
+
+    <div class="overlay hidden rules-overlay" id="rulesOverlay" onclick="if(event.target===this)closeRules()">
+        <div class="rules-modal">
+            <h2>📖 Règles d'Arène Tactique</h2>
+
+            <h3>Objectif</h3>
+            <p>Détruire les deux <strong>cristaux</strong> adverses avant qu'il ne détruise les vôtres. Alternativement, gagner si l'adversaire se retrouve sans unités, sans cartes en main et sans deck.</p>
+
+            <h3>Déroulement d'un tour</h3>
+            <p>À chaque tour, vous pouvez effectuer <strong>une action</strong> parmi :</p>
+            <ul>
+                <li><strong>Invoquer</strong> — poser une carte de votre main sur une case adjacente à l'un de vos cristaux. Coût : la puissance de l'unité.</li>
+                <li><strong>Déplacer</strong> — déplacer une unité d'un nombre de cases ≤ à ses Points de Mouvement (PM). Le mouvement est bloqué par les alliés, les ennemis et les obstacles.</li>
+                <li><strong>Attaquer</strong> — cibler une unité ou un cristal ennemi dans la portée d'attaque. Une unité ne peut pas se déplacer <em>après</em> avoir attaqué (sauf capacité spéciale).</li>
+            </ul>
+            <p>Cliquez <strong>Fin de tour</strong> pour terminer. Si aucune action n'est possible, le bouton devient <em>Passer le tour</em>.</p>
+
+            <h3>Effectif</h3>
+            <p>Chaque joueur dispose d'un <strong>effectif maximum</strong> qui augmente de 1 à chaque tour. La somme des puissances de vos unités sur le plateau ne peut pas dépasser ce maximum. L'effectif disponible détermine les cartes invocables.</p>
+
+            <h3>Deck &amp; Main</h3>
+            <p>Au début chaque joueur pioche 3 cartes. À chaque début de tour, une carte supplémentaire est piochée (max 5 en main par défaut). Si la main est pleine, vous choisissez une carte à défausser. Les cartes défaussées sont perdues.</p>
+
+            <h3>Terrain</h3>
+            <ul>
+                <li><strong>Plaine (h0)</strong> — terrain de base, aucun malus.</li>
+                <li><strong>Colline (h1)</strong> — légère élévation, bloque la ligne de vue vers le bas depuis certaines positions.</li>
+                <li><strong>Montagne (h2)</strong> — haute élévation, bloque la ligne de vue.</li>
+                <li><strong>Eau (h0)</strong> — infranchissable sauf pour le Canard. Bloque les invocations (sauf Canard).</li>
+                <li><strong>Eau h1 / Eau h2</strong> — eau en élévation (colline ou montagne). Même règles que l'eau normale, mais bloque aussi la ligne de vue depuis le bas (comme une colline ou montagne d'eau).</li>
+                <li><strong>Rocher / Mur</strong> — infranchissable, bloque totalement la ligne de vue.</li>
+            </ul>
+            <p>La ligne de vue est calculée entre attaquant et cible : un terrain plus haut que les deux bloque l'attaque.</p>
+
+            <h3>Cristaux</h3>
+            <p>Chaque joueur place 2 cristaux (10 PV chacun par défaut) sur le plateau. Les unités adjacentes aux cristaux alliés servent de points d'invocation. Quand un cristal tombe à 0 PV, il est détruit — perdre ses deux cristaux signifie la défaite.</p>
+
+            <h3>Personnages</h3>
+            <div class="rules-char-row">
+                <span class="rules-char-icon">🐭</span>
+                <div class="rules-char-info">
+                    <div class="rules-char-name">Souris <span class="char-rarity commun">Commun</span> — Puissance 1</div>
+                    PV 2 · PM 5 · Portée 1 · Dégâts 1 — Morsure (cible unique)<br>
+                    <em>✦ Fuite rapide : peut se déplacer de 2 cases supplémentaires après une attaque.</em>
+                </div>
+            </div>
+            <div class="rules-char-row">
+                <span class="rules-char-icon">🐿️</span>
+                <div class="rules-char-info">
+                    <div class="rules-char-name">Écureuil <span class="char-rarity commun">Commun</span> — Puissance 2</div>
+                    PV 2 · PM 2 · Portée 3 · Dégâts 1 — Lancer de gland (tir, cible unique)<br>
+                    <em>✦ Grimpeur : peut cibler des unités à une hauteur différente (ignore la différence de niveau pour viser).</em>
+                </div>
+            </div>
+            <div class="rules-char-row">
+                <span class="rules-char-icon">🦆</span>
+                <div class="rules-char-info">
+                    <div class="rules-char-name">Canard <span class="char-rarity rare">Rare</span> — Puissance 3</div>
+                    PV 4 · PM 2 · Portée 1 · Dégâts 2 — Coup de bec (cible unique)<br>
+                    <em>✦ Aquatique : se déplace sur l'eau. Positionné sur l'eau, peut soigner un allié adjacent de 2 PV ou attaquer normalement.</em>
+                </div>
+            </div>
+            <div class="rules-char-row">
+                <span class="rules-char-icon">🐰</span>
+                <div class="rules-char-info">
+                    <div class="rules-char-name">Lapin <span class="char-rarity rare">Rare</span> — Puissance 4</div>
+                    PV 3 · PM 4 · Portée 3 · Dégâts 2 — Charge<br>
+                    <em>✦ Charge : attaque en ligne droite jusqu'à 3 cases, frappe la première cible rencontrée.</em>
+                </div>
+            </div>
+            <div class="rules-char-row">
+                <span class="rules-char-icon">🦊</span>
+                <div class="rules-char-info">
+                    <div class="rules-char-name">Renard <span class="char-rarity epique">Épique</span> — Puissance 5</div>
+                    PV 5 · PM 3 · Portée 1 · Dégâts 3 — Griffure perçante (perforation)<br>
+                    <em>✦ Prédateur : se soigne de 1 PV après avoir éliminé un ennemi.</em>
+                </div>
+            </div>
+            <div class="rules-char-row">
+                <span class="rules-char-icon">🐗</span>
+                <div class="rules-char-info">
+                    <div class="rules-char-name">Sanglier <span class="char-rarity epique">Épique</span> — Puissance 6</div>
+                    PV 6 · PM 2 · Portée 1 · Dégâts 3 — Furie (zone adjacente)<br>
+                    <em>✦ Cuir épais : ne peut pas subir plus de 3 dégâts par tour (toutes sources confondues).</em>
+                </div>
+            </div>
+
+            <h3>Conditions de victoire</h3>
+            <ul>
+                <li><strong>Destruction des cristaux</strong> — les deux cristaux ennemis sont à 0 PV.</li>
+                <li><strong>Épuisement des ressources</strong> — un joueur n'a plus d'unités sur le plateau, ni cartes en main, ni cartes dans son deck. Le joueur avec le score total le plus élevé (cristaux + unités + cartes) remporte la partie.</li>
+            </ul>
+
+            <h3>Mode IA</h3>
+            <p>En mode "Jouer contre l'IA", le Joueur 2 est contrôlé automatiquement. Pendant son tour, toutes vos interactions sont bloquées. Sa main est cachée.</p>
+
+            <button class="rules-close-btn" onclick="closeRules()">Fermer</button>
         </div>
     </div>
 
@@ -2314,9 +2657,12 @@
             maxHandSize: 5, // 0 = illimite
             maxEffectif: 12,
             selectedUnit: null,
+            inspectedUnit: null,
             selectedCharacter: null,
             actionMode: null,
-            highlightedCells: []
+            highlightedCells: [],
+            distanceSide: null,   // 1 ou 2 : quel côté on joue réellement (mode distance)
+            undoSnapshot: null    // snapshot avant la dernière action (null = rien à annuler)
         };
 
         // ==================== INITIALISATION DU PLATEAU ====================
@@ -2624,6 +2970,14 @@
                     cell.type = 'water';
                     cell.height = 0;
                     break;
+                case 'water_hill':
+                    cell.type = 'water';
+                    cell.height = 1;
+                    break;
+                case 'water_mountain':
+                    cell.type = 'water';
+                    cell.height = 2;
+                    break;
                 case 'rock':
                     cell.type = 'obstacle';
                     cell.height = 0;
@@ -2643,8 +2997,16 @@
             const baseClass = cellEl.classList.contains('hex-editor-cell') ? 'hex-editor-cell' : 'editor-cell';
             cellEl.className = baseClass;
             if (cell.type === 'water') {
-                cellEl.classList.add('ec-water');
-                cellEl.textContent = '';
+                if (cell.height === 1) {
+                    cellEl.classList.add('ec-water-hill');
+                    cellEl.textContent = '~1';
+                } else if (cell.height === 2) {
+                    cellEl.classList.add('ec-water-mountain');
+                    cellEl.textContent = '~2';
+                } else {
+                    cellEl.classList.add('ec-water');
+                    cellEl.textContent = '';
+                }
             } else if (cell.type === 'obstacle') {
                 cellEl.classList.add('ec-rock');
                 cellEl.textContent = '';
@@ -2804,9 +3166,127 @@
             });
         }
 
+        // ==================== MODE DISTANCE ====================
+        function isDistanceOpponentTurn() {
+            return gameState.gameMode === 'distance' &&
+                   gameState.phase === 'playing' &&
+                   gameState.currentPlayer !== gameState.distanceSide;
+        }
+
+        // ==================== UNDO ====================
+        function saveUndoSnapshot() {
+            const snap = {
+                turn: gameState.turn,
+                currentPlayer: gameState.currentPlayer,
+                actionTaken: gameState.actionTaken,
+                players: {}
+            };
+            for (const p of [1, 2]) {
+                const pl = gameState.players[p];
+                snap.players[p] = {
+                    effectifMax: pl.effectifMax,
+                    effectifUsed: pl.effectifUsed,
+                    hand: [...pl.hand],
+                    deck: [...pl.deck],
+                    units: pl.units.map(u => ({
+                        id: u.id,
+                        characterId: u.character.id,
+                        player: u.player,
+                        x: u.x, y: u.y,
+                        currentHP: u.currentHP,
+                        movementLeft: u.movementLeft,
+                        hasActed: u.hasActed,
+                        justSummoned: u.justSummoned,
+                        damageTakenThisTurn: u.damageTakenThisTurn
+                    })),
+                    crystals: pl.crystals.map(c => ({...c}))
+                };
+            }
+            gameState.undoSnapshot = snap;
+        }
+
+        function applyUndo() {
+            if (!gameState.undoSnapshot || gameState.animating) return;
+            const snap = gameState.undoSnapshot;
+            gameState.undoSnapshot = null;
+
+            // Restaurer les champs scalaires
+            gameState.turn = snap.turn;
+            gameState.currentPlayer = snap.currentPlayer;
+            gameState.actionTaken = snap.actionTaken;
+
+            // Restaurer les joueurs
+            for (const p of [1, 2]) {
+                const sp = snap.players[p];
+                const player = gameState.players[p];
+                player.effectifMax = sp.effectifMax;
+                player.effectifUsed = sp.effectifUsed;
+                player.hand = [...sp.hand];
+                player.deck = [...sp.deck];
+                player.units = sp.units.map(u => ({
+                    id: u.id,
+                    character: CHARACTERS.find(c => c.id === u.characterId),
+                    player: u.player,
+                    x: u.x, y: u.y,
+                    currentHP: u.currentHP,
+                    movementLeft: u.movementLeft,
+                    hasActed: u.hasActed,
+                    justSummoned: u.justSummoned,
+                    damageTakenThisTurn: u.damageTakenThisTurn
+                }));
+                player.crystals = sp.crystals.map(c => ({...c}));
+            }
+
+            // Vider les refs board
+            const dim = getBoardDim();
+            for (let y = 0; y < dim; y++)
+                for (let x = 0; x < dim; x++) {
+                    const cell = getCellAt(x, y);
+                    if (cell) { cell.unit = null; cell.crystal = null; }
+                }
+
+            // Ré-lier unités + cristaux sur le board
+            for (const p of [1, 2]) {
+                for (const unit of gameState.players[p].units) {
+                    const cell = getCellAt(unit.x, unit.y);
+                    if (cell) cell.unit = unit;
+                }
+                for (const crystal of gameState.players[p].crystals) {
+                    const cell = getCellAt(crystal.x, crystal.y);
+                    if (cell) cell.crystal = crystal;
+                }
+            }
+
+            // Supprimer les éléments DOM d'unités et cristaux
+            document.querySelectorAll('[id^="unit-"]').forEach(el => el.remove());
+            document.querySelectorAll('[id^="crystal-"]').forEach(el => el.remove());
+
+            // Re-rendre unités
+            for (const p of [1, 2])
+                for (const unit of gameState.players[p].units)
+                    renderUnit(unit);
+
+            // Re-rendre cristaux
+            for (const p of [1, 2])
+                for (const crystal of gameState.players[p].crystals)
+                    renderCrystal(crystal);
+
+            // Réinitialiser la sélection
+            gameState.selectedUnit = null;
+            gameState.inspectedUnit = null;
+            gameState.selectedCharacter = null;
+            gameState.actionMode = null;
+            gameState.highlightedCells = [];
+            clearHighlights();
+
+            updateUI();
+            addMessage('Dernière action annulée.', 'system');
+        }
+
         // ==================== GESTION DES CLICS ====================
         function onCellClick(x, y) {
             if (gameState.animating) return;
+            if (gameState.aiThinking) return;
             const cell = getCellAt(x, y);
             if (!cell) return;
 
@@ -2821,6 +3301,7 @@
             // Mode invocation
             if (gameState.actionMode === 'summon') {
                 if (gameState.highlightedCells.some(c => c.x === x && c.y === y)) {
+                    saveUndoSnapshot();
                     summonUnit(x, y);
                 }
                 return;
@@ -2829,6 +3310,7 @@
             // Mode deplacement
             if (gameState.actionMode === 'move') {
                 if (gameState.highlightedCells.some(c => c.x === x && c.y === y)) {
+                    saveUndoSnapshot();
                     moveUnit(x, y);
                 }
                 return;
@@ -2837,6 +3319,7 @@
             // Mode attaque
             if (gameState.actionMode === 'attack') {
                 if (gameState.highlightedCells.some(c => c.x === x && c.y === y)) {
+                    saveUndoSnapshot();
                     attackTarget(x, y);
                 }
                 return;
@@ -2867,6 +3350,11 @@
             // Selection d'unite
             if (cell.unit && cell.unit.player === gameState.currentPlayer) {
                 selectUnit(cell.unit);
+            } else if (cell.unit) {
+                // Inspecter une unite ennemie (affiche ses stats sans selectionner pour action)
+                clearSelection();
+                gameState.inspectedUnit = cell.unit;
+                updateSelectedUnitInfo();
             } else {
                 clearSelection();
             }
@@ -3028,8 +3516,18 @@
                 gameState.players[p].deck = createDeck();
                 gameState.players[p].hand = [];
             }
-            drawCards(1, gameState.initialHandSize);
-            drawCards(2, gameState.initialHandSize);
+            if (gameState.gameMode === 'distance') {
+                // Mode distance : l'adversaire n'a pas de deck/main (liste infinie de persos)
+                const opp = gameState.distanceSide === 1 ? 2 : 1;
+                gameState.players[opp].deck = [];
+                gameState.players[opp].hand = [];
+                drawCards(gameState.distanceSide, gameState.initialHandSize);
+            } else {
+                drawCards(1, gameState.initialHandSize);
+                drawCards(2, gameState.initialHandSize);
+            }
+
+            document.getElementById('btnUndo').classList.remove('hidden');
 
             showPhaseBanner('La partie commence!<br>Tour du Joueur 1');
             updateUI();
@@ -3115,7 +3613,7 @@
                 return;
             }
 
-            if (!player.hand.includes(char.id)) {
+            if (!isDistanceOpponentTurn() && !player.hand.includes(char.id)) {
                 addMessage(`Pas de carte ${char.name} dans votre main!`, 'system');
                 return;
             }
@@ -3132,6 +3630,7 @@
             }
 
             gameState.selectedUnit = null;
+            gameState.inspectedUnit = null;
             gameState.selectedCharacter = null;
             gameState.actionMode = null;
             clearHighlights();
@@ -3238,9 +3737,11 @@
 
             player.units.push(unit);
             player.effectifUsed += char.power;
-            // Retirer la carte jouee de la main
-            const handIdx = player.hand.indexOf(char.id);
-            if (handIdx !== -1) player.hand.splice(handIdx, 1);
+            // Retirer la carte jouee de la main (sauf mode distance adversaire : liste infinie)
+            if (!isDistanceOpponentTurn()) {
+                const handIdx = player.hand.indexOf(char.id);
+                if (handIdx !== -1) player.hand.splice(handIdx, 1);
+            }
             getCellAt(x, y).unit = unit;
 
             // Animation d'invocation
@@ -4215,8 +4716,11 @@
             const available = player.effectifMax - player.effectifUsed;
 
             // Verifier si on peut invoquer (par personnage, car certains peuvent spawner sur l'eau)
+            // En mode distance (adversaire), tous les personnages sont toujours disponibles
+            const distOpp = isDistanceOpponentTurn();
             for (const char of CHARACTERS) {
-                if (char.power <= available && player.hand.includes(char.id)) {
+                const inHand = distOpp || player.hand.includes(char.id);
+                if (char.power <= available && inHand) {
                     if (getSummonCells(char).length > 0) return true;
                 }
             }
@@ -4246,6 +4750,9 @@
 
         // ==================== FIN DE TOUR ====================
         function endTurn() {
+            // Vider le snapshot undo : on ne peut pas annuler après avoir fini son tour
+            gameState.undoSnapshot = null;
+
             // Permettre de skip si aucune action n'est possible
             if (!gameState.actionTaken && canDoAnything()) {
                 addMessage('Vous devez effectuer au moins une action!', 'system');
@@ -4281,7 +4788,8 @@
             }
 
             // Piocher 1 carte au debut du tour (surpioche si main pleine)
-            const overdrew = drawCards(gameState.currentPlayer, 1);
+            // En mode distance (tour adversaire simulé), pas de pioche : liste infinie
+            const overdrew = isDistanceOpponentTurn() ? false : drawCards(gameState.currentPlayer, 1);
 
             gameState.players[gameState.currentPlayer].units.forEach(unit => {
                 unit.movementLeft = unit.character.movement;
@@ -4405,15 +4913,19 @@
             const unit = gameState.selectedUnit;
             const char = gameState.selectedCharacter;
 
-            // Desactiver tous les boutons pendant les animations
-            if (gameState.animating) {
+            // Desactiver tous les boutons pendant les animations ou le tour de l'IA
+            if (gameState.animating || gameState.aiThinking) {
                 document.getElementById('btnSummon').disabled = true;
                 document.getElementById('btnMove').disabled = true;
                 document.getElementById('btnAttack').disabled = true;
                 document.getElementById('btnCancel').disabled = true;
+                document.getElementById('btnUndo').disabled = true;
                 document.getElementById('btnEndTurn').disabled = true;
                 return;
             }
+
+            // Bouton Annuler dernière action
+            document.getElementById('btnUndo').disabled = !gameState.undoSnapshot;
 
             document.getElementById('btnSummon').disabled = !char || gameState.actionMode === 'summon';
             // Apres avoir agi (attaque/capacite), on ne peut plus se deplacer
@@ -4436,7 +4948,7 @@
 
         function updateSelectedUnitInfo() {
             const infoPanel = document.getElementById('selectedUnitInfo');
-            const unit = gameState.selectedUnit;
+            const unit = gameState.selectedUnit || gameState.inspectedUnit;
 
             if (!unit) {
                 infoPanel.classList.add('hidden');
@@ -4444,18 +4956,116 @@
             }
 
             infoPanel.classList.remove('hidden');
-            document.getElementById('selectedUnitName').textContent = unit.character.name;
-            document.getElementById('selectedUnitHP').textContent = `${unit.currentHP}/${unit.character.hp}`;
-            document.getElementById('selectedUnitMP').textContent = unit.movementLeft;
-            document.getElementById('selectedUnitActed').textContent = unit.hasActed ? 'Oui' : 'Non';
+
+            const char = unit.character;
+            const isAlly = unit.player === gameState.currentPlayer;
+            const isEnemy = !isAlly;
+            const hpPct = Math.max(0, (unit.currentHP / char.hp) * 100);
+            const hpLow = unit.currentHP <= Math.ceil(char.hp / 3);
+            const rarityLabel = { commun: 'Commun', rare: 'Rare', epique: 'Épique' }[char.rarity] || '';
+            const rarityClass = char.rarity || '';
+            const playerColor = unit.player === 1 ? 'var(--p1-light)' : 'var(--p2-light)';
+
+            // Etiquette de cote
+            let sideLabel, sideClass;
+            if (isEnemy) {
+                sideLabel = 'Ennemi';
+                sideClass = 'inspect';
+            } else if (unit.justSummoned) {
+                sideLabel = 'Vient d\'être invoquée';
+                sideClass = 'new-unit';
+            } else if (unit.hasActed) {
+                sideLabel = 'A déjà agi';
+                sideClass = 'acted';
+            } else {
+                sideLabel = 'Peut agir';
+                sideClass = 'can-act';
+            }
+
+            // Pattern d'attaque
+            const patternLabels = {
+                single: 'Cible unique',
+                charge: 'Charge',
+                pierce: 'Perforation',
+                adjacent_aoe: 'Zone adjacente'
+            };
+            const patternLabel = patternLabels[char.attack.pattern] || char.attack.pattern;
+            const typeLabel = char.attack.type === 'ranged' ? 'Tir' : 'Mêlée';
+            const damageDisplay = char.attack.damage > 0 ? char.attack.damage : '+' + Math.abs(char.attack.damage);
+
+            infoPanel.innerHTML = `
+                <div class="unit-info-header">
+                    <span class="unit-info-icon">${char.icon}</span>
+                    <div>
+                        <div class="unit-info-name">
+                            ${char.name}
+                            <span class="char-rarity ${rarityClass}">${rarityLabel}</span>
+                        </div>
+                        <div class="unit-info-sub">Puissance ${char.power} · J${unit.player}</div>
+                    </div>
+                </div>
+                <div class="unit-info-hp-bar">
+                    <div class="unit-info-hp-fill${hpLow ? ' low' : ''}" style="width:${hpPct}%"></div>
+                </div>
+                <div class="unit-info-hp-text">${unit.currentHP} / ${char.hp} PV</div>
+                <div class="unit-info-stats-row">
+                    <span>PM: ${unit.movementLeft}/${char.movement}</span>
+                    <span>Portée: ${char.attack.range}</span>
+                    <span>Dégâts: ${damageDisplay}</span>
+                </div>
+                <div class="unit-info-attack">
+                    <strong>${char.attack.name}</strong> — ${typeLabel}, ${patternLabel}
+                </div>
+                ${char.passive ? `<div class="unit-info-passive">✦ ${char.passive.name} : ${char.passive.description}</div>` : ''}
+                <div class="unit-info-status ${sideClass}">${sideLabel}</div>
+            `;
         }
 
         function updateRosterDisplay() {
             const rosterList = document.getElementById('rosterList');
             const player = gameState.players[gameState.currentPlayer];
 
-            document.getElementById('rosterPlayerName').textContent = `Joueur ${gameState.currentPlayer}`;
             rosterList.innerHTML = '';
+
+            // Mode distance : tour de l'adversaire → liste infinie des 6 personnages
+            if (isDistanceOpponentTurn()) {
+                document.getElementById('rosterPlayerName').textContent = `Joueur ${gameState.currentPlayer} (Adversaire)`;
+                const available = player.effectifMax - player.effectifUsed;
+                CHARACTERS.forEach(char => {
+                    const canSummon = char.power <= available;
+                    const card = document.createElement('div');
+                    card.className = 'character-card';
+                    if (!canSummon) card.classList.add('disabled');
+                    if (gameState.selectedCharacter && gameState.selectedCharacter.id === char.id)
+                        card.classList.add('selected');
+                    const damageDisplay = char.attack.damage > 0 ? char.attack.damage : '+' + Math.abs(char.attack.damage);
+                    const rarityLabel = { commun: 'Commun', rare: 'Rare', epique: 'Épique' }[char.rarity] || '';
+                    card.innerHTML = `
+                        <div class="char-header">
+                            <span class="char-name">[${char.icon}] ${char.name}</span>
+                            <span class="char-rarity ${char.rarity || ''}">${rarityLabel}</span>
+                            <span class="char-power">${char.power} P</span>
+                        </div>
+                        <div class="char-stats">
+                            <span>PV: ${char.hp}</span>
+                            <span>PM: ${char.movement}</span>
+                            <span>Deg: ${damageDisplay}</span>
+                        </div>
+                        <div class="char-ability">
+                            <strong>${char.attack.name}</strong> - Portée: ${char.attack.range}
+                            ${char.attack.pattern === 'charge' ? ' (Charge)' : ''}
+                            ${char.attack.pattern === 'pierce' ? ' (Perforation)' : ''}
+                            ${char.attack.pattern === 'adjacent_aoe' ? ' (Zone adjacente)' : ''}
+                        </div>
+                        ${char.passive ? `<div class="char-passive">* ${char.passive.name}: ${char.passive.description}</div>` : ''}
+                    `;
+                    if (canSummon) card.addEventListener('click', () => selectCharacter(char.id));
+                    rosterList.appendChild(card);
+                });
+                return;
+            }
+
+            document.getElementById('rosterPlayerName').textContent = `Joueur ${gameState.currentPlayer}`;
 
             // Si c'est l'IA, masquer le contenu des cartes
             if (player.isAI) {
@@ -5718,6 +6328,14 @@
             }, AI_DELAY);
         }
 
+        // ==================== MODAL RÈGLES ====================
+        function openRules() {
+            document.getElementById('rulesOverlay').classList.remove('hidden');
+        }
+        function closeRules() {
+            document.getElementById('rulesOverlay').classList.add('hidden');
+        }
+
         // ==================== EVENT LISTENERS ====================
         document.getElementById('btnConfirmCrystal').addEventListener('click', confirmCrystalPlacement);
         document.getElementById('btnHandoverConfirm').addEventListener('click', confirmHandover);
@@ -5738,6 +6356,28 @@
             gameState.players[2].isAI = true;
             startMapEditor();
         });
+
+        document.getElementById('btnModeDistance').addEventListener('click', () => {
+            gameState.gameMode = 'distance';
+            gameState.players[1].isAI = false;
+            gameState.players[2].isAI = false;
+            document.getElementById('gameModeOverlay').classList.add('hidden');
+            document.getElementById('distanceSideOverlay').classList.remove('hidden');
+        });
+
+        document.getElementById('btnSideP1').addEventListener('click', () => {
+            gameState.distanceSide = 1;
+            document.getElementById('distanceSideOverlay').classList.add('hidden');
+            startMapEditor();
+        });
+
+        document.getElementById('btnSideP2').addEventListener('click', () => {
+            gameState.distanceSide = 2;
+            document.getElementById('distanceSideOverlay').classList.add('hidden');
+            startMapEditor();
+        });
+
+        document.getElementById('btnUndo').addEventListener('click', applyUndo);
 
         function startMapEditor() {
             document.getElementById('gameModeOverlay').classList.add('hidden');

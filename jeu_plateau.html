@@ -3174,7 +3174,9 @@
             actionMode: null,
             highlightedCells: [],
             distanceSide: null,   // 1 ou 2 : quel côté on joue réellement (mode distance)
-            undoSnapshot: null,   // snapshot avant la dernière action (null = rien à annuler)
+            undoStack: [],           // pile de snapshots du tour courant (action par action)
+            prevTurnUndoStack: [],   // pile de snapshots du tour précédent (modes 2 joueurs uniquement)
+            prevTurnBoundarySnap: null, // snapshot de fin du tour précédent (pour "Revenir au tour précédent")
             activeActionId: null, // ID de l'action extra en cours d'execution
 
             // Statistiques vivantes de la partie — mise a jour en temps reel.
@@ -3968,7 +3970,9 @@
         }
 
         // ==================== UNDO ====================
-        function saveUndoSnapshot() {
+
+        // Construit et retourne un snapshot de l'état courant (sans l'enregistrer).
+        function buildUndoSnapshot() {
             const snap = {
                 turn: gameState.turn,
                 currentPlayer: gameState.currentPlayer,
@@ -3998,20 +4002,20 @@
                     crystals: pl.crystals.map(c => ({...c}))
                 };
             }
-            gameState.undoSnapshot = snap;
+            return snap;
         }
 
-        function applyUndo() {
-            if (!gameState.undoSnapshot || gameState.animating) return;
-            const snap = gameState.undoSnapshot;
-            gameState.undoSnapshot = null;
+        // Enregistre un snapshot avant une action du tour courant.
+        function saveUndoSnapshot() {
+            gameState.undoStack.push(buildUndoSnapshot());
+        }
 
-            // Restaurer les champs scalaires
+        // Restaure l'état du jeu à partir d'un snapshot (DOM + données).
+        function restoreUndoSnapshot(snap) {
             gameState.turn = snap.turn;
             gameState.currentPlayer = snap.currentPlayer;
             gameState.actionTaken = snap.actionTaken;
 
-            // Restaurer les joueurs
             for (const p of [1, 2]) {
                 const sp = snap.players[p];
                 const player = gameState.players[p];
@@ -4059,15 +4063,11 @@
             document.querySelectorAll('[id^="unit-"]').forEach(el => el.remove());
             document.querySelectorAll('[id^="crystal-"]').forEach(el => el.remove());
 
-            // Re-rendre unités
-            for (const p of [1, 2])
-                for (const unit of gameState.players[p].units)
-                    renderUnit(unit);
-
-            // Re-rendre cristaux
-            for (const p of [1, 2])
-                for (const crystal of gameState.players[p].crystals)
-                    renderCrystal(crystal);
+            // Re-rendre unités et cristaux
+            for (const p of [1, 2]) {
+                for (const unit of gameState.players[p].units) renderUnit(unit);
+                for (const crystal of gameState.players[p].crystals) renderCrystal(crystal);
+            }
 
             // Réinitialiser la sélection
             gameState.selectedUnit = null;
@@ -4076,9 +4076,37 @@
             gameState.actionMode = null;
             gameState.highlightedCells = [];
             clearHighlights();
+        }
 
-            updateUI();
-            addMessage('Dernière action annulée.', 'system');
+        function applyUndo() {
+            if (gameState.animating) return;
+
+            // Cas 1 : annuler la dernière action du tour courant
+            if (gameState.undoStack.length > 0) {
+                restoreUndoSnapshot(gameState.undoStack.pop());
+                updateUI();
+                addMessage('Dernière action annulée.', 'system');
+                return;
+            }
+
+            // Cas 2 : revenir à la fin du tour précédent (sans annuler ses actions)
+            if (gameState.prevTurnBoundarySnap) {
+                const snap = gameState.prevTurnBoundarySnap;
+                gameState.prevTurnBoundarySnap = null;
+                restoreUndoSnapshot(snap);
+                showPhaseBanner(`↩ Tour ${gameState.turn} — Joueur ${gameState.currentPlayer}`);
+                updateUI();
+                addMessage(`Retour au Tour ${gameState.turn} — Joueur ${gameState.currentPlayer}.`, 'system');
+                return;
+            }
+
+            // Cas 3 : annuler une action du tour précédent (après être revenu dedans)
+            if (gameState.prevTurnUndoStack.length > 0) {
+                restoreUndoSnapshot(gameState.prevTurnUndoStack.pop());
+                updateUI();
+                addMessage('Action du tour précédent annulée.', 'system');
+                return;
+            }
         }
 
         // ==================== GESTION DES CLICS ====================
@@ -5045,7 +5073,7 @@
                             applyDamageToUnit(targetCell.unit, damage, unit);
                             showDamageNumber(x, y, damage, false);
                         } else if (targetCell.crystal) {
-                            applyDamageToCrystal(targetCell.crystal, damage);
+                            applyDamageToCrystal(targetCell.crystal, damage, unit);
                             showDamageNumber(x, y, damage, false);
                         }
                         finishAttack(unit, callback);
@@ -5086,7 +5114,7 @@
                                 applyDamageToUnit(targetCell.unit, damage, unit);
                                 showDamageNumber(x, y, damage, false);
                             } else if (targetCell.crystal) {
-                                applyDamageToCrystal(targetCell.crystal, damage);
+                                applyDamageToCrystal(targetCell.crystal, damage, unit);
                                 showDamageNumber(x, y, damage, false);
                             }
                             finishAttack(unit, callback);
@@ -5109,7 +5137,7 @@
                         const cell = getCellAt(nx, ny);
                         if (!cell || cell.height !== attackerHeight) continue;
                         if (cell.unit && cell.unit.player !== unit.player) { applyDamageToUnit(cell.unit, damage, unit); showDamageNumber(nx, ny, damage, false); }
-                        if (cell.crystal && cell.crystal.player !== unit.player) { applyDamageToCrystal(cell.crystal, damage); showDamageNumber(nx, ny, damage, false); }
+                        if (cell.crystal && cell.crystal.player !== unit.player) { applyDamageToCrystal(cell.crystal, damage, unit); showDamageNumber(nx, ny, damage, false); }
                     }
                     finishAttack(unit, callback);
                 });
@@ -5126,7 +5154,7 @@
 
                 playAttackAnimation(unit.x, unit.y, x, y, attack, () => {
                     if (targetCell.unit) { applyDamageToUnit(targetCell.unit, damage, unit); showDamageNumber(x, y, damage, false); }
-                    else if (targetCell.crystal) { applyDamageToCrystal(targetCell.crystal, damage); showDamageNumber(x, y, damage, false); }
+                    else if (targetCell.crystal) { applyDamageToCrystal(targetCell.crystal, damage, unit); showDamageNumber(x, y, damage, false); }
                     for (let i = 1; i <= attack.pierceRange; i++) {
                         const px = x + dir.dx * i, py = y + dir.dy * i;
                         const pierceCell = getCellAt(px, py);
@@ -5134,7 +5162,7 @@
                         if (pierceCell.type === 'obstacle' || pierceCell.type === 'obstacle_tall') break;
                         if (pierceCell.height !== attackerHeight) continue;
                         if (pierceCell.unit && pierceCell.unit.player !== unit.player) { applyDamageToUnit(pierceCell.unit, damage, unit); showDamageNumber(px, py, damage, false); }
-                        if (pierceCell.crystal && pierceCell.crystal.player !== unit.player) { applyDamageToCrystal(pierceCell.crystal, damage); showDamageNumber(px, py, damage, false); }
+                        if (pierceCell.crystal && pierceCell.crystal.player !== unit.player) { applyDamageToCrystal(pierceCell.crystal, damage, unit); showDamageNumber(px, py, damage, false); }
                     }
                     finishAttack(unit, callback);
                 });
@@ -5149,7 +5177,7 @@
                     applyDamageToUnit(targetCell.unit, damage, unit);
                     showDamageNumber(x, y, damage, false);
                 } else if (targetCell.crystal) {
-                    applyDamageToCrystal(targetCell.crystal, damage);
+                    applyDamageToCrystal(targetCell.crystal, damage, unit);
                     showDamageNumber(x, y, damage, false);
                 }
                 finishAttack(unit, callback);
@@ -5395,7 +5423,7 @@
                         applyDamageToUnit(cell.unit, damage, attacker);
                     }
                     if (cell.crystal && cell.crystal.player !== attacker.player) {
-                        applyDamageToCrystal(cell.crystal, damage);
+                        applyDamageToCrystal(cell.crystal, damage, attacker);
                     }
                 }
             }
@@ -5463,6 +5491,20 @@
                 if (crystalBoardCell) crystalBoardCell.crystal = null;
                 const crystalEl = document.getElementById(`crystal-${crystal.player}-${crystalIndex}`);
                 if (crystalEl) crystalEl.remove();
+
+                // Renard: se soigne de 1 PV apres avoir detruit un cristal ennemi
+                if (attacker && attacker.character.healOnKill && attacker.currentHP > 0) {
+                    const healAmount = attacker.character.healOnKill;
+                    attacker.currentHP = Math.min(attacker.character.hp, attacker.currentHP + healAmount);
+                    addMessage(`${attacker.character.name} se soigne de ${healAmount} PV (Predateur)!`, `player${attacker.player}`);
+                    const attackerEl = document.getElementById(`unit-${attacker.id}`);
+                    if (attackerEl) {
+                        const hpFill = attackerEl.querySelector('.hp-fill');
+                        if (hpFill) hpFill.style.width = `${(attacker.currentHP / attacker.character.hp) * 100}%`;
+                        attackerEl.classList.add('healing');
+                        setTimeout(() => attackerEl.classList.remove('healing'), 600);
+                    }
+                }
             } else {
                 const crystalEl = document.getElementById(`crystal-${crystal.player}-${crystalIndex}`);
                 if (crystalEl) {
@@ -5557,8 +5599,20 @@
 
         // ==================== FIN DE TOUR ====================
         function endTurn() {
-            // Vider le snapshot undo : on ne peut pas annuler après avoir fini son tour
-            gameState.undoSnapshot = null;
+            // Gestion du stack undo selon le mode de jeu :
+            // - vsAI : on vide tout (on ne peut pas annuler le tour de l'IA)
+            // - 2players / distance : on garde le stack du tour courant dans prevTurnUndoStack
+            //   pour permettre de revenir jusqu'au debut du tour precedent
+            if (gameState.gameMode === 'vsAI') {
+                gameState.undoStack = [];
+                gameState.prevTurnUndoStack = [];
+                gameState.prevTurnBoundarySnap = null;
+            } else {
+                // Sauvegarder l'état de fin du tour courant comme point de retour
+                gameState.prevTurnBoundarySnap = buildUndoSnapshot();
+                gameState.prevTurnUndoStack = gameState.undoStack;
+                gameState.undoStack = [];
+            }
 
             if (!gameState.actionTaken) {
                 addMessage('Tour passé sans action.', 'system');
@@ -5749,8 +5803,18 @@
                 return;
             }
 
-            // Bouton Annuler dernière action
-            document.getElementById('btnUndo').disabled = !gameState.undoSnapshot;
+            // Bouton Annuler / Revenir au tour précédent
+            const btnUndoEl = document.getElementById('btnUndo');
+            if (gameState.undoStack.length > 0 || gameState.prevTurnUndoStack.length > 0) {
+                btnUndoEl.disabled = false;
+                btnUndoEl.textContent = '↩ Annuler action';
+            } else if (gameState.prevTurnBoundarySnap) {
+                btnUndoEl.disabled = false;
+                btnUndoEl.textContent = '⏪ Tour précédent';
+            } else {
+                btnUndoEl.disabled = true;
+                btnUndoEl.textContent = '↩ Annuler action';
+            }
 
             document.getElementById('btnSummon').disabled = !char || gameState.actionMode === 'summon';
             // Apres avoir agi (attaque/capacite), on ne peut plus se deplacer

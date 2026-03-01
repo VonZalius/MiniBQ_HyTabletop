@@ -5560,14 +5560,8 @@
             // Vider le snapshot undo : on ne peut pas annuler après avoir fini son tour
             gameState.undoSnapshot = null;
 
-            // Permettre de skip si aucune action n'est possible
-            if (!gameState.actionTaken && canDoAnything()) {
-                addMessage('Vous devez effectuer au moins une action!', 'system');
-                return;
-            }
-
             if (!gameState.actionTaken) {
-                addMessage('Aucune action possible - tour passe.', 'system');
+                addMessage('Tour passé sans action.', 'system');
             }
 
             clearSelection();
@@ -5790,17 +5784,7 @@
                 extraBtnsEl.classList.add('hidden');
             }
 
-            // Permettre de finir le tour si action effectuee OU si aucune action possible
-            const canEnd = gameState.actionTaken || !canDoAnything();
-            document.getElementById('btnEndTurn').disabled = !canEnd;
-
-            // Changer le texte du bouton si on doit skip
-            const endTurnBtn = document.getElementById('btnEndTurn');
-            if (!gameState.actionTaken && !canDoAnything()) {
-                endTurnBtn.textContent = 'Passer le tour';
-            } else {
-                endTurnBtn.textContent = 'Fin de tour';
-            }
+            document.getElementById('btnEndTurn').disabled = false;
         }
 
         function updateSelectedUnitInfo() {

@@ -367,26 +367,26 @@
         }
 
         .cell.obstacle {
-            background: linear-gradient(145deg, #6b6b6b 0%, #4a4a4a 30%, #383838 60%, #2a2a2a 100%);
+            background: linear-gradient(145deg, #9a9a9a 0%, #797979 30%, #646464 60%, #535353 100%);
             cursor: not-allowed;
-            box-shadow: inset 0 2px 3px rgba(255,255,255,0.1), inset 0 -3px 3px rgba(0,0,0,0.3);
+            box-shadow: inset 0 2px 3px rgba(255,255,255,0.15), inset 0 -3px 3px rgba(0,0,0,0.25);
         }
 
         .cell.obstacle::before {
             background:
-                repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.1) 4px, rgba(0,0,0,0.1) 6px);
+                repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.08) 4px, rgba(0,0,0,0.08) 6px);
         }
 
         .cell.obstacle-tall {
-            background: linear-gradient(145deg, #7a7a7a 0%, #5a5a5a 30%, #484848 60%, #363636 100%);
-            box-shadow: inset 0 -8px 0 rgba(0, 0, 0, 0.45), inset 0 3px 4px rgba(255,255,255,0.1);
+            background: linear-gradient(145deg, #545048 0%, #3e3c34 30%, #32302a 60%, #272319 100%);
+            box-shadow: inset 0 -8px 0 rgba(0, 0, 0, 0.55), inset 0 3px 4px rgba(255,255,255,0.06);
             cursor: not-allowed;
         }
 
         .cell.obstacle-tall::before {
             background:
-                repeating-linear-gradient(0deg, transparent, transparent 6px, rgba(0,0,0,0.08) 6px, rgba(0,0,0,0.08) 8px),
-                repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0,0,0,0.06) 10px, rgba(0,0,0,0.06) 12px);
+                repeating-linear-gradient(0deg, transparent, transparent 6px, rgba(0,0,0,0.1) 6px, rgba(0,0,0,0.1) 8px),
+                repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0,0,0,0.07) 10px, rgba(0,0,0,0.07) 12px);
         }
 
         .cell.obstacle-tall::after {
@@ -747,6 +747,22 @@
             background: linear-gradient(155deg, #2a3a50 0%, #1a2840 60%, #101e30 100%);
             color: #a0d0ff;
         }
+        #extraActionBtns { display: flex; flex-direction: column; gap: 6px; }
+        .action-btn.extra-action-btn {
+            background: linear-gradient(155deg, #0e3a3a 0%, #0a2828 60%, #061c1c 100%);
+            color: #80e8d8;
+            border: 1px solid rgba(60,180,160,0.35);
+        }
+        @media (hover: hover) {
+            .action-btn.extra-action-btn:hover:not(:disabled) {
+                background: linear-gradient(155deg, #1a5050 0%, #123838 60%, #0a2828 100%);
+                color: #a8f0e4;
+            }
+        }
+        .action-btn.extra-action-btn.active {
+            background: linear-gradient(155deg, #205a5a 0%, #184444 60%, #102e2e 100%);
+            border-color: rgba(80,220,200,0.6);
+        }
 
         .action-btn.confirm {
             background: linear-gradient(155deg, #006633 0%, #004d26 60%, #003518 100%);
@@ -928,6 +944,194 @@
             background: linear-gradient(155deg, #2e2018 0%, #1e1408 100%);
             color: var(--text-secondary);
             border-color: rgba(130,100,40,0.3);
+        }
+
+        /* ==================== SELECTION DES PERSONNAGES ==================== */
+        .char-selection-modal {
+            background: linear-gradient(160deg, rgba(12,8,3,0.98) 0%, rgba(22,14,6,0.98) 100%);
+            border-radius: 16px;
+            padding: 28px 32px;
+            max-width: 860px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 0 60px rgba(201,162,39,0.25), 0 20px 60px rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .char-selection-modal h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.6em;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            color: var(--gold-light);
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        .char-select-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.95em;
+            font-style: italic;
+        }
+
+        .char-select-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 14px;
+        }
+
+        .char-select-card {
+            background: linear-gradient(160deg, rgba(18,12,4,0.92) 0%, rgba(28,18,6,0.92) 100%);
+            border: 2px solid rgba(140,105,40,0.35);
+            border-radius: 12px;
+            padding: 14px 14px 26px 14px;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            user-select: none;
+            position: relative;
+        }
+
+        @media (hover: hover) {
+            .char-select-card:hover {
+                border-color: rgba(200,160,60,0.65);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 22px rgba(0,0,0,0.55);
+            }
+        }
+
+        .char-select-card.selected {
+            border-color: var(--gold);
+            box-shadow: 0 0 22px rgba(201,162,39,0.45), 0 4px 16px rgba(0,0,0,0.5);
+            background: linear-gradient(160deg, rgba(30,20,5,0.97) 0%, rgba(44,28,6,0.97) 100%);
+        }
+
+        .char-select-card.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 8px;
+            right: 11px;
+            color: var(--gold);
+            font-size: 1.1em;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(201,162,39,0.8);
+        }
+
+        .char-select-card.dimmed {
+            opacity: 0.4;
+        }
+
+        .char-select-card-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .char-select-icon {
+            font-size: 2em;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .char-select-card-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.0em;
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .char-select-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+
+        .char-select-stat {
+            font-size: 0.76em;
+            color: var(--text-secondary);
+            background: rgba(255,255,255,0.07);
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+
+        .char-select-ability {
+            font-size: 0.8em;
+            color: #a0c068;
+            margin-bottom: 4px;
+        }
+
+        .char-select-passive {
+            font-size: 0.74em;
+            color: var(--text-dim);
+            font-style: italic;
+        }
+
+        .char-select-deck-count {
+            position: absolute;
+            bottom: 7px;
+            right: 10px;
+            font-size: 0.74em;
+            color: var(--gold-dark);
+            font-style: italic;
+        }
+
+        .char-selection-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            border-top: 1px solid rgba(160,120,50,0.3);
+            padding-top: 16px;
+        }
+
+        .char-select-count {
+            font-family: 'Cinzel', serif;
+            font-size: 1.1em;
+            color: var(--gold);
+            min-width: 130px;
+        }
+
+        .char-select-deck-preview {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            flex: 1;
+            text-align: center;
+        }
+
+        .char-select-confirm {
+            padding: 11px 28px;
+            font-family: 'Cinzel', serif;
+            font-size: 0.95em;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            border: 1px solid rgba(60,200,110,0.35);
+            border-radius: 10px;
+            cursor: pointer;
+            background: linear-gradient(155deg, #006633 0%, #004d26 60%, #003518 100%);
+            color: #c8ffd8;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        .char-select-confirm:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        @media (hover: hover) {
+            .char-select-confirm:not(:disabled):hover {
+                transform: translateY(-2px);
+                filter: brightness(1.15);
+                box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+            }
         }
 
         .turn-indicator {
@@ -1650,6 +1854,71 @@
                 font-size: 0.9em;
                 min-height: 44px;
             }
+
+            /* Char selection mobile */
+            .char-selection-modal {
+                padding: 16px 14px;
+                gap: 14px;
+                border-radius: 12px;
+                width: 98%;
+                max-height: 88vh;
+            }
+            .char-selection-modal h2 {
+                font-size: 1.15em;
+                letter-spacing: 0.03em;
+            }
+            .char-select-subtitle {
+                font-size: 0.82em;
+            }
+            .char-select-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .char-select-card {
+                padding: 10px 10px 22px 10px;
+            }
+            .char-select-icon {
+                font-size: 1.6em;
+            }
+            .char-select-card-name {
+                font-size: 0.88em;
+            }
+            .char-select-stat {
+                font-size: 0.68em;
+                padding: 2px 4px;
+            }
+            .char-selection-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+                padding-top: 10px;
+            }
+            .char-select-count {
+                font-size: 0.9em;
+                min-width: 0;
+                text-align: center;
+            }
+            .char-select-deck-preview {
+                display: none;
+            }
+            .char-select-confirm {
+                width: 100%;
+                min-height: 48px;
+                padding: 12px;
+                font-size: 1em;
+            }
+
+            /* Rules modal mobile */
+            .rules-modal {
+                padding: 18px 16px;
+            }
+            .rules-btn {
+                top: 10px;
+                right: 10px;
+                width: 34px;
+                height: 34px;
+                font-size: 1em;
+            }
         }
 
         /* ==================== HEX BOARD ==================== */
@@ -1711,11 +1980,11 @@
             background: linear-gradient(to bottom, #7dd8ff 0%, #3ab8f5 35%, #0d8fe0 65%, #004a8c 100%);
         }
         .hex-cell.obstacle {
-            background: linear-gradient(145deg, #6b6b6b 0%, #4a4a4a 30%, #383838 60%, #2a2a2a 100%);
+            background: linear-gradient(145deg, #9a9a9a 0%, #797979 30%, #646464 60%, #535353 100%);
             cursor: not-allowed;
         }
         .hex-cell.obstacle-tall {
-            background: linear-gradient(145deg, #7a7a7a 0%, #5a5a5a 30%, #484848 60%, #363636 100%);
+            background: linear-gradient(145deg, #545048 0%, #3e3c34 30%, #32302a 60%, #272319 100%);
             cursor: not-allowed;
         }
 
@@ -2080,6 +2349,140 @@
                 height: 22px;
                 font-size: 6px;
             }
+
+            /* Char selection — 1 seule colonne sur très petits écrans */
+            .char-select-grid {
+                grid-template-columns: 1fr;
+            }
+            .char-selection-modal h2 {
+                font-size: 1.05em;
+            }
+        }
+
+        /* ==================== MASQUAGE UI — MODE DISTANCE ==================== */
+        #btnHideUI {
+            display: none;
+            position: fixed;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 8000;
+            background: linear-gradient(155deg, #1a1000 0%, #0e0a00 100%);
+            color: var(--gold-light);
+            border: 1px solid rgba(201,162,39,0.5);
+            border-radius: 24px;
+            padding: 10px 26px;
+            font-family: 'Cinzel', serif;
+            font-size: 0.88em;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.06);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        @media (hover: hover) {
+            #btnHideUI:hover {
+                background: linear-gradient(155deg, #2a1a00 0%, #1e1200 100%);
+                border-color: var(--gold);
+                box-shadow: 0 6px 24px rgba(0,0,0,0.85), 0 0 14px rgba(201,162,39,0.2);
+            }
+        }
+        /* Quand l'UI est cachée, seul le plateau reste visible */
+        body.board-only .game-header,
+        body.board-only .game-info,
+        body.board-only .action-panel,
+        body.board-only .roster-panel,
+        body.board-only #opponentInfoBar,
+        body.board-only .message-log {
+            display: none !important;
+        }
+        body.board-only .main-area {
+            justify-content: center;
+        }
+        @media (max-width: 700px) {
+            #btnHideUI {
+                bottom: 12px;
+                padding: 13px 22px;
+                font-size: 0.92em;
+                min-height: 48px;
+                border-radius: 20px;
+            }
+        }
+
+        /* ==================== SEED DE MAP ==================== */
+        .editor-seed {
+            margin-top: 10px;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(160,120,50,0.25);
+            border-radius: 10px;
+        }
+        .editor-seed > label {
+            display: block;
+            font-size: 0.82em;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.03em;
+        }
+        .editor-seed-row {
+            display: flex;
+            gap: 8px;
+            align-items: stretch;
+        }
+        .editor-seed-input {
+            flex: 1;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(160,120,50,0.3);
+            border-radius: 7px;
+            color: #c8c0a8;
+            font-size: 0.75em;
+            font-family: monospace;
+            padding: 7px 10px;
+            min-width: 0;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .editor-seed-input:focus {
+            border-color: rgba(201,162,39,0.6);
+            background: rgba(0,0,0,0.55);
+        }
+        .btn-seed-copy, .btn-seed-load {
+            padding: 7px 14px;
+            border-radius: 7px;
+            font-size: 0.8em;
+            font-family: 'Cinzel', serif;
+            cursor: pointer;
+            border: 1px solid;
+            white-space: nowrap;
+            transition: filter 0.15s;
+        }
+        .btn-seed-copy {
+            background: linear-gradient(155deg, #1e2a3a 0%, #0c1620 100%);
+            color: #7ab8e8;
+            border-color: rgba(60,120,180,0.35);
+        }
+        .btn-seed-load {
+            background: linear-gradient(155deg, #1a3a0a 0%, #0e2206 100%);
+            color: #8ad878;
+            border-color: rgba(80,180,60,0.35);
+        }
+        @media (hover: hover) {
+            .btn-seed-copy:hover, .btn-seed-load:hover { filter: brightness(1.3); }
+        }
+        @media (max-width: 700px) {
+            .editor-seed-row {
+                flex-direction: column;
+            }
+            .editor-seed-input {
+                font-size: 0.8em;
+                padding: 10px;
+            }
+            .btn-seed-copy, .btn-seed-load {
+                min-height: 44px;
+                font-size: 0.88em;
+                padding: 10px 16px;
+            }
         }
     </style>
 </head>
@@ -2175,6 +2578,7 @@
                 <button class="action-btn summon hidden" id="btnSummon" disabled>Invoquer</button>
                 <button class="action-btn move hidden" id="btnMove" disabled>Deplacer</button>
                 <button class="action-btn attack hidden" id="btnAttack" disabled>Attaquer</button>
+                <div id="extraActionBtns" class="hidden"></div>
                 <button class="action-btn cancel hidden" id="btnCancel" disabled>Annuler</button>
                 <button class="action-btn undo hidden" id="btnUndo" disabled>↩ Annuler action</button>
                 <button class="action-btn end-turn hidden" id="btnEndTurn">Fin de tour</button>
@@ -2209,8 +2613,8 @@
         <div class="map-editor-modal">
             <h2>Editeur de Carte</h2>
             <div class="map-type-toggle">
-                <button class="map-type-btn active" id="btnMapSquare" onclick="setMapType('square')">⬜ Grille carrée</button>
-                <button class="map-type-btn" id="btnMapHex" onclick="setMapType('hex')">⬡ Hexagone</button>
+                <button class="map-type-btn" id="btnMapSquare" onclick="setMapType('square')">⬜ Grille carrée</button>
+                <button class="map-type-btn active" id="btnMapHex" onclick="setMapType('hex')">⬡ Hexagone</button>
             </div>
             <div class="editor-container">
                 <div class="editor-palette">
@@ -2232,6 +2636,17 @@
                 <label>Cartes initiales en main: <input type="number" id="editorInitialHandSize" min="1" max="10" value="3" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
                 <label>Max cartes en main (0=&#x221e;): <input type="number" id="editorMaxHandSize" min="0" max="20" value="5" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
                 <label>Effectif max par joueur: <input type="number" id="editorMaxEffectif" min="1" max="30" value="12" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+            </div>
+            <div class="editor-seed">
+                <label>Seed de la carte :</label>
+                <div class="editor-seed-row">
+                    <input type="text" id="editorSeedInput" class="editor-seed-input"
+                        placeholder="Collez une seed ici pour charger une carte…"
+                        spellcheck="false" autocomplete="off" readonly
+                        onclick="this.removeAttribute('readonly'); this.select();">
+                    <button class="btn-seed-copy" onclick="copySeed()">📋 Copier</button>
+                    <button class="btn-seed-load" onclick="loadSeed()">📥 Charger</button>
+                </div>
             </div>
             <div class="editor-actions">
                 <button class="btn-reset-map" onclick="resetMap()">Reinitialiser</button>
@@ -2265,6 +2680,21 @@
             <p style="font-size:0.85em;color:rgba(255,255,255,0.6);margin-top:-8px;">Durant le tour adverse, simulez ses actions selon ce qu'il vous communique.</p>
             <button id="btnSideP1">Je suis Joueur 1</button>
             <button id="btnSideP2">Je suis Joueur 2</button>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="charSelectionOverlay">
+        <div class="char-selection-modal">
+            <div>
+                <h2 id="charSelectTitle">Joueur 1 — Construisez votre deck</h2>
+                <p class="char-select-subtitle">Choisissez exactement <strong id="charSelectNeeded">6</strong> personnages pour votre deck.</p>
+            </div>
+            <div id="charSelectGrid" class="char-select-grid"></div>
+            <div class="char-selection-footer">
+                <div id="charSelectCount" class="char-select-count">0 / 6 choisis</div>
+                <div id="charSelectDeckPreview" class="char-select-deck-preview"></div>
+                <button id="btnConfirmCharSelection" class="char-select-confirm" disabled>Confirmer le deck</button>
+            </div>
         </div>
     </div>
 
@@ -2390,7 +2820,12 @@
                     description: 'Apres attaque, peut se deplacer de 2 cases'
                 },
                 postAttackMove: 2,
-                icon: '🐭'
+                icon: '🐭',
+                hooks: {},
+                actions: [
+                    { id: 'morsure', name: 'Morsure', type: 'attack', isDefault: true,
+                      description: 'Morsure au corps a corps (portee 1). Apres attaque, peut se deplacer de 2 cases.' }
+                ]
             },
             {
                 id: 'ecureuil',
@@ -2412,7 +2847,12 @@
                     description: 'Peut cibler des personnages de hauteur differente'
                 },
                 ignoreHeight: true,
-                icon: '🐿️'
+                icon: '🐿️',
+                hooks: {},
+                actions: [
+                    { id: 'lancer_gland', name: 'Lancer de gland', type: 'attack', isDefault: true,
+                      description: 'Tir a distance (portee 3). Peut cibler des unites a hauteur differente.' }
+                ]
             },
             {
                 id: 'lapin',
@@ -2431,7 +2871,12 @@
                     chargeDistance: 3
                 },
                 passive: null,
-                icon: '🐰'
+                icon: '🐰',
+                hooks: {},
+                actions: [
+                    { id: 'charge', name: 'Charge', type: 'attack', isDefault: true,
+                      description: 'Charge en ligne droite jusqu\'a 3 cases, frappe la premiere cible.' }
+                ]
             },
             {
                 id: 'canard',
@@ -2453,8 +2898,57 @@
                     description: 'Se deplace sur l\'eau. Sur l\'eau, soigne 2 PV a un allie adjacent ou attaque normalement'
                 },
                 canMoveOnWater: true,
-                waterHeal: true,
-                icon: '🦆'
+                icon: '🦆',
+                hooks: {},
+                actions: [
+                    { id: 'coup_bec', name: 'Coup de bec', type: 'attack', isDefault: true,
+                      description: 'Attaque au corps a corps (portee 1).' },
+                    {
+                        id: 'soin_aquatique',
+                        name: 'Soin Aquatique',
+                        type: 'heal',
+                        isDefault: false,
+                        highlightType: 'summon',
+                        icon: '💧',
+                        description: 'Soigne un allie adjacent de 2 PV. Disponible uniquement sur l\'eau.',
+                        condition: (unit) => isUnitOnWater(unit),
+                        disabledReason: 'Disponible uniquement sur l\'eau',
+                        getTargetCells: (unit) => {
+                            const cells = [];
+                            const unitCell = getCellAt(unit.x, unit.y);
+                            const unitHeight = unitCell ? unitCell.height : 0;
+                            for (const dir of getDirections()) {
+                                const nx = unit.x + dir.dx, ny = unit.y + dir.dy;
+                                const cell = getCellAt(nx, ny);
+                                if (cell && cell.unit && cell.unit.player === unit.player
+                                        && cell.unit !== unit && cell.height === unitHeight) {
+                                    cells.push({ x: nx, y: ny });
+                                }
+                            }
+                            return cells;
+                        },
+                        execute: (unit, targetCell, callback) => {
+                            gameState.animating = true;
+                            const healAnim = { damage: -1, pattern: 'single', range: 1 };
+                            playAttackAnimation(unit.x, unit.y, targetCell.x, targetCell.y, healAnim, () => {
+                                const ally = targetCell.unit;
+                                const healAmt = 2;
+                                ally.currentHP = Math.min(getUnitStat(ally, 'maxHP'), ally.currentHP + healAmt);
+                                showDamageNumber(targetCell.x, targetCell.y, healAmt, true);
+                                addMessage(`${unit.character.name} soigne ${ally.character.name} de ${healAmt} PV!`, `player${unit.player}`);
+                                gameState.matchStats[unit.player].totalHealingDone += healAmt;
+                                const allyEl = document.getElementById(`unit-${ally.id}`);
+                                if (allyEl) {
+                                    const hpFill = allyEl.querySelector('.hp-fill');
+                                    if (hpFill) hpFill.style.width = `${(ally.currentHP / getUnitStat(ally, 'maxHP')) * 100}%`;
+                                    allyEl.classList.add('healing');
+                                    setTimeout(() => allyEl.classList.remove('healing'), 600);
+                                }
+                                finishAttack(unit, callback);
+                            });
+                        }
+                    }
+                ]
             },
             {
                 id: 'renard',
@@ -2477,7 +2971,12 @@
                     description: 'Se soigne de 1 PV apres avoir elimine un ennemi'
                 },
                 healOnKill: 1,
-                icon: '🦊'
+                icon: '🦊',
+                hooks: {},
+                actions: [
+                    { id: 'griffure_percante', name: 'Griffure percante', type: 'attack', isDefault: true,
+                      description: 'Attaque perforante adjacente : blesse aussi les ennemis derriere la cible. Se soigne de 1 PV apres un kill.' }
+                ]
             },
             {
                 id: 'sanglier',
@@ -2499,7 +2998,12 @@
                     description: 'Ne peut pas perdre plus de 3 PV par tour'
                 },
                 maxDamagePerTurn: 3,
-                icon: '🐗'
+                icon: '🐗',
+                hooks: {},
+                actions: [
+                    { id: 'furie', name: 'Furie', type: 'attack', isDefault: true,
+                      description: 'Zone adjacente : frappe tous les ennemis a la meme hauteur. Encaisse max 3 degats par tour.' }
+                ]
             }
         ];
 
@@ -2603,9 +3107,14 @@
             const targetCellData = getCellAt(x2, y2);
             const targetHeight = targetCellData ? targetCellData.height : 0;
             const losHeight = Math.max(originHeight, targetHeight);
+            // Nudge epsilon: quand t=i/n tombe exactement sur une frontière entre hexagones,
+            // hexRound() peut trancher dans le mauvais sens. On nudge légèrement
+            // dans la direction du rayon pour garantir un résultat cohérent.
+            const nudgeQ = (q2 - q1) >= 0 ? 1e-6 : -1e-6;
+            const nudgeR = (r2 - r1) >= 0 ? 1e-6 : -1e-6;
             for (let i = 1; i < n; i++) {
                 const t = i / n;
-                const { q, r } = hexRound(q1 + (q2 - q1) * t, r1 + (r2 - r1) * t);
+                const { q, r } = hexRound(q1 + (q2 - q1) * t + nudgeQ, r1 + (r2 - r1) * t + nudgeR);
                 const cell = getCellAt(q + HEX_S, r + HEX_S);
                 if (!cell) return false;
                 if (cell.type === 'obstacle_tall') return false;
@@ -2619,9 +3128,10 @@
         const AI_DELAY = 600; // Delai entre les actions de l'IA (ms)
 
         let gameState = {
-            phase: 'mode_selection', // mode_selection, crystal_placement_p1, crystal_placement_p2, playing, game_over
+            phase: 'mode_selection', // mode_selection, char_selection_p1, char_selection_p2, crystal_placement_p1, crystal_placement_p2, playing, game_over
             gameMode: '2players', // '2players' ou 'vsAI'
-            mapType: 'square',   // 'square' or 'hex'
+            mapType: 'hex',      // 'square' or 'hex' — hex par defaut
+            uiHidden: false,     // mode distance: UI cachée pour montrer le plateau
             turn: 1,
             currentPlayer: 1,
             actionTaken: false,
@@ -2637,6 +3147,7 @@
                     units: [],
                     deck: [],
                     hand: [],
+                    selectedChars: [], // IDs des personnages choisis lors de la selection pre-partie
                     isAI: false
                 },
                 2: {
@@ -2647,6 +3158,7 @@
                     units: [],
                     deck: [],
                     hand: [],
+                    selectedChars: [], // IDs des personnages choisis lors de la selection pre-partie
                     isAI: false
                 }
             },
@@ -2662,7 +3174,34 @@
             actionMode: null,
             highlightedCells: [],
             distanceSide: null,   // 1 ou 2 : quel côté on joue réellement (mode distance)
-            undoSnapshot: null    // snapshot avant la dernière action (null = rien à annuler)
+            undoSnapshot: null,   // snapshot avant la dernière action (null = rien à annuler)
+            activeActionId: null, // ID de l'action extra en cours d'execution
+
+            // Statistiques vivantes de la partie — mise a jour en temps reel.
+            // Utilisees par les capacites de personnages pour des conditions dynamiques.
+            // Exemples d'usage futur : +dégâts si X kills, bouclier si N allies soignés, etc.
+            matchStats: {
+                1: {
+                    unitsInvoked: 0,       // total unites invoquees depuis debut partie
+                    unitsKilled: 0,        // total ennemis elimines
+                    unitsLost: 0,          // total de nos unites perdues
+                    totalDamageDealt: 0,   // degats totaux infliges
+                    totalHealingDone: 0,   // soins totaux effectues
+                    crystalDamageDealt: 0, // degats infliges aux cristaux adverses
+                    turnsPlayed: 0,        // nombre de tours joues par ce joueur
+                    charactersSummoned: {} // { charId: count } combien de fois chaque perso invoque
+                },
+                2: {
+                    unitsInvoked: 0,
+                    unitsKilled: 0,
+                    unitsLost: 0,
+                    totalDamageDealt: 0,
+                    totalHealingDone: 0,
+                    crystalDamageDealt: 0,
+                    turnsPlayed: 0,
+                    charactersSummoned: {}
+                }
+            }
         };
 
         // ==================== INITIALISATION DU PLATEAU ====================
@@ -2810,6 +3349,7 @@
             document.getElementById('btnMapHex').classList.toggle('active', type === 'hex');
             initDefaultBoardData();
             initEditorBoard();
+            updateSeedDisplay();
         }
 
         function showMapEditor() {
@@ -2821,6 +3361,7 @@
             document.getElementById('btnMapHex').classList.toggle('active', isHexMode());
             document.getElementById('mapEditorOverlay').classList.remove('hidden');
             initEditorBoard();
+            updateSeedDisplay();
         }
 
         function initEditorBoard() {
@@ -2948,6 +3489,7 @@
                     applyCellTerrain(mx, my, terrain);
                 }
             }
+            updateSeedDisplay();
         }
 
         function applyCellTerrain(x, y, terrain) {
@@ -3028,6 +3570,7 @@
         function resetMap() {
             initDefaultBoardData();
             initEditorBoard();
+            updateSeedDisplay();
         }
 
         function confirmMapEditor() {
@@ -3054,12 +3597,17 @@
 
         // ==================== SYSTEME DE DECK ====================
         // Nombre de cartes par creature selon la rarete
-        // Commun: 6 cartes, Rare: 3 cartes, Epique: 2 cartes
         const RARITY_COUNTS = { commun: 4, rare: 3, epique: 2 };
+        // Nombre de personnages distincts que chaque joueur doit choisir pour son deck
+        const CHARS_PER_DECK = 6;
 
-        function createDeck() {
+        // Construit le deck a partir des personnages selectionnes par ce joueur
+        function createDeck(playerNum) {
+            const selectedIds = gameState.players[playerNum].selectedChars;
             let deck = [];
-            for (const char of CHARACTERS) {
+            for (const charId of selectedIds) {
+                const char = CHARACTERS.find(c => c.id === charId);
+                if (!char) continue;
                 const count = RARITY_COUNTS[char.rarity] || 0;
                 for (let i = 0; i < count; i++) {
                     deck.push(char.id);
@@ -3071,6 +3619,252 @@
                 [deck[i], deck[j]] = [deck[j], deck[i]];
             }
             return deck;
+        }
+
+        // ==================== SYSTEME DE HOOKS DE CAPACITES ====================
+        // Permet aux personnages de definir des comportements reactifs via character.hooks
+        // Les personnages existants ont des hooks vides ({}) — leurs mecaniques utilisent
+        // des proprietes directes (postAttackMove, healOnKill, etc.) pour retrocompatibilite.
+        // Les nouveaux personnages peuvent utiliser les hooks pour des capacites inedites.
+        //
+        // Signatures disponibles dans character.hooks :
+        //   onSummon(unit)
+        //     → Declenche a l'invocation de l'unite
+        //   onKill(unit, victim)
+        //     → Declenche quand cette unite elimine un ennemi
+        //   onDamageTaken(unit, damage, attacker) → number|null
+        //     → Declenche avant d'appliquer les degats (apres les caps existants)
+        //       Retourner un nombre pour modifier les degats, null pour les laisser inchanges
+        //   onAttackEnd(unit)
+        //     → Declenche apres resolution complete d'une attaque
+        //   onTurnStart(unit)
+        //     → Declenche au debut du tour du joueur qui controle cette unite
+        //   onTurnEnd(unit)
+        //     → Declenche a la fin du tour du joueur qui controle cette unite
+        //   canEnterCell(unit, cell) → bool|null
+        //     → Etendre les regles de deplacement ; null = comportement standard
+        function fireHook(unit, hookName, ...args) {
+            if (!unit || !unit.character || !unit.character.hooks) return undefined;
+            const hook = unit.character.hooks[hookName];
+            if (typeof hook === 'function') {
+                return hook(unit, ...args);
+            }
+            return undefined;
+        }
+
+        // ==================== STATS DYNAMIQUES ====================
+        // Lit la valeur effective d'une stat en cumulant base + unit.modifiers[stat].
+        // Toute logique de jeu doit appeler cette fonction plutot que lire les proprietes
+        // du personnage directement, afin que les buffs/debuffs soient pris en compte.
+        //
+        // Stats reconnues : movement, damage, range, maxHP, chargeDistance, pierceRange, power
+        // Pour les stats personnalisees de futurs persos : unit.modifiers.monStat = N,
+        //   getUnitStat(unit, 'monStat') retourne N.
+        function getUnitStat(unit, stat) {
+            if (!unit) return 0;
+            const mod = (unit.modifiers && unit.modifiers[stat] != null) ? unit.modifiers[stat] : 0;
+            switch (stat) {
+                case 'movement':        return unit.character.movement + mod;
+                case 'damage':          return unit.character.attack.damage + mod;
+                case 'range':           return unit.character.attack.range + mod;
+                case 'maxHP':           return unit.character.hp + mod;
+                case 'chargeDistance':  return (unit.character.attack.chargeDistance || 0) + mod;
+                case 'pierceRange':     return (unit.character.attack.pierceRange || 0) + mod;
+                case 'power':           return unit.character.power + mod;
+                default:                return mod; // stat personnalisee
+            }
+        }
+
+        // ==================== REQUETES D'ETAT DU TERRAIN ====================
+        // Fonctions destinées aux capacités de personnages pour interroger l'état live du jeu.
+        // Elles retournent TOUJOURS l'etat actuel (pas un snapshot) afin que les
+        // conditions s'évaluent dynamiquement au moment de l'appel.
+
+        // Retourne les unites actives (playerNum null = tous joueurs, charId null = tous persos)
+        function getUnitsOnField(playerNum = null, charId = null) {
+            let units = [];
+            const players = playerNum !== null ? [playerNum] : [1, 2];
+            for (const p of players) {
+                units = units.concat(gameState.players[p].units);
+            }
+            if (charId) units = units.filter(u => u.character.id === charId);
+            return units;
+        }
+
+        // Combien de copies d'un personnage (charId) un joueur a sur le terrain
+        function getFieldCount(playerNum, charId) {
+            return gameState.players[playerNum].units.filter(u => u.character.id === charId).length;
+        }
+
+        // Unites d'un joueur filtrees par rarete
+        function getUnitsByRarity(playerNum, rarity) {
+            return gameState.players[playerNum].units.filter(u => u.character.rarity === rarity);
+        }
+
+        // Unites dans un rayon autour d'une position (playerFilter null = tous)
+        function getUnitsNear(x, y, range, playerFilter = null) {
+            const result = [];
+            const players = playerFilter !== null ? [playerFilter] : [1, 2];
+            for (const p of players) {
+                for (const unit of gameState.players[p].units) {
+                    if (cellDistance(unit.x, unit.y, x, y) <= range) result.push(unit);
+                }
+            }
+            return result;
+        }
+
+        // Vrai si les deux unites sont adjacentes (distance 1)
+        function isAdjacentTo(unitA, unitB) {
+            return cellDistance(unitA.x, unitA.y, unitB.x, unitB.y) === 1;
+        }
+
+        // Toutes les unites adjacentes a une unite (playerFilter null = tous)
+        function getAdjacentUnits(unit, playerFilter = null) {
+            return getUnitsNear(unit.x, unit.y, 1, playerFilter).filter(u => u !== unit);
+        }
+
+        // La cellule ou se trouve une unite
+        function getUnitCell(unit) {
+            return getCellAt(unit.x, unit.y);
+        }
+
+        // Vrai si l'unite est sur de l'eau (type commence par 'water')
+        function isUnitOnWater(unit) {
+            const cell = getUnitCell(unit);
+            return cell != null && cell.type != null && cell.type.startsWith('water');
+        }
+
+        // Hauteur de la case de l'unite
+        function getUnitHeight(unit) {
+            const cell = getUnitCell(unit);
+            return cell ? cell.height : 0;
+        }
+
+        // Vrai si l'unite est sur un terrain de type specifique
+        function isUnitOnTerrain(unit, terrainType) {
+            const cell = getUnitCell(unit);
+            return cell != null && cell.type === terrainType;
+        }
+
+        // Cases adjacentes a une position avec leur contenu
+        function getAdjacentCells(x, y) {
+            const result = [];
+            for (const dir of getDirections()) {
+                const cell = getCellAt(x + dir.dx, y + dir.dy);
+                if (cell) result.push(cell);
+            }
+            return result;
+        }
+
+        // Unites a une hauteur specifique (playerFilter null = tous)
+        function getUnitsAtHeight(height, playerFilter = null) {
+            return getUnitsOnField(playerFilter).filter(u => getUnitHeight(u) === height);
+        }
+
+        // Unites avec un effet de statut specifique actif
+        function getUnitsWithStatus(statusId, playerFilter = null) {
+            return getUnitsOnField(playerFilter).filter(u =>
+                u.statusEffects && u.statusEffects.some(e => e.id === statusId)
+            );
+        }
+
+        // Snapshot complet de l'etat du terrain — utile pour des conditions complexes
+        function getFieldState() {
+            const result = {};
+            for (const p of [1, 2]) {
+                const player = gameState.players[p];
+                const units = player.units;
+                // Un seul passage sur les unites pour toutes les stats
+                const byRarity = { commun: 0, rare: 0, epique: 0 };
+                const byChar = {};
+                for (const unit of units) {
+                    byRarity[unit.character.rarity] = (byRarity[unit.character.rarity] || 0) + 1;
+                    byChar[unit.character.id] = (byChar[unit.character.id] || 0) + 1;
+                }
+                result[p] = {
+                    totalUnits: units.length,
+                    unitsByRarity: byRarity,
+                    unitsByChar: byChar,
+                    effectifUsed: player.effectifUsed,
+                    effectifMax: player.effectifMax,
+                    effectifAvailable: player.effectifMax - player.effectifUsed,
+                    handSize: player.hand.length,
+                    deckSize: player.deck.length,
+                    crystalsAlive: player.crystals.filter(c => c.hp > 0).length,
+                    crystalTotalHP: player.crystals.reduce((s, c) => s + Math.max(0, c.hp), 0)
+                };
+            }
+            return result;
+        }
+
+        // ==================== EFFETS DE STATUT ====================
+        // Systeme leger d'effets temporaires sur les unites.
+        // Chaque effet : { id, name, duration, onTurnStart?(unit,eff), onExpire?(unit,eff),
+        //                  onApply?(unit,eff), [donnees personnalisees...] }
+        // Les futurs personnages peuvent appeler addStatusEffect() depuis leurs hooks/actions.
+
+        function processStatusEffects(unit) {
+            if (!unit.statusEffects || unit.statusEffects.length === 0) return;
+            const toRemove = [];
+            for (const effect of unit.statusEffects) {
+                if (typeof effect.onTurnStart === 'function') effect.onTurnStart(unit, effect);
+                effect.duration--;
+                if (effect.duration <= 0) {
+                    if (typeof effect.onExpire === 'function') effect.onExpire(unit, effect);
+                    toRemove.push(effect);
+                }
+            }
+            unit.statusEffects = unit.statusEffects.filter(e => !toRemove.includes(e));
+        }
+
+        function addStatusEffect(unit, effect) {
+            if (!unit.statusEffects) unit.statusEffects = [];
+            const existing = unit.statusEffects.find(e => e.id === effect.id);
+            if (existing) {
+                existing.duration = Math.max(existing.duration, effect.duration);
+                return;
+            }
+            const eff = { ...effect };
+            unit.statusEffects.push(eff);
+            if (typeof eff.onApply === 'function') eff.onApply(unit, eff);
+        }
+
+        function removeStatusEffect(unit, statusId) {
+            if (!unit.statusEffects) return;
+            const eff = unit.statusEffects.find(e => e.id === statusId);
+            if (eff) {
+                if (typeof eff.onExpire === 'function') eff.onExpire(unit, eff);
+                unit.statusEffects = unit.statusEffects.filter(e => e.id !== statusId);
+            }
+        }
+
+        // ==================== SYSTEME D'ACTIONS MULTIPLES ====================
+        // Un personnage peut avoir plusieurs actions dans character.actions[].
+        // actions[0] avec isDefault:true est l'action declenchee par btnAttack.
+        // Les autres (condition optionnelle) apparaissent comme boutons supplementaires.
+
+        // Retourne les actions extra disponibles pour l'unite (non-defaut, condition remplie, pas encore agi)
+        function getExtraActions(unit) {
+            if (!unit || unit.hasActed || !unit.character.actions) return [];
+            return unit.character.actions.filter(action => {
+                if (action.isDefault) return false;
+                if (typeof action.condition === 'function') return action.condition(unit);
+                return true;
+            });
+        }
+
+        // Lance une action extra pour l'unite selectionnee
+        function startExtraAction(unit, action) {
+            if (!unit || unit.hasActed) return;
+            const cells = action.getTargetCells(unit);
+            if (cells.length === 0) {
+                addMessage(`Aucune cible disponible pour "${action.name}"!`, 'system');
+                return;
+            }
+            gameState.actionMode = 'extra_action';
+            gameState.activeActionId = action.id;
+            highlightCells(cells, action.highlightType || 'attack');
+            updateActionButtons();
         }
 
         function drawCards(playerNum, count) {
@@ -3197,7 +3991,9 @@
                         movementLeft: u.movementLeft,
                         hasActed: u.hasActed,
                         justSummoned: u.justSummoned,
-                        damageTakenThisTurn: u.damageTakenThisTurn
+                        damageTakenThisTurn: u.damageTakenThisTurn,
+                        modifiers: { ...(u.modifiers || {}) },
+                        statusEffects: (u.statusEffects || []).map(e => ({ ...e }))
                     })),
                     crystals: pl.crystals.map(c => ({...c}))
                 };
@@ -3232,7 +4028,9 @@
                     movementLeft: u.movementLeft,
                     hasActed: u.hasActed,
                     justSummoned: u.justSummoned,
-                    damageTakenThisTurn: u.damageTakenThisTurn
+                    damageTakenThisTurn: u.damageTakenThisTurn,
+                    modifiers: { ...(u.modifiers || {}) },
+                    statusEffects: (u.statusEffects || []).map(e => ({ ...e }))
                 }));
                 player.crystals = sp.crystals.map(c => ({...c}));
             }
@@ -3321,6 +4119,25 @@
                 if (gameState.highlightedCells.some(c => c.x === x && c.y === y)) {
                     saveUndoSnapshot();
                     attackTarget(x, y);
+                }
+                return;
+            }
+
+            // Mode action extra (multi-actions : soin, capacite speciale, etc.)
+            if (gameState.actionMode === 'extra_action') {
+                if (gameState.highlightedCells.some(c => c.x === x && c.y === y)) {
+                    const unit = gameState.selectedUnit;
+                    const action = unit && unit.character.actions
+                        ? unit.character.actions.find(a => a.id === gameState.activeActionId)
+                        : null;
+                    if (action && action.execute) {
+                        saveUndoSnapshot();
+                        gameState.actionMode = null;
+                        gameState.activeActionId = null;
+                        clearHighlights();
+                        // execute() appelle finishAttack() qui gere hasActed/actionTaken/checkVictory/updateUI
+                        action.execute(unit, getCellAt(x, y), () => { updateUI(); });
+                    }
                 }
                 return;
             }
@@ -3476,13 +4293,11 @@
                 for (const dir of directions) {
                     const nx = x + dir.dx;
                     const ny = y + dir.dy;
-                    if (true) {
-                        const cell = getCellAt(nx, ny);
-                        if (cell && cell.type === 'normal' && !cell.crystal) {
-                            x = nx;
-                            y = ny;
-                            break;
-                        }
+                    const cell = getCellAt(nx, ny);
+                    if (cell && cell.type === 'normal' && !cell.crystal) {
+                        x = nx;
+                        y = ny;
+                        break;
                     }
                 }
             }
@@ -3511,9 +4326,9 @@
             document.getElementById('btnCancel').classList.remove('hidden');
             document.getElementById('btnEndTurn').classList.remove('hidden');
 
-            // Initialiser les decks et piocher les mains initiales
+            // Initialiser les decks a partir des personnages selectionnes par chaque joueur
             for (const p of [1, 2]) {
-                gameState.players[p].deck = createDeck();
+                gameState.players[p].deck = createDeck(p);
                 gameState.players[p].hand = [];
             }
             if (gameState.gameMode === 'distance') {
@@ -3641,6 +4456,7 @@
 
         function cancelAction() {
             gameState.actionMode = null;
+            gameState.activeActionId = null;
             clearHighlights();
             updateActionButtons();
         }
@@ -3732,8 +4548,15 @@
                 movementLeft: 0,
                 hasActed: true,
                 justSummoned: true,
-                damageTakenThisTurn: 0
+                damageTakenThisTurn: 0,
+                modifiers: {},      // Modificateurs de stats actifs : { movement, damage, range, maxHP, ... }
+                statusEffects: []   // Effets temporaires actifs
             };
+
+            // Mise a jour des stats de match
+            const ms = gameState.matchStats[gameState.currentPlayer];
+            ms.unitsInvoked++;
+            ms.charactersSummoned[char.id] = (ms.charactersSummoned[char.id] || 0) + 1;
 
             player.units.push(unit);
             player.effectifUsed += char.power;
@@ -3754,6 +4577,7 @@
                 }
 
                 addMessage(`${char.name} invoque en (${x}, ${y})!`, `player${gameState.currentPlayer}`);
+                fireHook(unit, 'onSummon');
 
                 gameState.actionTaken = true;
                 clearSelection();
@@ -4045,22 +4869,8 @@
             const cells = [];
             const unitCell = getCellAt(unit.x, unit.y);
             const unitHeight = unitCell ? unitCell.height : 0;
-            const ignoreHeight = unit.character.ignoreHeight || (unit.character.waterHeal && unitCell && unitCell.type === 'water') || false;
-            const unitOnWater = unitCell && unitCell.type === 'water';
+            const ignoreHeight = unit.character.ignoreHeight || false;
             const dirs = getDirections();
-
-            // Canard sur l'eau: ajoute les allies adjacents comme cibles de soin
-            // (les ennemis sont ajoutes par la logique standard ci-dessous)
-            if (unit.character.waterHeal && unitOnWater) {
-                for (const dir of dirs) {
-                    const nx = unit.x + dir.dx, ny = unit.y + dir.dy;
-                    const targetCell = getCellAt(nx, ny);
-                    if (targetCell && targetCell.unit && targetCell.unit.player === unit.player && targetCell.unit !== unit) {
-                        cells.push({x: nx, y: ny, isHeal: true});
-                    }
-                }
-                // Fall through to standard attack logic to also add enemy targets
-            }
 
             // Charge du Lapin: cible en ligne droite (meme hauteur)
             if (attack.pattern === 'charge') {
@@ -4211,31 +5021,9 @@
             const unit = gameState.selectedUnit;
             const attack = unit.character.attack;
             const targetCell = getCellAt(x, y);
-            const unitOnWater = getCellAt(unit.x, unit.y) && getCellAt(unit.x, unit.y).type === 'water';
 
             // Desactiver les interactions pendant l'animation
             gameState.animating = true;
-
-            // === CANARD SUR L'EAU: SOIN SI ALLIE, ATTAQUE SINON ===
-            if (unit.character.waterHeal && unitOnWater && targetCell.unit && targetCell.unit.player === unit.player) {
-                const healAttack = {damage: -1, pattern: 'single', range: 1};
-                playAttackAnimation(unit.x, unit.y, x, y, healAttack, () => {
-                    const ally = targetCell.unit;
-                    ally.currentHP = Math.min(ally.character.hp, ally.currentHP + 2);
-                    showDamageNumber(x, y, 2, true);
-                    addMessage(`${unit.character.name} soigne ${ally.character.name} de 2 PV!`, `player${unit.player}`);
-                    const allyEl = document.getElementById(`unit-${ally.id}`);
-                    if (allyEl) {
-                        const hpFill = allyEl.querySelector('.hp-fill');
-                        if (hpFill) hpFill.style.width = `${(ally.currentHP / ally.character.hp) * 100}%`;
-                        allyEl.classList.add('healing');
-                        setTimeout(() => allyEl.classList.remove('healing'), 600);
-                    }
-                    finishAttack(unit, callback);
-                });
-                return;
-            }
-            // If waterHeal + onWater but targeting an enemy/crystal: fall through to standard attack
 
             // === LAPIN CHARGE (dash 1-3 cases en ligne droite) ===
             if (attack.pattern === 'charge') {
@@ -4378,6 +5166,9 @@
             cancelAction();
             updateSelectedUnitInfo();
             checkVictory();
+
+            // Hook onAttackEnd : un personnage peut reagir apres avoir resolu une attaque
+            fireHook(unit, 'onAttackEnd');
 
             // Souris: deplacement post-attaque
             if (unit.character.postAttackMove && unit.currentHP > 0 && gameState.phase !== 'game_over') {
@@ -4622,20 +5413,26 @@
                 target.damageTakenThisTurn += damage;
             }
 
+            // Hook onDamageTaken : un personnage peut modifier les degats qu'il recoit
+            const hookedDmg = fireHook(target, 'onDamageTaken', damage, attacker);
+            if (hookedDmg != null) damage = hookedDmg;
+
             if (damage < 0) {
                 const healAmount = Math.abs(damage);
-                target.currentHP = Math.min(target.character.hp, target.currentHP + healAmount);
+                target.currentHP = Math.min(getUnitStat(target, 'maxHP'), target.currentHP + healAmount);
+                if (attacker) gameState.matchStats[attacker.player].totalHealingDone += healAmount;
                 addMessage(`${target.character.name} recupere ${healAmount} PV!`, `player${attacker.player}`);
             } else {
                 target.currentHP -= damage;
-                addMessage(`${target.character.name} subit ${damage} degats! (${target.currentHP}/${target.character.hp} PV)`, `player${attacker.player}`);
+                if (attacker) gameState.matchStats[attacker.player].totalDamageDealt += damage;
+                addMessage(`${target.character.name} subit ${damage} degats! (${target.currentHP}/${getUnitStat(target, 'maxHP')} PV)`, `player${attacker.player}`);
             }
 
             const unitEl = document.getElementById(`unit-${target.id}`);
             if (unitEl) {
                 const hpFill = unitEl.querySelector('.hp-fill');
                 if (hpFill) {
-                    hpFill.style.width = `${Math.max(0, (target.currentHP / target.character.hp) * 100)}%`;
+                    hpFill.style.width = `${Math.max(0, (target.currentHP / getUnitStat(target, 'maxHP')) * 100)}%`;
                 }
             }
 
@@ -4644,7 +5441,8 @@
             }
         }
 
-        function applyDamageToCrystal(crystal, damage) {
+        function applyDamageToCrystal(crystal, damage, attacker) {
+            if (attacker) gameState.matchStats[attacker.player].crystalDamageDealt += damage;
             crystal.hp -= damage;
             const maxHP = gameState.crystalHP || 5;
             addMessage(`Cristal du Joueur ${crystal.player} subit ${damage} degats! (${Math.max(0, crystal.hp)}/${maxHP} PV)`, 'system');
@@ -4676,6 +5474,10 @@
         function killUnit(unit, attacker) {
             addMessage(`${unit.character.name} du Joueur ${unit.player} est detruit!`, 'system');
 
+            // matchStats
+            gameState.matchStats[unit.player].unitsLost++;
+            if (attacker) gameState.matchStats[attacker.player].unitsKilled++;
+
             gameState.players[unit.player].effectifUsed -= unit.character.power;
 
             const killCell = getCellAt(unit.x, unit.y);
@@ -4705,6 +5507,11 @@
                     attackerEl.classList.add('healing');
                     setTimeout(() => attackerEl.classList.remove('healing'), 600);
                 }
+            }
+
+            // Hook onKill : un personnage peut reagir apres avoir elimine un ennemi
+            if (attacker && attacker.currentHP > 0) {
+                fireHook(attacker, 'onKill', unit);
             }
 
             updateUI();
@@ -4765,6 +5572,8 @@
 
             clearSelection();
 
+            gameState.matchStats[gameState.currentPlayer].turnsPlayed++;
+
             gameState.players[gameState.currentPlayer].units.forEach(unit => {
                 unit.justSummoned = false;
             });
@@ -4792,9 +5601,11 @@
             const overdrew = isDistanceOpponentTurn() ? false : drawCards(gameState.currentPlayer, 1);
 
             gameState.players[gameState.currentPlayer].units.forEach(unit => {
-                unit.movementLeft = unit.character.movement;
+                unit.movementLeft = getUnitStat(unit, 'movement');
                 unit.hasActed = false;
                 unit.damageTakenThisTurn = 0; // Reset pour Sanglier
+                processStatusEffects(unit);
+                fireHook(unit, 'onTurnStart');
 
                 const unitEl = document.getElementById(`unit-${unit.id}`);
                 if (unitEl) unitEl.classList.remove('cannot-act');
@@ -4869,6 +5680,7 @@
         }
 
         function gameOver(winner, reason, scores) {
+            restoreUI();
             gameState.phase = 'game_over';
             document.getElementById('gameOverText').textContent = `Joueur ${winner} gagne!`;
             if (reason === 'ressources') {
@@ -4891,6 +5703,12 @@
             updateActionButtons();
             updateRosterDisplay();
             updatePlayerPanels();
+            // Show hide-UI button only in distance mode during playing phase
+            const btnHide = document.getElementById('btnHideUI');
+            if (btnHide) {
+                const showBtn = gameState.gameMode === 'distance' && gameState.phase === 'playing';
+                btnHide.style.display = showBtn ? 'block' : 'none';
+            }
         }
 
         function updateEffectifDisplay() {
@@ -4912,15 +5730,28 @@
         function updateActionButtons() {
             const unit = gameState.selectedUnit;
             const char = gameState.selectedCharacter;
+            const extraBtnsEl = document.getElementById('extraActionBtns');
+            const btnAttack = document.getElementById('btnAttack');
+
+            // Nom du bouton attaque = action par défaut du personnage sélectionné
+            if (unit && unit.character.actions) {
+                const defAction = unit.character.actions.find(a => a.isDefault);
+                btnAttack.textContent = defAction
+                    ? (defAction.icon ? defAction.icon + ' ' : '') + defAction.name
+                    : 'Attaquer';
+            } else {
+                btnAttack.textContent = 'Attaquer';
+            }
 
             // Desactiver tous les boutons pendant les animations ou le tour de l'IA
             if (gameState.animating || gameState.aiThinking) {
                 document.getElementById('btnSummon').disabled = true;
                 document.getElementById('btnMove').disabled = true;
-                document.getElementById('btnAttack').disabled = true;
+                btnAttack.disabled = true;
                 document.getElementById('btnCancel').disabled = true;
                 document.getElementById('btnUndo').disabled = true;
                 document.getElementById('btnEndTurn').disabled = true;
+                extraBtnsEl.querySelectorAll('button').forEach(b => b.disabled = true);
                 return;
             }
 
@@ -4930,8 +5761,34 @@
             document.getElementById('btnSummon').disabled = !char || gameState.actionMode === 'summon';
             // Apres avoir agi (attaque/capacite), on ne peut plus se deplacer
             document.getElementById('btnMove').disabled = !unit || unit.movementLeft <= 0 || unit.hasActed || gameState.actionMode === 'move';
-            document.getElementById('btnAttack').disabled = !unit || unit.hasActed || gameState.actionMode === 'attack';
+            btnAttack.disabled = !unit || unit.hasActed || gameState.actionMode === 'attack';
             document.getElementById('btnCancel').disabled = !gameState.actionMode;
+
+            // Boutons d'actions extra (non-default) — toujours visibles si l'unité en a,
+            // mais désactivés si condition non remplie ou unité a déjà agi
+            extraBtnsEl.innerHTML = '';
+            if (unit && unit.character.actions) {
+                const allExtras = unit.character.actions.filter(a => !a.isDefault);
+                if (allExtras.length > 0) {
+                    extraBtnsEl.classList.remove('hidden');
+                    allExtras.forEach(action => {
+                        const btn = document.createElement('button');
+                        btn.className = 'action-btn extra-action-btn';
+                        const isActive = gameState.actionMode === 'extra_action' && gameState.activeActionId === action.id;
+                        const conditionMet = typeof action.condition === 'function' ? action.condition(unit) : true;
+                        if (isActive) btn.classList.add('active');
+                        btn.disabled = unit.hasActed || !conditionMet || isActive;
+                        btn.textContent = (action.icon ? action.icon + ' ' : '') + action.name;
+                        if (!conditionMet) btn.title = action.disabledReason || 'Condition non remplie';
+                        btn.addEventListener('click', () => startExtraAction(unit, action));
+                        extraBtnsEl.appendChild(btn);
+                    });
+                } else {
+                    extraBtnsEl.classList.add('hidden');
+                }
+            } else {
+                extraBtnsEl.classList.add('hidden');
+            }
 
             // Permettre de finir le tour si action effectuee OU si aucune action possible
             const canEnd = gameState.actionTaken || !canDoAnything();
@@ -5274,9 +6131,6 @@
             const fromCell = getCellAt(fromX, fromY);
             const unitHeight = fromCell ? fromCell.height : 0;
             const ignoreHeight = unit.character.ignoreHeight || false;
-            const onWater = fromCell ? fromCell.type === 'water' : false;
-
-            // Canard sur l'eau peut attaquer les ennemis normalement (waterHeal = soin allie en bonus)
 
             // Charge du lapin
             if (attack.pattern === 'charge') {
@@ -5461,6 +6315,35 @@
                                 y: cell.y,
                                 score: score
                             });
+                        }
+                    }
+                }
+
+                // Actions extra (soin, capacites speciales, etc.)
+                if (!unit.hasActed) {
+                    const extras = getExtraActions(unit);
+                    for (const action of extras) {
+                        if (!action.getTargetCells) continue;
+                        const targetCells = action.getTargetCells(unit);
+                        for (const cell of targetCells) {
+                            // Scorer l'action extra: soins preferent les allies peu de vie
+                            let score = 0;
+                            if (action.type === 'heal' && cell.unit) {
+                                const ally = cell.unit;
+                                const maxHP = getUnitStat(ally, 'maxHP');
+                                const missing = maxHP - ally.currentHP;
+                                score = missing > 0 ? 20 + missing * 3 : -50; // Seulement si utile
+                            }
+                            if (score > 0) {
+                                actions.push({
+                                    type: 'extraAction',
+                                    unit: unit,
+                                    action: action,
+                                    x: cell.x,
+                                    y: cell.y,
+                                    score: score
+                                });
+                            }
                         }
                     }
                 }
@@ -6203,6 +7086,25 @@
                     }, 200);
                     break;
 
+                case 'extraAction':
+                    // Action extra (soin, capacite speciale, etc.)
+                    gameState.selectedUnit = action.unit;
+                    setTimeout(() => {
+                        const targetCell = getCellAt(action.x, action.y);
+                        if (!targetCell || !action.action.execute) {
+                            gameState.aiThinking = false;
+                            setTimeout(() => aiTakeTurn(), 300);
+                            return;
+                        }
+                        // execute() appelle finishAttack() qui gere hasActed/actionTaken/checkVictory
+                        action.action.execute(action.unit, targetCell, () => {
+                            gameState.aiThinking = false;
+                            if (gameState.phase === 'game_over') return;
+                            setTimeout(() => aiTakeTurn(), 300);
+                        });
+                    }, 200);
+                    break;
+
                 case 'moveAttack':
                     // Combo atomique: deplacement puis attaque en sequence
                     gameState.selectedUnit = action.unit;
@@ -6328,12 +7230,270 @@
             }, AI_DELAY);
         }
 
+        // ==================== SELECTION DES PERSONNAGES ====================
+
+        // Lance la phase de selection pour le joueur indique
+        function startCharSelection(playerNum) {
+            gameState.phase = `char_selection_p${playerNum}`;
+            gameState.players[playerNum].selectedChars = [];
+
+            document.getElementById('gameModeOverlay').classList.add('hidden');
+            document.getElementById('distanceSideOverlay').classList.add('hidden');
+            document.getElementById('charSelectionOverlay').classList.remove('hidden');
+
+            const playerLabel = playerNum === 1 ? 'Joueur 1' : 'Joueur 2';
+            document.getElementById('charSelectTitle').textContent = `${playerLabel} — Construisez votre deck`;
+            document.getElementById('charSelectNeeded').textContent = CHARS_PER_DECK;
+
+            renderCharSelectionGrid(playerNum);
+            updateCharSelectionUI(playerNum);
+        }
+
+        // Genere les cartes cliquables dans la grille
+        function renderCharSelectionGrid(playerNum) {
+            const grid = document.getElementById('charSelectGrid');
+            grid.innerHTML = '';
+            for (const char of CHARACTERS) {
+                const card = document.createElement('div');
+                card.className = 'char-select-card';
+                card.dataset.charId = char.id;
+
+                const rarityLabel = { commun: 'Commun', rare: 'Rare', epique: 'Epique' }[char.rarity] || char.rarity;
+                const deckCount = RARITY_COUNTS[char.rarity] || 0;
+                const passiveHtml = char.passive
+                    ? `<div class="char-select-passive">✦ ${char.passive.name} : ${char.passive.description}</div>`
+                    : '';
+
+                card.innerHTML = `
+                    <div class="char-select-card-top">
+                        <span class="char-select-icon">${char.icon}</span>
+                        <div>
+                            <div class="char-select-card-name">${char.name}</div>
+                            <span class="char-rarity ${char.rarity}">${rarityLabel}</span>
+                        </div>
+                    </div>
+                    <div class="char-select-stats">
+                        <span class="char-select-stat">❤ ${char.hp} PV</span>
+                        <span class="char-select-stat">☩ ${char.movement} PM</span>
+                        <span class="char-select-stat">⚔ ${char.attack.damage} ATQ</span>
+                        <span class="char-select-stat">◎ Portée ${char.attack.range}</span>
+                        <span class="char-select-stat">★ Puiss. ${char.power}</span>
+                    </div>
+                    <div class="char-select-ability">${char.attack.name}</div>
+                    ${passiveHtml}
+                    <div class="char-select-deck-count">×${deckCount} dans le deck</div>
+                `;
+
+                card.addEventListener('click', () => toggleCharSelection(playerNum, char.id));
+                grid.appendChild(card);
+            }
+        }
+
+        // Bascule la selection d'un personnage
+        function toggleCharSelection(playerNum, charId) {
+            const selected = gameState.players[playerNum].selectedChars;
+            const idx = selected.indexOf(charId);
+            if (idx !== -1) {
+                selected.splice(idx, 1);
+            } else {
+                if (selected.length < CHARS_PER_DECK) {
+                    selected.push(charId);
+                }
+            }
+            updateCharSelectionUI(playerNum);
+        }
+
+        // Rafraichit l'affichage de l'ecran de selection
+        function updateCharSelectionUI(playerNum) {
+            const selected = gameState.players[playerNum].selectedChars;
+            const needed = CHARS_PER_DECK;
+
+            document.querySelectorAll('#charSelectGrid .char-select-card').forEach(card => {
+                const isSelected = selected.includes(card.dataset.charId);
+                card.classList.toggle('selected', isSelected);
+                // Griser les cartes non selectionnees quand le quota est atteint
+                if (!isSelected && selected.length >= needed) {
+                    card.classList.add('dimmed');
+                } else {
+                    card.classList.remove('dimmed');
+                }
+            });
+
+            document.getElementById('charSelectCount').textContent = `${selected.length} / ${needed} choisis`;
+
+            if (selected.length > 0) {
+                const selChars = selected.map(id => CHARACTERS.find(ch => ch.id === id));
+                const totalCards = selChars.reduce((sum, c) => sum + (RARITY_COUNTS[c.rarity] || 0), 0);
+                const parts = selChars.map(c => `${c.icon} ×${RARITY_COUNTS[c.rarity]}`);
+                document.getElementById('charSelectDeckPreview').textContent =
+                    `Deck : ${parts.join('  ')}  (${totalCards} cartes)`;
+            } else {
+                document.getElementById('charSelectDeckPreview').textContent = '';
+            }
+
+            document.getElementById('btnConfirmCharSelection').disabled = selected.length !== needed;
+        }
+
+        // Confirme la selection et passe a la phase suivante
+        function confirmCharSelection() {
+            const playerNum = gameState.phase === 'char_selection_p1' ? 1 : 2;
+            document.getElementById('charSelectionOverlay').classList.add('hidden');
+
+            if (gameState.gameMode === '2players' && playerNum === 1) {
+                // Mode local : le Joueur 2 choisit a son tour
+                startCharSelection(2);
+            } else {
+                // vsAI : l'IA choisit aleatoirement
+                if (gameState.gameMode === 'vsAI') {
+                    autoSelectChars(2);
+                }
+                // distance : l'adversaire recoit tous les personnages disponibles
+                if (gameState.gameMode === 'distance') {
+                    const opp = gameState.distanceSide === 1 ? 2 : 1;
+                    autoSelectChars(opp);
+                }
+                // Pour le mode 2players, quand playerNum === 2 on arrive ici aussi
+                startMapEditor();
+            }
+        }
+
+        // Selectionne automatiquement CHARS_PER_DECK personnages (melange aleatoire)
+        function autoSelectChars(playerNum) {
+            const pool = CHARACTERS.map(c => c.id);
+            // Melange Fisher-Yates
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+            gameState.players[playerNum].selectedChars = pool.slice(0, CHARS_PER_DECK);
+        }
+
         // ==================== MODAL RÈGLES ====================
         function openRules() {
             document.getElementById('rulesOverlay').classList.remove('hidden');
         }
         function closeRules() {
             document.getElementById('rulesOverlay').classList.add('hidden');
+        }
+
+        // ==================== MASQUAGE UI MODE DISTANCE ====================
+        function toggleUIVisibility() {
+            gameState.uiHidden = !gameState.uiHidden;
+            document.body.classList.toggle('board-only', gameState.uiHidden);
+            document.getElementById('btnHideUI').textContent =
+                gameState.uiHidden ? '👁 Afficher l\'UI' : '👁 Cacher l\'UI';
+        }
+
+        // Appele quand la partie se termine : on restaure toujours l'UI
+        function restoreUI() {
+            if (gameState.uiHidden) {
+                gameState.uiHidden = false;
+                document.body.classList.remove('board-only');
+                const btn = document.getElementById('btnHideUI');
+                if (btn) btn.textContent = '👁 Cacher l\'UI';
+            }
+        }
+
+        // ==================== SEED DE MAP ====================
+        // Encode une cellule (type + hauteur) en 1 caractere parmi 'a'-'l' (12 combos)
+        // Ordre : type * 3 + height. Types : normal=0, water=1, obstacle=2, obstacle_tall=3
+        const SEED_TYPES = ['normal', 'water', 'obstacle', 'obstacle_tall'];
+        const SEED_CHARS = 'abcdefghijkl';
+
+        function encodeMapSeed() {
+            const prefix = isHexMode() ? 'H' : 'S';
+            let seed = prefix;
+            const dim = getBoardDim();
+            for (let y = 0; y < dim; y++) {
+                for (let x = 0; x < dim; x++) {
+                    const cell = getCellAt(x, y);
+                    if (!cell) continue; // cellule invalide (hex)
+                    const typeIdx = SEED_TYPES.indexOf(cell.type);
+                    const t = typeIdx === -1 ? 0 : typeIdx;
+                    const h = Math.min(2, Math.max(0, cell.height || 0));
+                    seed += SEED_CHARS[t * 3 + h];
+                }
+            }
+            return seed;
+        }
+
+        function decodeMapSeed(seed) {
+            if (!seed || seed.length < 2) return false;
+            const prefix = seed[0].toUpperCase();
+            if (prefix !== 'S' && prefix !== 'H') return false;
+            const data = seed.slice(1);
+            // Verifier que tous les chars sont valides
+            for (const ch of data) {
+                if (SEED_CHARS.indexOf(ch) === -1) return false;
+            }
+            // Appliquer le type de map et reinitialiser
+            gameState.mapType = prefix === 'H' ? 'hex' : 'square';
+            initDefaultBoardData();
+            // Appliquer le terrain
+            const dim = getBoardDim();
+            let i = 0;
+            for (let y = 0; y < dim; y++) {
+                for (let x = 0; x < dim; x++) {
+                    const cell = getCellAt(x, y);
+                    if (!cell) continue;
+                    if (i >= data.length) break;
+                    const charIdx = SEED_CHARS.indexOf(data[i++]);
+                    if (charIdx === -1) continue;
+                    cell.type = SEED_TYPES[Math.floor(charIdx / 3)];
+                    cell.height = charIdx % 3;
+                }
+            }
+            return true;
+        }
+
+        function updateSeedDisplay() {
+            const input = document.getElementById('editorSeedInput');
+            if (input) {
+                input.value = encodeMapSeed();
+                input.setAttribute('readonly', '');
+            }
+        }
+
+        function copySeed() {
+            const seed = encodeMapSeed();
+            const input = document.getElementById('editorSeedInput');
+            if (input) input.value = seed;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(seed).catch(() => {
+                    // Fallback
+                    if (input) { input.removeAttribute('readonly'); input.select(); document.execCommand('copy'); input.setAttribute('readonly', ''); }
+                });
+            } else if (input) {
+                input.removeAttribute('readonly');
+                input.select();
+                document.execCommand('copy');
+                input.setAttribute('readonly', '');
+            }
+            // Feedback visuel temporaire
+            const btn = document.querySelector('.btn-seed-copy');
+            if (btn) {
+                const orig = btn.textContent;
+                btn.textContent = '✓ Copié!';
+                setTimeout(() => { btn.textContent = orig; }, 1500);
+            }
+        }
+
+        function loadSeed() {
+            const input = document.getElementById('editorSeedInput');
+            if (!input) return;
+            const seed = input.value.trim();
+            if (!seed) return;
+            if (decodeMapSeed(seed)) {
+                // Sync les boutons de type
+                document.getElementById('btnMapSquare').classList.toggle('active', !isHexMode());
+                document.getElementById('btnMapHex').classList.toggle('active', isHexMode());
+                initEditorBoard();
+                updateSeedDisplay();
+            } else {
+                // Feedback d'erreur
+                input.style.borderColor = 'rgba(220,80,80,0.7)';
+                setTimeout(() => { input.style.borderColor = ''; }, 1500);
+            }
         }
 
         // ==================== EVENT LISTENERS ====================
@@ -6348,13 +7508,13 @@
         document.getElementById('btnMode2Players').addEventListener('click', () => {
             gameState.gameMode = '2players';
             gameState.players[2].isAI = false;
-            startMapEditor();
+            startCharSelection(1);
         });
 
         document.getElementById('btnModeVsAI').addEventListener('click', () => {
             gameState.gameMode = 'vsAI';
             gameState.players[2].isAI = true;
-            startMapEditor();
+            startCharSelection(1);
         });
 
         document.getElementById('btnModeDistance').addEventListener('click', () => {
@@ -6368,14 +7528,16 @@
         document.getElementById('btnSideP1').addEventListener('click', () => {
             gameState.distanceSide = 1;
             document.getElementById('distanceSideOverlay').classList.add('hidden');
-            startMapEditor();
+            startCharSelection(1);
         });
 
         document.getElementById('btnSideP2').addEventListener('click', () => {
             gameState.distanceSide = 2;
             document.getElementById('distanceSideOverlay').classList.add('hidden');
-            startMapEditor();
+            startCharSelection(2);
         });
+
+        document.getElementById('btnConfirmCharSelection').addEventListener('click', confirmCharSelection);
 
         document.getElementById('btnUndo').addEventListener('click', applyUndo);
 
@@ -6446,5 +7608,7 @@
 
         init();
     </script>
+
+    <button id="btnHideUI" onclick="toggleUIVisibility()">👁 Cacher l'UI</button>
 </body>
 </html>

@@ -2502,16 +2502,16 @@
             <div class="player-panel player1" id="player1Panel">
                 <h2>Joueur 1 (Bleu)</h2>
                 <div class="stat">
-                    <span>Effectif utilise:</span>
+                    <span>Or dépensé :</span>
                     <span id="p1EffectifUsed">0</span>
                 </div>
                 <div class="stat">
-                    <span>Effectif max:</span>
-                    <span id="p1EffectifMax">1</span>
+                    <span>Or total :</span>
+                    <span id="p1EffectifMax">8</span>
                 </div>
                 <div class="stat">
-                    <span>Effectif disponible:</span>
-                    <span id="p1EffectifAvailable">1</span>
+                    <span>Or disponible :</span>
+                    <span id="p1EffectifAvailable">8</span>
                 </div>
                 <div class="stat">
                     <span>Deck:</span>
@@ -2531,16 +2531,16 @@
             <div class="player-panel player2" id="player2Panel">
                 <h2>Joueur 2 (Rouge)</h2>
                 <div class="stat">
-                    <span>Effectif utilise:</span>
+                    <span>Or dépensé :</span>
                     <span id="p2EffectifUsed">0</span>
                 </div>
                 <div class="stat">
-                    <span>Effectif max:</span>
-                    <span id="p2EffectifMax">1</span>
+                    <span>Or total :</span>
+                    <span id="p2EffectifMax">8</span>
                 </div>
                 <div class="stat">
-                    <span>Effectif disponible:</span>
-                    <span id="p2EffectifAvailable">1</span>
+                    <span>Or disponible :</span>
+                    <span id="p2EffectifAvailable">8</span>
                 </div>
                 <div class="stat">
                     <span>Deck:</span>
@@ -2635,7 +2635,9 @@
                 <label>PV des cristaux: <input type="number" id="editorCrystalHP" min="1" max="20" value="10" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
                 <label>Cartes initiales en main: <input type="number" id="editorInitialHandSize" min="1" max="10" value="3" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
                 <label>Max cartes en main (0=&#x221e;): <input type="number" id="editorMaxHandSize" min="0" max="20" value="5" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
-                <label>Effectif max par joueur: <input type="number" id="editorMaxEffectif" min="1" max="30" value="12" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+                <label>🪙 Or de départ J1: <input type="number" id="editorStartGoldP1" min="0" max="99" value="8" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+                <label>🪙 Or de départ J2: <input type="number" id="editorStartGoldP2" min="0" max="99" value="8" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+                <label>🪙 Or gagné par tour: <input type="number" id="editorGoldPerTurn" min="0" max="20" value="1" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
             </div>
             <div class="editor-seed">
                 <label>Seed de la carte :</label>
@@ -2660,6 +2662,14 @@
             <h2 style="color:var(--gold);margin-bottom:8px;">Main pleine !</h2>
             <p id="discardText" style="margin-bottom:16px;color:rgba(255,255,255,0.75);font-size:0.95em;">Vous avez pioché une 6ème carte. Choisissez-en une à défausser.</p>
             <div id="discardList" style="display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow-y:auto;padding-right:4px;"></div>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="fatigueOverlay">
+        <div class="modal" style="max-width:520px;width:90%;">
+            <h2 style="color:#e05050;margin-bottom:8px;">⚠ Deck vide — Fatigue !</h2>
+            <p id="fatigueText" style="margin-bottom:16px;color:rgba(255,255,255,0.75);font-size:0.95em;">Votre deck est vide. Choisissez une cible parmi vos unités ou cristaux pour subir 1 dégât.</p>
+            <div id="fatigueList" style="display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow-y:auto;padding-right:4px;"></div>
         </div>
     </div>
 
@@ -2714,11 +2724,11 @@
             </ul>
             <p>Cliquez <strong>Fin de tour</strong> pour terminer. Si aucune action n'est possible, le bouton devient <em>Passer le tour</em>.</p>
 
-            <h3>Effectif</h3>
-            <p>Chaque joueur dispose d'un <strong>effectif maximum</strong> qui augmente de 1 à chaque tour. La somme des puissances de vos unités sur le plateau ne peut pas dépasser ce maximum. L'effectif disponible détermine les cartes invocables.</p>
+            <h3>Pièces d'or</h3>
+            <p>Chaque joueur commence avec <strong>8 pièces d'or</strong> et en gagne <strong>1 par tour</strong>, sans limite. Invoquer une unité coûte son nombre de pièces d'or indiqué (🪙). Cette dépense est <em>définitive</em> : l'or n'est pas récupéré à la mort de l'unité. L'or disponible (total − dépensé) détermine les cartes invocables.</p>
 
             <h3>Deck &amp; Main</h3>
-            <p>Au début chaque joueur pioche 3 cartes. À chaque début de tour, une carte supplémentaire est piochée (max 5 en main par défaut). Si la main est pleine, vous choisissez une carte à défausser. Les cartes défaussées sont perdues.</p>
+            <p>Au début chaque joueur pioche 3 cartes. À chaque début de tour, une carte supplémentaire est piochée (max 5 en main par défaut). Si la main est pleine, vous choisissez une carte à défausser. Les cartes défaussées sont perdues. <strong>Si le deck est vide au moment de piocher, vous devez infliger 1 dégât à l'une de vos propres unités ou cristaux (Fatigue).</strong></p>
 
             <h3>Terrain</h3>
             <ul>
@@ -2738,15 +2748,15 @@
             <div class="rules-char-row">
                 <span class="rules-char-icon">🐭</span>
                 <div class="rules-char-info">
-                    <div class="rules-char-name">Souris <span class="char-rarity commun">Commun</span> — Puissance 1</div>
-                    PV 2 · PM 5 · Portée 1 · Dégâts 1 — Morsure (cible unique)<br>
+                    <div class="rules-char-name">Souris <span class="char-rarity commun">Commun</span> — 🪙 1</div>
+                    PV 1 · PM 5 · Portée 1 · Dégâts 1 — Morsure (cible unique)<br>
                     <em>✦ Fuite rapide : peut se déplacer de 2 cases supplémentaires après une attaque.</em>
                 </div>
             </div>
             <div class="rules-char-row">
                 <span class="rules-char-icon">🐿️</span>
                 <div class="rules-char-info">
-                    <div class="rules-char-name">Écureuil <span class="char-rarity commun">Commun</span> — Puissance 2</div>
+                    <div class="rules-char-name">Écureuil <span class="char-rarity commun">Commun</span> — 🪙 2</div>
                     PV 2 · PM 2 · Portée 3 · Dégâts 1 — Lancer de gland (tir, cible unique)<br>
                     <em>✦ Grimpeur : peut cibler des unités à une hauteur différente (ignore la différence de niveau pour viser).</em>
                 </div>
@@ -2754,7 +2764,7 @@
             <div class="rules-char-row">
                 <span class="rules-char-icon">🦆</span>
                 <div class="rules-char-info">
-                    <div class="rules-char-name">Canard <span class="char-rarity rare">Rare</span> — Puissance 3</div>
+                    <div class="rules-char-name">Canard <span class="char-rarity rare">Rare</span> — 🪙 3</div>
                     PV 4 · PM 2 · Portée 1 · Dégâts 2 — Coup de bec (cible unique)<br>
                     <em>✦ Aquatique : se déplace sur l'eau. Positionné sur l'eau, peut soigner un allié adjacent de 2 PV ou attaquer normalement.</em>
                 </div>
@@ -2762,7 +2772,7 @@
             <div class="rules-char-row">
                 <span class="rules-char-icon">🐰</span>
                 <div class="rules-char-info">
-                    <div class="rules-char-name">Lapin <span class="char-rarity rare">Rare</span> — Puissance 4</div>
+                    <div class="rules-char-name">Lapin <span class="char-rarity rare">Rare</span> — 🪙 4</div>
                     PV 3 · PM 4 · Portée 3 · Dégâts 2 — Charge<br>
                     <em>✦ Charge : attaque en ligne droite jusqu'à 3 cases, frappe la première cible rencontrée.</em>
                 </div>
@@ -2770,7 +2780,7 @@
             <div class="rules-char-row">
                 <span class="rules-char-icon">🦊</span>
                 <div class="rules-char-info">
-                    <div class="rules-char-name">Renard <span class="char-rarity epique">Épique</span> — Puissance 5</div>
+                    <div class="rules-char-name">Renard <span class="char-rarity epique">Épique</span> — 🪙 5</div>
                     PV 5 · PM 3 · Portée 1 · Dégâts 3 — Griffure perçante (perforation)<br>
                     <em>✦ Prédateur : se soigne de 1 PV après avoir éliminé un ennemi.</em>
                 </div>
@@ -2778,7 +2788,7 @@
             <div class="rules-char-row">
                 <span class="rules-char-icon">🐗</span>
                 <div class="rules-char-info">
-                    <div class="rules-char-name">Sanglier <span class="char-rarity epique">Épique</span> — Puissance 6</div>
+                    <div class="rules-char-name">Sanglier <span class="char-rarity epique">Épique</span> — 🪙 6</div>
                     PV 6 · PM 2 · Portée 1 · Dégâts 3 — Furie (zone adjacente)<br>
                     <em>✦ Cuir épais : ne peut pas subir plus de 3 dégâts par tour (toutes sources confondues).</em>
                 </div>
@@ -2805,7 +2815,7 @@
                 name: 'Souris',
                 rarity: 'commun',
                 power: 1,
-                hp: 2,
+                hp: 1,
                 movement: 5,
                 maxOnField: 3,
                 attack: {
@@ -3140,7 +3150,7 @@
 
             players: {
                 1: {
-                    effectifMax: 1,
+                    effectifMax: 8,
                     effectifUsed: 0,
                     crystals: [],
                     pendingCrystalPos: null,
@@ -3151,7 +3161,7 @@
                     isAI: false
                 },
                 2: {
-                    effectifMax: 1,
+                    effectifMax: 8,
                     effectifUsed: 0,
                     crystals: [],
                     pendingCrystalPos: null,
@@ -3168,6 +3178,8 @@
             initialHandSize: 3,
             maxHandSize: 5, // 0 = illimite
             maxEffectif: 12,
+            startGold: {1: 8, 2: 8}, // or de depart par joueur (configurable dans l'editeur)
+            goldPerTurn: 1,           // or gagne par tour (configurable dans l'editeur)
             selectedUnit: null,
             inspectedUnit: null,
             selectedCharacter: null,
@@ -3584,7 +3596,10 @@
             gameState.initialHandSize = parseInt(document.getElementById('editorInitialHandSize').value) || 3;
             const rawMax = parseInt(document.getElementById('editorMaxHandSize').value);
             gameState.maxHandSize = isNaN(rawMax) ? 5 : rawMax;
-            gameState.maxEffectif = parseInt(document.getElementById('editorMaxEffectif').value) || 12;
+            // Lire les parametres d'or
+            gameState.startGold[1] = parseInt(document.getElementById('editorStartGoldP1').value) || 0;
+            gameState.startGold[2] = parseInt(document.getElementById('editorStartGoldP2').value) || 0;
+            gameState.goldPerTurn  = parseInt(document.getElementById('editorGoldPerTurn').value)  || 0;
             // Clear units and crystals from board data (clean slate)
             const dim = getBoardDim();
             for (let y = 0; y < dim; y++) {
@@ -3913,7 +3928,7 @@
                     <div class="char-header">
                         <span class="char-name">[${char.icon}] ${char.name}</span>
                         <span class="char-rarity ${char.rarity || ''}">${rarityLabelDiscard}</span>
-                        <span class="char-power">${char.power} P</span>
+                        <span class="char-power">${char.power} 🪙</span>
                     </div>
                     <div class="char-stats">
                         <span>PV: ${char.hp}</span>
@@ -3942,6 +3957,96 @@
             });
 
             overlay.classList.remove('hidden');
+        }
+
+        // ==================== FATIGUE ====================
+        // Affiche l'overlay de fatigue : le joueur choisit une de ses unites ou cristaux
+        // pour subir 1 degat (deck vide au moment de piocher).
+        function showFatigueOverlay(playerNum, callback) {
+            const player = gameState.players[playerNum];
+            const overlay = document.getElementById('fatigueOverlay');
+            const list = document.getElementById('fatigueList');
+            list.innerHTML = '';
+
+            document.getElementById('fatigueText').textContent =
+                `Joueur ${playerNum} — Votre deck est vide ! Choisissez une unité ou un cristal allié pour subir 1 dégât.`;
+
+            const applyAndClose = (label, damageFn) => {
+                damageFn();
+                overlay.classList.add('hidden');
+                addMessage(`Joueur ${playerNum} : fatigue — ${label} subit 1 dégât.`, 'system');
+                updateUI();
+                checkVictory();
+                callback();
+            };
+
+            // Unites sur le terrain
+            for (const unit of player.units) {
+                const btn = document.createElement('button');
+                btn.style.cssText = 'width:100%;text-align:left;padding:10px 14px;background:rgba(60,30,10,0.7);border:1px solid rgba(160,120,50,0.4);border-radius:8px;color:var(--text-primary);cursor:pointer;font-size:0.95em;';
+                btn.innerHTML = `<strong>${unit.character.icon} ${unit.character.name}</strong> — ${unit.currentHP} / ${unit.character.hp} PV`;
+                btn.addEventListener('mouseover', () => btn.style.background = 'rgba(100,50,20,0.8)');
+                btn.addEventListener('mouseout',  () => btn.style.background = 'rgba(60,30,10,0.7)');
+                btn.addEventListener('click', () => applyAndClose(
+                    unit.character.name,
+                    () => applyDamageToUnit(unit, 1, null)
+                ));
+                list.appendChild(btn);
+            }
+
+            // Cristaux encore en vie
+            for (let i = 0; i < player.crystals.length; i++) {
+                const crystal = player.crystals[i];
+                if (crystal.hp <= 0) continue;
+                const btn = document.createElement('button');
+                btn.style.cssText = 'width:100%;text-align:left;padding:10px 14px;background:rgba(30,30,70,0.7);border:1px solid rgba(100,100,200,0.4);border-radius:8px;color:var(--text-primary);cursor:pointer;font-size:0.95em;';
+                btn.innerHTML = `<strong>💎 Cristal ${i + 1}</strong> — ${crystal.hp} PV`;
+                btn.addEventListener('mouseover', () => btn.style.background = 'rgba(50,50,120,0.8)');
+                btn.addEventListener('mouseout',  () => btn.style.background = 'rgba(30,30,70,0.7)');
+                btn.addEventListener('click', () => applyAndClose(
+                    `Cristal ${i + 1}`,
+                    () => applyDamageToCrystal(crystal, 1, null)
+                ));
+                list.appendChild(btn);
+            }
+
+            // Si aucune cible (ne devrait pas arriver en pratique), fermer directement
+            if (list.childElementCount === 0) {
+                callback();
+                return;
+            }
+
+            overlay.classList.remove('hidden');
+        }
+
+        // Fatigue pour l'IA : inflige 1 degat a la cible la moins importante
+        // Priorite : unite ennemie avec le moins de PV → cristal avec le moins de PV
+        function aiFatigue(playerNum) {
+            const player = gameState.players[playerNum];
+
+            // Choisir l'unite avec le moins de PV restants (la plus pres de mourir)
+            let bestUnit = null;
+            for (const unit of player.units) {
+                if (!bestUnit || unit.currentHP < bestUnit.currentHP) bestUnit = unit;
+            }
+            if (bestUnit) {
+                addMessage(`IA Fatigue : ${bestUnit.character.name} subit 1 dégât.`, 'system');
+                applyDamageToUnit(bestUnit, 1, null);
+                updateUI();
+                return;
+            }
+
+            // Sinon : cristal avec le moins de PV
+            let bestCrystal = null;
+            for (const crystal of player.crystals) {
+                if (crystal.hp <= 0) continue;
+                if (!bestCrystal || crystal.hp < bestCrystal.hp) bestCrystal = crystal;
+            }
+            if (bestCrystal) {
+                addMessage(`IA Fatigue : Cristal subit 1 dégât.`, 'system');
+                applyDamageToCrystal(bestCrystal, 1, null);
+                updateUI();
+            }
         }
 
         function highlightValidCrystalCells() {
@@ -4047,7 +4152,7 @@
                     if (cell) { cell.unit = null; cell.crystal = null; }
                 }
 
-            // Ré-lier unités + cristaux sur le board
+            // Ré-lier unités + cristaux sur le board (cristaux morts exclus du board)
             for (const p of [1, 2]) {
                 for (const unit of gameState.players[p].units) {
                     const cell = getCellAt(unit.x, unit.y);
@@ -4055,7 +4160,7 @@
                 }
                 for (const crystal of gameState.players[p].crystals) {
                     const cell = getCellAt(crystal.x, crystal.y);
-                    if (cell) cell.crystal = crystal;
+                    if (cell) cell.crystal = crystal.hp > 0 ? crystal : null;
                 }
             }
 
@@ -4063,10 +4168,12 @@
             document.querySelectorAll('[id^="unit-"]').forEach(el => el.remove());
             document.querySelectorAll('[id^="crystal-"]').forEach(el => el.remove());
 
-            // Re-rendre unités et cristaux
+            // Re-rendre unités et cristaux vivants uniquement
             for (const p of [1, 2]) {
                 for (const unit of gameState.players[p].units) renderUnit(unit);
-                for (const crystal of gameState.players[p].crystals) renderCrystal(crystal);
+                for (const crystal of gameState.players[p].crystals) {
+                    if (crystal.hp > 0) renderCrystal(crystal);
+                }
             }
 
             // Réinitialiser la sélection
@@ -4354,6 +4461,12 @@
             document.getElementById('btnCancel').classList.remove('hidden');
             document.getElementById('btnEndTurn').classList.remove('hidden');
 
+            // Appliquer l'or de depart configure dans l'editeur
+            for (const p of [1, 2]) {
+                gameState.players[p].effectifMax  = gameState.startGold[p];
+                gameState.players[p].effectifUsed = 0;
+            }
+
             // Initialiser les decks a partir des personnages selectionnes par chaque joueur
             for (const p of [1, 2]) {
                 gameState.players[p].deck = createDeck(p);
@@ -4452,7 +4565,7 @@
             const available = player.effectifMax - player.effectifUsed;
 
             if (char.power > available) {
-                addMessage('Effectif insuffisant pour invoquer ce personnage!', 'system');
+                addMessage('Pièces d\'or insuffisantes pour invoquer ce personnage!', 'system');
                 return;
             }
 
@@ -5449,11 +5562,11 @@
                 const healAmount = Math.abs(damage);
                 target.currentHP = Math.min(getUnitStat(target, 'maxHP'), target.currentHP + healAmount);
                 if (attacker) gameState.matchStats[attacker.player].totalHealingDone += healAmount;
-                addMessage(`${target.character.name} recupere ${healAmount} PV!`, `player${attacker.player}`);
+                addMessage(`${target.character.name} recupere ${healAmount} PV!`, attacker ? `player${attacker.player}` : 'system');
             } else {
                 target.currentHP -= damage;
                 if (attacker) gameState.matchStats[attacker.player].totalDamageDealt += damage;
-                addMessage(`${target.character.name} subit ${damage} degats! (${target.currentHP}/${getUnitStat(target, 'maxHP')} PV)`, `player${attacker.player}`);
+                addMessage(`${target.character.name} subit ${damage} degats! (${target.currentHP}/${getUnitStat(target, 'maxHP')} PV)`, attacker ? `player${attacker.player}` : 'system');
             }
 
             const unitEl = document.getElementById(`unit-${target.id}`);
@@ -5519,8 +5632,6 @@
             // matchStats
             gameState.matchStats[unit.player].unitsLost++;
             if (attacker) gameState.matchStats[attacker.player].unitsKilled++;
-
-            gameState.players[unit.player].effectifUsed -= unit.character.power;
 
             const killCell = getCellAt(unit.x, unit.y);
             if (killCell) killCell.unit = null;
@@ -5635,18 +5746,26 @@
                 gameState.turn++;
             }
 
-            // Augmenter l'effectif max au debut du tour du joueur
-            // SAUF pour J1 au tour 1 (premier tour de la partie)
+            // Gagner goldPerTurn pieces d'or au debut du tour du joueur (sans limite)
+            // SAUF pour J1 au tout premier tour de la partie
             if (!(gameState.turn === 1 && gameState.currentPlayer === 1)) {
                 const player = gameState.players[gameState.currentPlayer];
-                if (player.effectifMax < gameState.maxEffectif) {
-                    player.effectifMax++;
-                }
+                player.effectifMax += gameState.goldPerTurn;
             }
 
             // Piocher 1 carte au debut du tour (surpioche si main pleine)
             // En mode distance (tour adversaire simulé), pas de pioche : liste infinie
-            const overdrew = isDistanceOpponentTurn() ? false : drawCards(gameState.currentPlayer, 1);
+            // Si le deck est vide : fatigue (1 dégât sur une de ses propres cibles)
+            let overdrew = false;
+            let fatigueTrigger = false;
+            if (!isDistanceOpponentTurn()) {
+                const currentPlayerData = gameState.players[gameState.currentPlayer];
+                if (currentPlayerData.deck.length === 0) {
+                    fatigueTrigger = true;
+                } else {
+                    overdrew = drawCards(gameState.currentPlayer, 1);
+                }
+            }
 
             gameState.players[gameState.currentPlayer].units.forEach(unit => {
                 unit.movementLeft = getUnitStat(unit, 'movement');
@@ -5677,7 +5796,16 @@
                 }
             };
 
-            if (overdrew && !gameState.players[gameState.currentPlayer].isAI) {
+            if (fatigueTrigger) {
+                addMessage('Deck vide ! Fatigue : vous devez infliger 1 dégât à l\'une de vos cibles.', 'system');
+                if (gameState.players[gameState.currentPlayer].isAI) {
+                    aiFatigue(gameState.currentPlayer);
+                    checkVictory();
+                    if (gameState.phase !== 'game_over') finalizeTurnStart();
+                } else {
+                    showFatigueOverlay(gameState.currentPlayer, finalizeTurnStart);
+                }
+            } else if (overdrew && !gameState.players[gameState.currentPlayer].isAI) {
                 // Joueur humain : afficher le choix de defausse
                 showDiscardOverlay(gameState.currentPlayer, finalizeTurnStart);
             } else {
@@ -5704,6 +5832,12 @@
             // Deuxieme condition: un joueur n'a plus de creatures, ni de cartes en main, ni dans sa pioche
             // → calcul de score pour determiner le vainqueur
             for (let player = 1; player <= 2; player++) {
+                // En mode distance, l'adversaire a une liste infinie de personnages : il ne peut pas
+                // perdre par manque de ressources (sa main/deck sont toujours vides par design)
+                if (gameState.gameMode === 'distance') {
+                    const opp = gameState.distanceSide === 1 ? 2 : 1;
+                    if (player === opp) continue;
+                }
                 const p = gameState.players[player];
                 if (p.units.length === 0 && p.hand.length === 0 && p.deck.length === 0) {
                     const scores = {};
@@ -5906,7 +6040,7 @@
                             ${char.name}
                             <span class="char-rarity ${rarityClass}">${rarityLabel}</span>
                         </div>
-                        <div class="unit-info-sub">Puissance ${char.power} · J${unit.player}</div>
+                        <div class="unit-info-sub">🪙 ${char.power} or · J${unit.player}</div>
                     </div>
                 </div>
                 <div class="unit-info-hp-bar">
@@ -5949,7 +6083,7 @@
                         <div class="char-header">
                             <span class="char-name">[${char.icon}] ${char.name}</span>
                             <span class="char-rarity ${char.rarity || ''}">${rarityLabel}</span>
-                            <span class="char-power">${char.power} P</span>
+                            <span class="char-power">${char.power} 🪙</span>
                         </div>
                         <div class="char-stats">
                             <span>PV: ${char.hp}</span>
@@ -6020,7 +6154,7 @@
                     <div class="char-header">
                         <span class="char-name">[${char.icon}] ${char.name}</span>
                         <span class="char-rarity ${char.rarity || ''}">${rarityLabel}</span>
-                        <span class="char-power">${char.power} P</span>
+                        <span class="char-power">${char.power} 🪙</span>
                     </div>
                     <div class="char-stats">
                         <span>PV: ${char.hp}</span>
@@ -6054,6 +6188,16 @@
                 p2Title.textContent = 'Joueur 2 (IA)';
             } else {
                 p2Title.textContent = 'Joueur 2 (Rouge)';
+            }
+
+            // Mettre a jour les icones de cristaux dans les panneaux (synchro apres undo notamment)
+            for (const p of [1, 2]) {
+                gameState.players[p].crystals.forEach((crystal, idx) => {
+                    const iconEl = document.getElementById(`p${p}Crystal${idx + 1}`);
+                    if (!iconEl) return;
+                    iconEl.textContent = Math.max(0, crystal.hp);
+                    iconEl.classList.toggle('destroyed', crystal.hp <= 0);
+                });
             }
         }
 
@@ -7301,7 +7445,8 @@
         function renderCharSelectionGrid(playerNum) {
             const grid = document.getElementById('charSelectGrid');
             grid.innerHTML = '';
-            for (const char of CHARACTERS) {
+            const sortedByPower = [...CHARACTERS].sort((a, b) => a.power - b.power);
+            for (const char of sortedByPower) {
                 const card = document.createElement('div');
                 card.className = 'char-select-card';
                 card.dataset.charId = char.id;
@@ -7325,7 +7470,7 @@
                         <span class="char-select-stat">☩ ${char.movement} PM</span>
                         <span class="char-select-stat">⚔ ${char.attack.damage} ATQ</span>
                         <span class="char-select-stat">◎ Portée ${char.attack.range}</span>
-                        <span class="char-select-stat">★ Puiss. ${char.power}</span>
+                        <span class="char-select-stat">🪙 ${char.power} or</span>
                     </div>
                     <div class="char-select-ability">${char.attack.name}</div>
                     ${passiveHtml}

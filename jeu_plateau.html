@@ -838,6 +838,31 @@
             display: none;
         }
 
+        .editor-ai-section {
+            margin-top: 14px;
+            padding: 14px 18px;
+            background: rgba(201, 162, 39, 0.06);
+            border: 1px solid rgba(201, 162, 39, 0.25);
+            border-radius: 10px;
+        }
+
+        .editor-ai-section h4 {
+            font-family: 'Cinzel', serif;
+            color: var(--gold-light);
+            font-size: 0.9em;
+            letter-spacing: 0.05em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .phase-banner .banner-subtitle {
+            font-size: 0.52em;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+
         .message-log {
             position: fixed;
             bottom: 16px;
@@ -2639,6 +2664,16 @@
                 <label>🪙 Or de départ J2: <input type="number" id="editorStartGoldP2" min="0" max="99" value="8" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
                 <label>🪙 Or gagné par tour: <input type="number" id="editorGoldPerTurn" min="0" max="20" value="1" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
             </div>
+            <div class="editor-ai-section" id="aiSettingsSection" style="display:none;">
+                <h4>⚔ Paramètres de l'IA</h4>
+                <div class="editor-options">
+                    <label>Or de départ (IA): <input type="number" id="editorAIStartGold" min="0" max="99" value="8" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+                    <label>Or par tour (IA): <input type="number" id="editorAIGoldPerTurn" min="0" max="20" value="1" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+                    <label>Or par kill (IA): <input type="number" id="editorAIKillGold" min="0" max="20" value="1" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+                    <label>PV cristaux (IA): <input type="number" id="editorAICrystalHP" min="1" max="20" value="10" style="width: 50px; padding: 4px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: 0.95em;"></label>
+                    <label><input type="checkbox" id="editorManualAICrystal" style="width:18px;height:18px;margin-right:6px;"> Placer le cristal de l'IA manuellement</label>
+                </div>
+            </div>
             <div class="editor-seed">
                 <label>Seed de la carte :</label>
                 <div class="editor-seed-row">
@@ -3180,6 +3215,13 @@
             maxEffectif: 12,
             startGold: {1: 8, 2: 8}, // or de depart par joueur (configurable dans l'editeur)
             goldPerTurn: 1,           // or gagne par tour (configurable dans l'editeur)
+            aiSettings: {
+                startGold: 8,               // or de depart de l'IA (vsAI uniquement)
+                goldPerTurn: 1,             // or gagne par tour (IA)
+                killGold: 1,               // or gagne par kill (IA)
+                crystalHP: 10,             // PV des cristaux de l'IA
+                manualCrystalPlacement: false // placement manuel du cristal de l'IA
+            },
             selectedUnit: null,
             inspectedUnit: null,
             selectedCharacter: null,
@@ -3374,6 +3416,7 @@
             document.getElementById('btnMapSquare').classList.toggle('active', !isHexMode());
             document.getElementById('btnMapHex').classList.toggle('active', isHexMode());
             document.getElementById('mapEditorOverlay').classList.remove('hidden');
+            document.getElementById('aiSettingsSection').style.display = gameState.gameMode === 'vsAI' ? 'block' : 'none';
             initEditorBoard();
             updateSeedDisplay();
         }
@@ -3600,6 +3643,20 @@
             gameState.startGold[1] = parseInt(document.getElementById('editorStartGoldP1').value) || 0;
             gameState.startGold[2] = parseInt(document.getElementById('editorStartGoldP2').value) || 0;
             gameState.goldPerTurn  = parseInt(document.getElementById('editorGoldPerTurn').value)  || 0;
+            // Parametres specifiques a l'IA (vsAI uniquement)
+            if (gameState.gameMode === 'vsAI') {
+                gameState.aiSettings.startGold   = parseInt(document.getElementById('editorAIStartGold').value)   || 0;
+                gameState.aiSettings.goldPerTurn = parseInt(document.getElementById('editorAIGoldPerTurn').value) || 0;
+                gameState.aiSettings.killGold    = parseInt(document.getElementById('editorAIKillGold').value)    || 0;
+                gameState.aiSettings.crystalHP   = parseInt(document.getElementById('editorAICrystalHP').value)   || 1;
+                gameState.aiSettings.manualCrystalPlacement = document.getElementById('editorManualAICrystal').checked;
+            } else {
+                gameState.aiSettings.startGold   = gameState.startGold[2];
+                gameState.aiSettings.goldPerTurn = gameState.goldPerTurn;
+                gameState.aiSettings.killGold    = 1;
+                gameState.aiSettings.crystalHP   = gameState.crystalHP;
+                gameState.aiSettings.manualCrystalPlacement = false;
+            }
             // Clear units and crystals from board data (clean slate)
             const dim = getBoardDim();
             for (let y = 0; y < dim; y++) {
@@ -4357,14 +4414,23 @@
                 // J1 a confirme, passer a J2
                 gameState.phase = 'crystal_placement_p2';
                 if (gameState.players[2].isAI) {
-                    // L'IA place son cristal automatiquement
-                    addMessage('L\'IA place son cristal...', 'system');
-                    setTimeout(() => aiPlaceCrystal(), AI_DELAY);
+                    if (gameState.aiSettings.manualCrystalPlacement) {
+                        // Le joueur 1 place aussi le cristal de l'IA manuellement
+                        document.getElementById('instructionTitle').textContent = 'Placement du cristal ennemi';
+                        document.getElementById('instructionText').textContent = 'Placez maintenant le cristal de l\'IA sur le plateau.';
+                        highlightValidCrystalCells();
+                        document.getElementById('btnConfirmCrystal').disabled = true;
+                        addMessage('Placez le cristal de l\'IA.', 'system');
+                    } else {
+                        // L'IA place son cristal automatiquement
+                        addMessage('L\'IA place son cristal...', 'system');
+                        setTimeout(() => aiPlaceCrystal(), AI_DELAY);
+                    }
                 } else {
                     showHandoverScreen(2);
                 }
             } else {
-                // J2 a confirme, reveler les cristaux
+                // J2 a confirme (ou placement manuel du cristal IA), reveler les cristaux
                 revealCrystals();
             }
         }
@@ -4441,7 +4507,9 @@
                 x: x,
                 y: y,
                 player: player,
-                hp: gameState.crystalHP || 5
+                hp: (player === 2 && gameState.players[2].isAI && gameState.gameMode === 'vsAI')
+                    ? (gameState.aiSettings.crystalHP || 1)
+                    : (gameState.crystalHP || 5)
             };
 
             gameState.players[player].crystals.push(crystal);
@@ -4463,7 +4531,8 @@
 
             // Appliquer l'or de depart configure dans l'editeur
             for (const p of [1, 2]) {
-                gameState.players[p].effectifMax  = gameState.startGold[p];
+                const isAI = gameState.players[p].isAI && gameState.gameMode === 'vsAI';
+                gameState.players[p].effectifMax  = isAI ? gameState.aiSettings.startGold : gameState.startGold[p];
                 gameState.players[p].effectifUsed = 0;
             }
 
@@ -5633,6 +5702,16 @@
             gameState.matchStats[unit.player].unitsLost++;
             if (attacker) gameState.matchStats[attacker.player].unitsKilled++;
 
+            // Gagner de l'or quand on elimine une creature ennemie
+            if (attacker && attacker.player !== unit.player) {
+                const isAI = attacker.player === 2 && gameState.players[2].isAI && gameState.gameMode === 'vsAI';
+                const goldGained = isAI ? gameState.aiSettings.killGold : 1;
+                if (goldGained > 0) {
+                    gameState.players[attacker.player].effectifMax += goldGained;
+                    addMessage(`Joueur ${attacker.player} gagne ${goldGained} piece${goldGained > 1 ? 's' : ''} d'or (creature ennemie eliminee) !`, `player${attacker.player}`);
+                }
+            }
+
             const killCell = getCellAt(unit.x, unit.y);
             if (killCell) killCell.unit = null;
 
@@ -5746,11 +5825,12 @@
                 gameState.turn++;
             }
 
-            // Gagner goldPerTurn pieces d'or au debut du tour du joueur (sans limite)
+            // Gagner des pieces d'or au debut du tour (sans limite)
             // SAUF pour J1 au tout premier tour de la partie
             if (!(gameState.turn === 1 && gameState.currentPlayer === 1)) {
                 const player = gameState.players[gameState.currentPlayer];
-                player.effectifMax += gameState.goldPerTurn;
+                const isAI = player.isAI && gameState.gameMode === 'vsAI';
+                player.effectifMax += isAI ? gameState.aiSettings.goldPerTurn : gameState.goldPerTurn;
             }
 
             // Piocher 1 carte au debut du tour (surpioche si main pleine)
@@ -5781,7 +5861,12 @@
             gameState.actionTaken = false;
 
             const finalizeTurnStart = () => {
-                showPhaseBanner(`Tour ${gameState.turn}<br>Joueur ${gameState.currentPlayer}`);
+                const cp = gameState.currentPlayer;
+                const cpData = gameState.players[cp];
+                const goldAvailable = cpData.effectifMax - cpData.effectifUsed;
+                const handCount = cpData.hand.length;
+                const carteLabel = handCount === 0 ? '0 carte' : handCount === 1 ? '1 carte' : `${handCount} cartes`;
+                showPhaseBanner(`Tour ${gameState.turn}<br>Joueur ${cp}<div class="banner-subtitle">Or : ${goldAvailable} &bull; Main : ${carteLabel}</div>`);
                 updateUI();
                 addMessage(`Tour du Joueur ${gameState.currentPlayer}`, `player${gameState.currentPlayer}`);
 
@@ -7747,6 +7832,8 @@
             renderGameBoard();
             document.getElementById('btnConfirmCrystal').classList.remove('hidden');
             document.getElementById('btnConfirmCrystal').disabled = true;
+            document.getElementById('instructionTitle').textContent = 'Placement des Cristaux';
+            document.getElementById('instructionText').textContent = 'Joueur 1, cliquez sur une case pour placer votre cristal.';
             highlightValidCrystalCells();
             addMessage('Joueur 1, placez votre cristal.', 'system');
         }

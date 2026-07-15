@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hytabletop</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    :root {
+        --gold: #c9a227;
+        --gold-light: #e8c04a;
+        --gold-dark: #8a6f10;
+        --p1-color: #4a80c4;
+        --p1-light: #7aa8e8;
+        --p2-color: #c44a4a;
+        --p2-light: #e87a7a;
+        --panel-bg: rgba(10, 6, 2, 0.88);
+        --panel-border: rgba(160, 120, 50, 0.5);
+        --text-primary: #e8d5a0;
+        --text-secondary: #b09860;
+        --text-dim: #6a5a40;
+        --radius: 8px;
+    }
+
+    body {
+        font-family: 'Crimson Text', 'Palatino Linotype', Georgia, serif;
+        background:
+            radial-gradient(ellipse at 15% 15%, rgba(50, 90, 20, 0.25) 0%, transparent 55%),
+            radial-gradient(ellipse at 85% 85%, rgba(20, 60, 10, 0.25) 0%, transparent 55%),
+            linear-gradient(160deg, #090e08 0%, #0d160b 40%, #111a0d 70%, #090d07 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+        color: var(--text-primary);
+    }
+
+    .app { max-width: 1400px; margin: 0 auto; padding: 16px; }
+
+    header { text-align:center; margin-bottom: 14px; }
+
+    header h1 {
+        font-family: 'Cinzel', 'Times New Roman', serif;
+        font-size: 2.3em;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        background: linear-gradient(180deg, #f5e070 0%, #c9a227 45%, #8a6f10 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        filter: drop-shadow(0 2px 10px rgba(200,155,30,0.5));
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .tabs {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin: 16px 0;
+        flex-wrap: wrap;
+    }
+
+    .tab-btn {
+        font-family: 'Cinzel', serif;
+        font-size: 0.85em;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 10px 22px;
+        border-radius: var(--radius);
+        border: 1px solid var(--panel-border);
+        background: linear-gradient(160deg, rgba(14,9,4,0.85) 0%, rgba(22,14,6,0.8) 100%);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.18s ease;
+    }
+    .tab-btn:hover { color: var(--text-primary); border-color: rgba(200,160,60,0.6); }
+    .tab-btn.active {
+        color: var(--gold-light);
+        border-color: var(--gold);
+        box-shadow: 0 0 16px rgba(201,162,39,0.3);
+        background: linear-gradient(160deg, rgba(30,20,5,0.9) 0%, rgba(44,28,6,0.85) 100%);
+    }
+
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+
+    .panel {
+        background: linear-gradient(160deg, rgba(14,9,4,0.92) 0%, rgba(22,14,6,0.88) 100%);
+        border-radius: 12px;
+        padding: 16px 18px;
+        border: 1px solid var(--panel-border);
+        box-shadow: 0 6px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(200,160,60,0.12);
+    }
+
+    button {
+        font-family: 'Crimson Text', serif;
+        font-size: 0.92em;
+        cursor: pointer;
+        border-radius: 6px;
+        border: 1px solid rgba(160,120,50,0.4);
+        background: linear-gradient(155deg, #3a2a10 0%, #241a08 100%);
+        color: var(--text-primary);
+        padding: 6px 12px;
+        transition: all 0.15s ease;
+    }
+    button:hover { filter: brightness(1.2); }
+    button:disabled { opacity: 0.35; cursor: not-allowed; filter:none; }
+
+    button.btn-gold {
+        background: linear-gradient(155deg, #b8860b 0%, #7a5406 100%);
+        color: #fff8e0;
+        border-color: rgba(200,160,40,0.5);
+    }
+    button.btn-danger {
+        background: linear-gradient(155deg, #6a1e1e 0%, #3e1010 100%);
+        color: #ffd8d8;
+        border-color: rgba(200,80,80,0.4);
+    }
+    button.btn-small { padding: 3px 8px; font-size: 0.85em; }
+
+    input[type=text], input[type=number], textarea, select {
+        font-family: 'Crimson Text', serif;
+        background: rgba(0,0,0,0.4);
+        border: 1px solid rgba(160,120,50,0.35);
+        border-radius: 5px;
+        color: var(--text-primary);
+        padding: 5px 8px;
+        font-size: 0.92em;
+    }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--gold); }
+
+    h2.section-title, h3.section-title {
+        font-family: 'Cinzel', serif;
+        color: var(--gold-light);
+        letter-spacing: 0.04em;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(160,120,50,0.3);
+    }
+
+    /* ---------- Plateau tab ---------- */
+    .players-row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+    .player-panel { flex: 1; min-width: 300px; position: relative; }
+    .player-panel.p1 { border-left: 4px solid var(--p1-color); }
+    .player-panel.p2 { border-left: 4px solid var(--p2-color); }
+
+    .player-panel h2 {
+        font-family: 'Cinzel', serif;
+        font-size: 1.05em;
+        border: none;
+        background: transparent;
+        color: var(--text-primary);
+        width: 60%;
+        margin-bottom: 10px;
+        padding: 2px 4px;
+    }
+    .player-panel.p1 h2 { color: var(--p1-light); }
+    .player-panel.p2 h2 { color: var(--p2-light); }
+
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin: 5px 0;
+        padding: 4px 8px;
+        background: rgba(0,0,0,0.25);
+        border-radius: 4px;
+        font-size: 0.9em;
+        color: var(--text-secondary);
+    }
+    .stat-controls { display:flex; align-items:center; gap:9px; }
+    .stat-controls span { min-width: 2.6em; text-align:center; color: var(--text-primary); font-weight:600; }
+    .stat-controls button { padding: 1px 9px; line-height: 1.2; }
+
+    .panel-actions { display:flex; align-items:center; gap:8px; margin: 8px 0; flex-wrap: wrap; }
+
+    .hand-row { display:flex; gap:8px; flex-wrap:wrap; margin-top: 8px; min-height: 40px; }
+    .hint-text { font-size: 0.85em; color: var(--text-dim); font-style: italic; }
+
+    .hand-card {
+        background: rgba(0,0,0,0.35);
+        border: 1px solid rgba(130,100,40,0.35);
+        border-radius: 8px;
+        padding: 8px;
+        width: 118px;
+        text-align: center;
+    }
+    .hand-card .hc-icon { font-size: 1.8em; line-height: 1; }
+    .hand-card .hc-name { font-family:'Cinzel', serif; font-size: 0.8em; margin: 3px 0; color: var(--text-primary); }
+    .hand-card .hc-stats { font-size: 0.72em; color: var(--text-secondary); margin-bottom: 5px; }
+    .hand-card .hc-actions { display:flex; flex-direction:column; gap:4px; margin-top: 5px; }
+    .cost-warn { color: #e08080; font-weight: 600; }
+
+    .rarity-badge {
+        display: inline-block;
+        font-size: 0.7em;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        padding: 1px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        vertical-align: middle;
+    }
+    .rarity-badge.rarity-commune { background: rgba(120,120,140,0.25); color: #aab0c0; border: 1px solid rgba(160,160,180,0.3); }
+    .rarity-badge.rarity-rare    { background: rgba(40,90,200,0.25);  color: #7ab0f0; border: 1px solid rgba(80,130,220,0.4); }
+    .rarity-badge.rarity-epique  { background: rgba(130,40,200,0.25); color: #d080ff; border: 1px solid rgba(160,60,220,0.4); }
+
+    .type-badge {
+        display: inline-block;
+        font-size: 0.7em;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        padding: 1px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        vertical-align: middle;
+    }
+    .type-badge.type-classique { background: rgba(120,90,40,0.25); color: #d0a060; border: 1px solid rgba(160,120,60,0.35); }
+    .type-badge.type-distance  { background: rgba(40,130,110,0.25); color: #6fd0b8; border: 1px solid rgba(60,160,140,0.4); }
+    .type-badge.type-batiment  { background: rgba(150,60,60,0.25); color: #e08888; border: 1px solid rgba(180,80,80,0.4); }
+
+    .discard-details summary { cursor:pointer; color: var(--text-dim); font-size: 0.82em; }
+    .discard-list { font-size: 0.82em; color: var(--text-secondary); margin-top: 4px; }
+
+    .board-area {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    /* Collapsible "Options de la partie" panel */
+    .toolbox-details { margin-bottom: 14px; }
+    .toolbox-details summary {
+        cursor: pointer;
+        font-family: 'Cinzel', serif;
+        color: var(--gold-light);
+        letter-spacing: 0.04em;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(160,120,50,0.3);
+        list-style: none;
+    }
+    .toolbox-details summary::-webkit-details-marker { display: none; }
+    .toolbox-details summary::before { content: '▶ '; }
+    .toolbox-details[open] summary::before { content: '▼ '; }
+    .toolbox { display:flex; flex-direction: column; gap:10px; margin-top: 12px; }
+    .tool-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        background: rgba(0,0,0,0.25);
+        border: 1px solid rgba(130,100,40,0.25);
+        border-radius: 8px;
+        padding: 8px 10px;
+    }
+    .tool-group label { font-size: 0.85em; color: var(--text-secondary); }
+    .tool-group .tg-label { font-family:'Cinzel', serif; font-size: 0.82em; color: var(--gold-light); min-width: 88px; }
+    .tool-group .tg-info { font-size: 0.82em; color: var(--text-secondary); }
+
+    .banner[hidden] { display: none; }
+    .banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        background: linear-gradient(135deg, rgba(20,15,4,0.95), rgba(30,20,6,0.92));
+        border: 1px solid var(--gold);
+        border-radius: 8px;
+        padding: 10px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 0 20px rgba(201,162,39,0.25);
+    }
+    .banner .banner-text { color: var(--gold-light); font-size: 0.92em; }
+
+    .board-wrap {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        max-width: 100%;
+        overflow: hidden;
+        padding: 8px;
+        border-radius: 16px;
+        background: linear-gradient(145deg, rgba(8,5,2,0.9), rgba(18,12,5,0.95));
+        border: 2px solid rgba(140,105,45,0.6);
+        box-shadow: 0 0 40px rgba(0,0,0,0.7), inset 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    .hex-board { position: relative; user-select: none; }
+    .hex-board.armed .hex-cell { cursor: crosshair; }
+
+    .hex-cell {
+        position: absolute;
+        width: 38px;
+        height: 44px;
+        clip-path: polygon(50% 2%, 98% 26%, 98% 74%, 50% 98%, 2% 74%, 2% 26%);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: filter 0.15s ease;
+    }
+    @media (hover: hover) {
+        .hex-cell:hover { filter: brightness(1.25); z-index: 3; }
+    }
+
+    /* Highlight rings: two-layer technique so clip-path doesn't distort a plain box-shadow */
+    .hex-cell.cell-selected::before,
+    .hex-cell.cell-armed::before,
+    .hex-cell.cell-move-source::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+    .hex-cell.cell-selected::after,
+    .hex-cell.cell-armed::after,
+    .hex-cell.cell-move-source::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        clip-path: polygon(50% 10%, 90% 30%, 90% 70%, 50% 90%, 10% 70%, 10% 30%);
+        background: inherit;
+    }
+    .hex-cell.cell-armed { filter: drop-shadow(0 0 6px rgba(80,255,120,0.6)); z-index: 4; }
+    .hex-cell.cell-armed::before { background: #4aff7a; }
+    .hex-cell.cell-selected { filter: drop-shadow(0 0 7px rgba(232,192,74,0.8)); z-index: 5; }
+    .hex-cell.cell-selected::before { background: #e8c04a; }
+    .hex-cell.cell-move-source { filter: drop-shadow(0 0 7px rgba(74,200,255,0.8)); z-index: 6; }
+    .hex-cell.cell-move-source::before { background: #4ac8ff; }
+
+    .token-wrap {
+        position: absolute;
+        z-index: 7;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 1px;
+        pointer-events: none;
+    }
+
+    .token {
+        position: relative;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 21px;
+        background: rgba(20,20,20,0.6);
+        border: 3px solid rgba(255,255,255,0.55);
+        pointer-events: none;
+    }
+    .token.owner-p1 { border-color: var(--p1-color); }
+    .token.owner-p2 { border-color: var(--p2-color); }
+    .token.token-gold { border-color: var(--gold); }
+    .token .token-badge {
+        position: absolute;
+        bottom: -7px;
+        right: -9px;
+        background: #111;
+        border: 1px solid rgba(255,255,255,0.4);
+        border-radius: 6px;
+        font-size: 11px;
+        padding: 0 4px;
+        color: #fff;
+        line-height: 1.4;
+    }
+    .inspector { min-width: 240px; max-width: 260px; }
+    .inspector-hint { color: var(--text-dim); font-style: italic; font-size: 0.88em; }
+    .inspector-token {
+        background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(130,100,40,0.3);
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    .inspector-token.owner-p1 { border-left: 3px solid var(--p1-color); }
+    .inspector-token.owner-p2 { border-left: 3px solid var(--p2-color); }
+    .inspector-token-title { font-family:'Cinzel', serif; font-size: 0.95em; color: var(--text-primary); }
+    .inspector-token-owner { font-size: 0.78em; color: var(--text-dim); margin-bottom: 4px; }
+    .inspector-token-sub { font-size: 0.8em; color: var(--text-secondary); margin-bottom: 4px; }
+    .inspector-token-desc { font-size: 0.8em; color: var(--text-secondary); font-style: italic; margin: 6px 0; }
+    .inspector-token-actions { display:flex; gap:6px; margin-top:8px; flex-wrap: wrap; }
+
+    /* ---------- Bibliotheque tab ---------- */
+    .lib-table { display:flex; flex-direction:column; gap:8px; }
+    .lib-row {
+        display: grid;
+        grid-template-columns: 3.2em 1fr 4.5em 4.5em 4.5em 7em 7em 2fr auto auto;
+        gap: 8px;
+        align-items: start;
+        background: rgba(0,0,0,0.25);
+        border: 1px solid rgba(130,100,40,0.25);
+        border-radius: 8px;
+        padding: 8px;
+    }
+    .lib-row input, .lib-row textarea { width: 100%; }
+    .lib-row textarea { resize: none; overflow: hidden; min-height: 2.4em; }
+    .lib-col-label { font-size: 0.7em; color: var(--text-dim); display:block; margin-bottom:2px; }
+    .lib-reorder { display:flex; flex-direction:column; gap:4px; }
+    .lib-reorder button { padding: 2px 8px; line-height: 1; font-size: 0.8em; }
+
+    @media (max-width: 800px) {
+        .lib-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ---------- Decks tab ---------- */
+    .decks-row { display:flex; gap:16px; flex-wrap: wrap; }
+    .deck-builder { flex: 1; min-width: 300px; }
+    .deck-list { display:flex; flex-direction:column; gap:6px; margin: 10px 0; }
+    .deck-row {
+        display:flex; align-items:center; gap:8px;
+        background: rgba(0,0,0,0.25);
+        border-radius: 6px; padding: 5px 8px;
+        font-size: 0.9em;
+    }
+    .deck-row .deck-row-name { flex:1; }
+    .deck-row .deck-row-count { min-width: 1.6em; text-align:center; font-weight:600; color: var(--gold-light); }
+
+    /* ---------- Carte tab ---------- */
+    .map-toolbar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom: 14px; }
+    .map-toolbar label { display:flex; align-items:center; gap:6px; font-size: 0.9em; color: var(--text-secondary); }
+
+    .map-palette { display:flex; gap:8px; flex-wrap:wrap; }
+    .palette-swatch {
+        display:flex; align-items:center; gap:7px;
+        padding: 7px 12px;
+        border: 1px solid rgba(130,100,40,0.4);
+        border-radius: 8px;
+        background: rgba(0,0,0,0.4);
+        color: var(--text-secondary);
+        font-size: 0.85em;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .palette-swatch:hover { color: var(--text-primary); border-color: rgba(200,160,60,0.6); }
+    .palette-swatch .swatch-color {
+        width: 16px; height: 16px; border-radius: 4px;
+        border: 1px solid rgba(255,255,255,0.35);
+        flex-shrink: 0;
+    }
+    .palette-swatch.active {
+        border-color: var(--gold);
+        background: rgba(201,162,39,0.15);
+        color: var(--gold-light);
+        box-shadow: 0 0 10px rgba(201,162,39,0.3);
+    }
+
+    /* ---------- Regles tab ---------- */
+    .rules-textarea {
+        display: block;
+        width: 100%;
+        min-height: 200px;
+        resize: none;
+        overflow: hidden;
+        line-height: 1.55;
+        font-size: 0.95em;
+        padding: 14px;
+    }
+    .rules-config-actions { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+
+</style>
+</head>
+<body>
+<div class="app">
+    <header>
+        <h1>Hytabletop</h1>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab-btn active" data-tab="plateau">Jeu</button>
+        <button class="tab-btn" data-tab="carte">Plateau</button>
+        <button class="tab-btn" data-tab="decks">Decks</button>
+        <button class="tab-btn" data-tab="bibliotheque">Bibliothèque</button>
+        <button class="tab-btn" data-tab="regles">Règles</button>
+    </nav>
+
+    <!-- ============ TAB: JEU ============ -->
+    <section id="tab-plateau" class="tab-panel active">
+        <div class="players-row">
+            <div class="panel player-panel p1" id="playerPanel_p1"></div>
+            <div class="panel player-panel p2" id="playerPanel_p2"></div>
+        </div>
+
+        <details class="panel toolbox-details" id="toolboxDetails">
+            <summary class="section-title">Options de la partie</summary>
+            <div class="toolbox">
+                <div class="tool-group">
+                    <span class="tg-label">💎 Cristal</span>
+                    <label>Propriétaire
+                        <select id="crystalOwner">
+                            <option value="p1">Joueur 1</option>
+                            <option value="p2">Joueur 2</option>
+                        </select>
+                    </label>
+                    <label>PV <input type="number" id="crystalHp" min="0" value="10" style="width:3.6em"></label>
+                    <button class="btn-gold" onclick="armCrystalPlacement()">Placer</button>
+                </div>
+                <div class="tool-group">
+                    <span class="tg-label">🪙 Or</span>
+                    <label>Montant <input type="number" id="goldAmount" min="0" value="1" style="width:3.6em"></label>
+                    <button class="btn-gold" onclick="armGoldPlacement()">Placer</button>
+                </div>
+                <div class="tool-group">
+                    <span class="tg-label">🐾 Créature</span>
+                    <select id="freeCreatureSelect"></select>
+                    <label>Propriétaire
+                        <select id="freeCreatureOwner">
+                            <option value="p1">Joueur 1</option>
+                            <option value="p2">Joueur 2</option>
+                        </select>
+                    </label>
+                    <span class="tg-info" id="freeCreatureInfo"></span>
+                    <button class="btn-gold" id="freeCreaturePlaceBtn" onclick="armFreeCreaturePlacement()">Placer</button>
+                </div>
+                <div class="tool-group">
+                    <span class="tg-label">Partie</span>
+                    <button class="btn-danger" onclick="resetBoard()">Réinitialiser le plateau</button>
+                    <button class="btn-danger" onclick="resetEverything()">Tout réinitialiser</button>
+                </div>
+            </div>
+        </details>
+
+        <div class="banner" id="placementBanner" hidden>
+            <span class="banner-text"></span>
+            <button onclick="cancelCurrentAction()">Annuler (Échap)</button>
+        </div>
+
+        <div class="board-area">
+            <div class="board-wrap">
+                <div class="hex-board" id="board"></div>
+            </div>
+            <div class="panel inspector" id="inspector"></div>
+        </div>
+    </section>
+
+    <!-- ============ TAB: PLATEAU (editeur de carte) ============ -->
+    <section id="tab-carte" class="tab-panel">
+        <div class="panel">
+            <h2 class="section-title">Éditeur de carte</h2>
+            <div class="map-toolbar">
+                <div class="map-palette" id="mapPalette"></div>
+                <label><input type="checkbox" id="mapMirrorToggle"> Mode miroir</label>
+                <button class="btn-danger" onclick="resetMapColors()">Réinitialiser les couleurs</button>
+            </div>
+            <div class="board-wrap">
+                <div class="hex-board" id="mapEditorBoard"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ TAB: DECKS ============ -->
+    <section id="tab-decks" class="tab-panel">
+        <div class="panel">
+            <h2 class="section-title">Construction des decks</h2>
+            <div class="decks-row">
+                <div class="deck-builder" id="deckBuilder_p1"></div>
+                <div class="deck-builder" id="deckBuilder_p2"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ TAB: BIBLIOTHEQUE ============ -->
+    <section id="tab-bibliotheque" class="tab-panel">
+        <div class="panel">
+            <h2 class="section-title">Bibliothèque de créatures</h2>
+            <div class="lib-table" id="libraryTable"></div>
+            <button class="btn-gold" style="margin-top:12px;" onclick="addCreature()">+ Ajouter une créature</button>
+        </div>
+    </section>
+
+    <!-- ============ TAB: REGLES ============ -->
+    <section id="tab-regles" class="tab-panel">
+        <div class="panel">
+            <h2 class="section-title">Règles du jeu</h2>
+            <textarea id="rulesText" class="rules-textarea" oninput="updateRulesText(this.value); autoGrowTextarea(this)"></textarea>
+            <div class="rules-config-actions">
+                <button class="btn-gold" onclick="exportConfig()">⬇ Exporter la configuration</button>
+                <button onclick="document.getElementById('importConfigInput').click()">⬆ Importer une configuration</button>
+                <input type="file" id="importConfigInput" accept="application/json,.json" style="display:none" onchange="importConfig(this.files[0]); this.value='';">
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+// ==================== HEX BOARD GEOMETRY ====================
+const HEX_BOARD_SIDE = 8;      // cells per edge of the hexagon
+const HEX_W = 38;              // hex cell pixel width
+const HEX_H = 44;              // hex cell pixel height
+const HEX_VSPACE = 33;         // vertical spacing between hex rows
+const HEX_S = HEX_BOARD_SIDE - 1; // max axial coordinate (7)
+const HEX_DIM = 2 * HEX_BOARD_SIDE - 1; // 15 — size of the backing index grid
+const HEX_BOARD_W = 2 * HEX_S * HEX_W + HEX_W;
+const HEX_BOARD_H = 2 * HEX_S * HEX_VSPACE + HEX_H;
+const HEX_OX = HEX_S * HEX_W + HEX_W / 2;
+const HEX_OY = HEX_S * HEX_VSPACE + HEX_H / 2;
+const DEFAULT_CELL_COLOR = '#2d5a3d'; // matches the "Plaine" swatch in MAP_PALETTE
+
+function isValidHexCell(x, y) {
+    const q = x - HEX_S, r = y - HEX_S;
+    return Math.abs(q) <= HEX_S && Math.abs(r) <= HEX_S && Math.abs(q + r) <= HEX_S;
+}
+
+function hexCellTopLeft(x, y) {
+    const q = x - HEX_S, r = y - HEX_S;
+    const px = q * HEX_W + r * (HEX_W / 2) + HEX_OX;
+    const py = r * HEX_VSPACE + HEX_OY;
+    return { left: px - HEX_W / 2, top: py - HEX_H / 2 };
+}
+
+function buildHexCells() {
+    const cells = [];
+    for (let y = 0; y < HEX_DIM; y++) {
+        for (let x = 0; x < HEX_DIM; x++) {
+            if (isValidHexCell(x, y)) {
+                const { left, top } = hexCellTopLeft(x, y);
+                cells.push({ x, y, left, top });
+            }
+        }
+    }
+    return cells;
+}
+
+const HEX_CELLS = buildHexCells();
+
+function mirrorOf(x, y) {
+    return { x: 2 * HEX_S - x, y: 2 * HEX_S - y };
+}
+
+// Shrinks a hex board (via CSS transform) so it always fits its container's
+// width — avoids horizontal scrolling on narrow/mobile screens.
+function fitBoardToContainer(wrapEl) {
+    const boardEl = wrapEl.querySelector('.hex-board');
+    if (!boardEl) return;
+    wrapEl.style.width = '';
+    wrapEl.style.height = '';
+    boardEl.style.transform = 'none';
+    if (wrapEl.clientWidth === 0) return; // hidden tab — refit when it becomes visible
+    const innerWidth = wrapEl.clientWidth - 16; // minus board-wrap's own padding
+    const scale = Math.min(1, innerWidth / HEX_BOARD_W);
+    boardEl.style.transformOrigin = 'top left';
+    if (scale < 1) {
+        boardEl.style.transform = `scale(${scale})`;
+        wrapEl.style.width = Math.round(HEX_BOARD_W * scale + 16) + 'px';
+        wrapEl.style.height = Math.round(HEX_BOARD_H * scale + 16) + 'px';
+    }
+}
+
+function fitAllBoards() {
+    document.querySelectorAll('.board-wrap').forEach(fitBoardToContainer);
+}
+
+window.addEventListener('resize', fitAllBoards);
+
+// ==================== CONFIGURATION ====================
+const STORAGE_KEY = 'hytabletop_state_v2';
+
+const DEFAULT_LIBRARY = [
+    { id:'souris', icon:'🐭', name:'Souris', hp:1, pm:5, cost:1, rarity:'commune', type:'classique',
+      desc:"Morsure au corps à corps (portée 1). Passif Fuite rapide : après une attaque, peut se déplacer de 2 cases supplémentaires." },
+    { id:'ecureuil', icon:'🐿️', name:'Écureuil', hp:2, pm:2, cost:2, rarity:'commune', type:'distance',
+      desc:"Lancer de gland à distance (portée 3). Passif Grimpeur : peut cibler des unités à une hauteur différente." },
+    { id:'canard', icon:'🦆', name:'Canard', hp:4, pm:2, cost:3, rarity:'rare', type:'classique',
+      desc:"Coup de bec au corps à corps (portée 1). Passif Aquatique : se déplace sur l'eau, et peut y soigner un allié adjacent de 2 PV au lieu d'attaquer." },
+    { id:'lapin', icon:'🐰', name:'Lapin', hp:3, pm:4, cost:4, rarity:'rare', type:'classique',
+      desc:"Charge en ligne droite jusqu'à 3 cases, frappe la première cible rencontrée." },
+    { id:'renard', icon:'🦊', name:'Renard', hp:5, pm:3, cost:5, rarity:'epique', type:'classique',
+      desc:"Griffure perçante au corps à corps : blesse aussi l'ennemi juste derrière la cible. Passif Prédateur : se soigne de 1 PV après avoir éliminé un ennemi." },
+    { id:'sanglier', icon:'🐗', name:'Sanglier', hp:6, pm:2, cost:6, rarity:'epique', type:'classique',
+      desc:"Furie : frappe tous les ennemis adjacents à la même hauteur. Passif Cuir épais : ne peut pas perdre plus de 3 PV par tour." }
+];
+
+function rarityLabel(r) {
+    return r === 'rare' ? 'Rare' : r === 'epique' ? 'Épique' : 'Commune';
+}
+
+function rarityBadge(r) {
+    const cls = r === 'rare' ? 'rarity-rare' : r === 'epique' ? 'rarity-epique' : 'rarity-commune';
+    return `<span class="rarity-badge ${cls}">${rarityLabel(r)}</span>`;
+}
+
+function typeLabel(t) {
+    return t === 'distance' ? 'Distance' : t === 'batiment' ? 'Bâtiment' : 'Classique';
+}
+
+function typeBadge(t) {
+    const cls = t === 'distance' ? 'type-distance' : t === 'batiment' ? 'type-batiment' : 'type-classique';
+    return `<span class="type-badge ${cls}">${typeLabel(t)}</span>`;
+}
+
+const DEFAULT_RULES_TEXT =
+`OBJECTIF
+Détruire les cristaux de l'adversaire avant qu'il ne détruise les vôtres.
+
+MISE EN PLACE
+1. Chaque joueur compose son deck dans l'onglet Decks. Pour cela, il choisit jusqu'à 6 créatures différentes, et pour chaque créature choisie, ajoute autant de cartes dans son deck que sa rareté le permet (4 cartes pour les Communes, 3 pour les Rares, 2 pour les Épiques).
+2. Chaque joueur choisit une case pour y placer un cristal. Les cases choisies sont révélées simultanément, et un second cristal est ajouté en position miroir sur le plateau pour le joueur adverse, reflétant le positionnement choisi. Chaque joueur possède alors 2 cristaux à protéger.
+3. Si les joueurs le souhaitent, ils peuvent convenir de déposer des pièces d'or sur le plateau. Pour cela, chaque joueur choisit une case où placer le nombre de pièces convenu ; les cases choisies sont révélées simultanément, et pour chacune, une seconde pile est ajoutée en position miroir. Quatre piles d'or sont ainsi déposées à chaque répétition de cette étape, qui peut être répétée autant de fois que voulu.
+4. Chaque joueur pioche une main de départ de 3 cartes.
+
+DÉROULEMENT D'UN TOUR
+Au début de son tour, un joueur doit :
+- Piocher une carte. S'il n'a plus de cartes à piocher, il doit infliger 1 dégât à une de ses créatures ou à un de ses cristaux.
+- Gagner une pièce d'or.
+
+Il peut ensuite :
+- Poser une ou plusieurs créatures de sa main sur le plateau, sur une case adjacente à l'un de ses cristaux. Le coût en or est alors déduit de sa réserve.
+- Utiliser une créature : la déplacer d'un nombre de cases inférieur ou égal à ses PM, puis lui faire utiliser une de ses actions. Cette étape peut être répétée autant de fois qu'il y a de créatures alliées en jeu, une fois par créature. Si une créature se trouve sur une ou plusieurs piles d'or, elle peut utiliser son action pour en ramasser une.
+
+À la fin du tour, le joueur doit :
+- Défausser une carte de sa main s'il en possède plus de 5.
+
+TERRAIN ET DÉPLACEMENT
+- L'eau et les rochers sont infranchissables, mais on peut attaquer à travers si la portée le permet.
+- Les murs bloquent aussi les attaques (ils bloquent à la fois le déplacement et la ligne d'attaque).
+- Monter d'un niveau de hauteur coûte 2 PM au lieu de 1. Descendre coûte toujours 1 PM.
+- Il est impossible de monter ou descendre de 2 niveaux de hauteur en un seul déplacement.
+- On ne peut pas se déplacer à travers une autre créature ou un cristal, mais on peut viser à travers eux.
+- On ne peut pas cibler une créature ou un cristal situé à une hauteur de terrain différente.
+- On peut se déplacer au-dessus des piles d'or.
+
+CRISTAUX
+Chaque cristal possède 10 PV. Quand un cristal atteint 0 PV, il est considéré comme détruit (vous pouvez le retirer du plateau).
+
+FIN DE PARTIE
+La partie se termine quand un joueur n'a plus de cristaux, ou s'il ne possède plus aucune créature en jeu, en main, ni dans son deck.`;
+
+function defaultState() {
+    return {
+        library: DEFAULT_LIBRARY.map(c => ({ ...c })),
+        players: {
+            p1: { name: 'Joueur 1', gold: 0, deck: [], hand: [], discard: [] },
+            p2: { name: 'Joueur 2', gold: 0, deck: [], hand: [], discard: [] }
+        },
+        tokens: [],
+        mapColors: {},
+        rulesText: DEFAULT_RULES_TEXT,
+        libraryOrder: DEFAULT_LIBRARY.map(c => c.id),
+        nextTokenId: 1,
+        nextCreatureId: 100,
+        nextSeq: 1
+    };
+}
+
+// Fills in any field missing from an older/partial save (or an imported file)
+// with a sensible default, so the app never crashes on incomplete state.
+function normalizeState(parsed) {
+    if (!parsed.mapColors) parsed.mapColors = {};
+    if (typeof parsed.rulesText !== 'string') parsed.rulesText = DEFAULT_RULES_TEXT;
+    if (typeof parsed.nextSeq !== 'number') parsed.nextSeq = 1;
+    if (typeof parsed.nextTokenId !== 'number') parsed.nextTokenId = 1;
+    if (typeof parsed.nextCreatureId !== 'number') parsed.nextCreatureId = 100;
+    if (!Array.isArray(parsed.libraryOrder)) parsed.libraryOrder = parsed.library.map(c => c.id);
+    parsed.library.forEach(c => { if (!c.rarity) c.rarity = 'commune'; if (!c.type) c.type = 'classique'; });
+    return parsed;
+}
+
+function loadState() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return defaultState();
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.library || !parsed.players || !parsed.tokens) return defaultState();
+        return normalizeState(parsed);
+    } catch (e) {
+        console.warn('État local corrompu, réinitialisation.', e);
+        return defaultState();
+    }
+}
+
+let state = loadState();
+
+// Ephemeral UI state — not persisted.
+let game = { inspecting: null, placement: null, moveMode: null };
+
+function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function getCreature(id) {
+    return state.library.find(c => c.id === id);
+}
+
+function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, s => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[s]));
+}
+
+function ownerLabel(owner) {
+    if (owner === 'p1') return state.players.p1.name;
+    if (owner === 'p2') return state.players.p2.name;
+    return 'Neutre';
+}
+
+function getCellColor(x, y) {
+    return state.mapColors[x + ',' + y] || DEFAULT_CELL_COLOR;
+}
+
+// ==================== BOARD ====================
+function renderBoard() {
+    const board = document.getElementById('board');
+    board.innerHTML = '';
+    board.style.width = HEX_BOARD_W + 'px';
+    board.style.height = HEX_BOARD_H + 'px';
+    board.classList.toggle('armed', !!(game.placement || game.moveMode));
+
+    let moveSource = null;
+    if (game.moveMode) {
+        const t = state.tokens.find(tk => tk.id === game.moveMode.tokenId);
+        if (t) moveSource = { x: t.x, y: t.y };
+    }
+
+    HEX_CELLS.forEach(({ x, y, left, top }) => {
+        const cell = document.createElement('div');
+        cell.className = 'hex-cell';
+        cell.style.left = left + 'px';
+        cell.style.top = top + 'px';
+        cell.style.background = getCellColor(x, y);
+        cell.dataset.x = x;
+        cell.dataset.y = y;
+
+        if (game.inspecting && game.inspecting.x === x && game.inspecting.y === y) cell.classList.add('cell-selected');
+        if (game.placement || game.moveMode) cell.classList.add('cell-armed');
+        if (moveSource && moveSource.x === x && moveSource.y === y) cell.classList.add('cell-move-source');
+
+        cell.addEventListener('click', () => onCellClick(x, y));
+        board.appendChild(cell);
+    });
+
+    // Tokens are rendered as a separate overlay layer (not nested inside the
+    // hex-cell), so their larger size isn't cropped by the cell's clip-path hexagon.
+    // When several tokens share a cell, only the most recently arrived one is shown
+    // on the board — the rest remain accessible via the inspector.
+    const tokensByCell = {};
+    state.tokens.forEach(t => {
+        const key = t.x + ',' + t.y;
+        const current = tokensByCell[key];
+        if (!current || (t.arrivedAt || 0) > (current.arrivedAt || 0)) tokensByCell[key] = t;
+    });
+    Object.keys(tokensByCell).forEach(key => {
+        const [x, y] = key.split(',').map(Number);
+        if (!isValidHexCell(x, y)) return;
+        const { left, top } = hexCellTopLeft(x, y);
+        const wrap = document.createElement('div');
+        wrap.className = 'token-wrap';
+        wrap.style.left = left + 'px';
+        wrap.style.top = top + 'px';
+        wrap.style.width = HEX_W + 'px';
+        wrap.style.height = HEX_H + 'px';
+        wrap.appendChild(renderTokenEl(tokensByCell[key]));
+        board.appendChild(wrap);
+    });
+
+    fitAllBoards();
+}
+
+function renderTokenEl(t) {
+    const el = document.createElement('div');
+    if (t.type === 'creature') {
+        const c = getCreature(t.creatureId);
+        el.className = `token token-creature owner-${t.owner}`;
+        el.innerHTML = `<span>${c ? c.icon : '❓'}</span><span class="token-badge">${t.hp}</span>`;
+        el.title = `${c ? c.name : 'Créature inconnue'} — ${t.hp} PV (${ownerLabel(t.owner)})`;
+    } else if (t.type === 'crystal') {
+        el.className = `token token-crystal owner-${t.owner}`;
+        el.innerHTML = `<span>💎</span><span class="token-badge">${t.hp}</span>`;
+        el.title = `Cristal — ${t.hp} PV (${ownerLabel(t.owner)})`;
+    } else if (t.type === 'gold') {
+        el.className = 'token token-gold';
+        el.innerHTML = `<span>🪙</span><span class="token-badge">${t.amount}</span>`;
+        el.title = `Or — ${t.amount}`;
+    }
+    return el;
+}
+
+function onCellClick(x, y) {
+    if (game.placement) { commitPlacement(x, y); return; }
+    if (game.moveMode) { commitMove(x, y); return; }
+    game.inspecting = { x, y };
+    renderAll();
+}
+
+// ---- Placement ----
+function armCrystalPlacement() {
+    const owner = document.getElementById('crystalOwner').value;
+    const hp = parseInt(document.getElementById('crystalHp').value) || 0;
+    game.placement = { type: 'crystal', owner, hp };
+    showBanner(`💎 Cliquez sur une case pour placer un cristal (${hp} PV, ${ownerLabel(owner)}).`);
+    renderAll();
+}
+
+function armGoldPlacement() {
+    const amount = parseInt(document.getElementById('goldAmount').value) || 0;
+    game.placement = { type: 'gold', amount };
+    showBanner(`🪙 Cliquez sur une case pour placer ${amount} or.`);
+    renderAll();
+}
+
+function armFreeCreaturePlacement() {
+    const creatureId = document.getElementById('freeCreatureSelect').value;
+    const owner = document.getElementById('freeCreatureOwner').value;
+    const c = getCreature(creatureId);
+    if (!c) { alert('Aucune créature disponible dans la bibliothèque.'); return; }
+    game.placement = { type: 'creature', creatureId, owner, deductCost: false };
+    showBanner(`${c.icon} Cliquez sur une case pour placer ${c.name} (${ownerLabel(owner)}).`);
+    renderAll();
+}
+
+function armHandPlacement(pk, idx) {
+    const player = state.players[pk];
+    const creatureId = player.hand[idx];
+    const c = getCreature(creatureId);
+    if (!c) return;
+    if (player.gold < c.cost) return;
+    player.hand.splice(idx, 1);
+    game.placement = { type: 'creature', creatureId, owner: pk, deductCost: true, restoreHand: { playerKey: pk, creatureId } };
+    saveState();
+    showBanner(`${c.icon} Cliquez sur une case pour placer ${c.name} (coût ${c.cost} 🪙, déduit de ${player.name}).`);
+    renderAll();
+}
+
+function commitPlacement(x, y) {
+    const p = game.placement;
+    const token = { id: state.nextTokenId++, x, y, type: p.type, arrivedAt: state.nextSeq++ };
+    if (p.type === 'creature') {
+        const c = getCreature(p.creatureId);
+        token.owner = p.owner;
+        token.creatureId = p.creatureId;
+        token.hp = c ? c.hp : 0;
+        if (c && p.deductCost) state.players[p.owner].gold = Math.max(0, state.players[p.owner].gold - c.cost);
+    } else if (p.type === 'crystal') {
+        token.owner = p.owner;
+        token.hp = p.hp;
+    } else if (p.type === 'gold') {
+        token.amount = p.amount;
+    }
+    state.tokens.push(token);
+    game.placement = null;
+    hideBanner();
+    saveState();
+    renderAll();
+}
+
+function cancelPlacement() {
+    const p = game.placement;
+    if (p && p.restoreHand) {
+        state.players[p.restoreHand.playerKey].hand.push(p.restoreHand.creatureId);
+        saveState();
+    }
+    game.placement = null;
+    hideBanner();
+    renderAll();
+}
+
+// ---- Move ----
+function armMove(tokenId) {
+    game.moveMode = { tokenId };
+    showBanner('🧭 Cliquez sur la case de destination.');
+    renderAll();
+}
+
+function commitMove(x, y) {
+    const t = state.tokens.find(tk => tk.id === game.moveMode.tokenId);
+    if (t) { t.x = x; t.y = y; t.arrivedAt = state.nextSeq++; saveState(); }
+    game.moveMode = null;
+    hideBanner();
+    renderAll();
+}
+
+function cancelMove() {
+    game.moveMode = null;
+    hideBanner();
+    renderAll();
+}
+
+function cancelCurrentAction() {
+    if (game.placement) cancelPlacement();
+    else if (game.moveMode) cancelMove();
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') cancelCurrentAction();
+});
+
+function showBanner(text) {
+    const b = document.getElementById('placementBanner');
+    b.hidden = false;
+    b.querySelector('.banner-text').textContent = text;
+}
+function hideBanner() {
+    document.getElementById('placementBanner').hidden = true;
+}
+
+function adjustToken(id, field, delta) {
+    const t = state.tokens.find(tk => tk.id === id);
+    if (!t) return;
+    t[field] = Math.max(0, (t[field] || 0) + delta);
+    saveState();
+    renderAll();
+}
+
+function removeToken(id) {
+    state.tokens = state.tokens.filter(t => t.id !== id);
+    saveState();
+    renderAll();
+}
+
+// ---- Inspector ----
+function renderInspector() {
+    const el = document.getElementById('inspector');
+    if (!game.inspecting) {
+        el.innerHTML = '<p class="inspector-hint">Cliquez sur une case du plateau pour l\'inspecter.</p>';
+        return;
+    }
+    const { x, y } = game.inspecting;
+    const tokensHere = state.tokens.filter(t => t.x === x && t.y === y);
+    let html = '';
+    if (!tokensHere.length) html += '<p class="inspector-hint">Case vide.</p>';
+    tokensHere.forEach(t => { html += renderInspectorToken(t); });
+    el.innerHTML = html;
+}
+
+function renderInspectorToken(t) {
+    let title, sub = '', desc = '', badge = '';
+    if (t.type === 'creature') {
+        const c = getCreature(t.creatureId);
+        title = `${c ? c.icon : '❓'} ${c ? escapeHtml(c.name) : 'Créature inconnue'}`;
+        if (c) { sub = `PM ${c.pm} · Coût ${c.cost} 🪙`; desc = c.desc; badge = `${rarityBadge(c.rarity)} ${typeBadge(c.type)}`; }
+    } else if (t.type === 'crystal') {
+        title = '💎 Cristal';
+    } else if (t.type === 'gold') {
+        title = '🪙 Or';
+    }
+
+    const valueField = t.type === 'gold'
+        ? `<div class="stat-row"><span>Montant</span><div class="stat-controls"><button class="btn-small" onclick="adjustToken(${t.id},'amount',-1)">−</button><span>${t.amount}</span><button class="btn-small" onclick="adjustToken(${t.id},'amount',1)">+</button></div></div>`
+        : `<div class="stat-row"><span>PV</span><div class="stat-controls"><button class="btn-small" onclick="adjustToken(${t.id},'hp',-1)">−</button><span>${t.hp}</span><button class="btn-small" onclick="adjustToken(${t.id},'hp',1)">+</button></div></div>`;
+
+    const ownerHtml = t.type === 'gold' ? '' : `<div class="inspector-token-owner">${escapeHtml(ownerLabel(t.owner))}</div>`;
+    const ownerClass = t.type === 'gold' ? '' : ' owner-' + t.owner;
+
+    return `<div class="inspector-token${ownerClass}">
+        <div class="inspector-token-title">${title}</div>
+        ${badge}
+        ${ownerHtml}
+        ${sub ? `<div class="inspector-token-sub">${sub}</div>` : ''}
+        ${valueField}
+        ${desc ? `<div class="inspector-token-desc">${escapeHtml(desc)}</div>` : ''}
+        <div class="inspector-token-actions">
+            <button class="btn-small" onclick="armMove(${t.id})">🧭 Déplacer</button>
+            <button class="btn-small btn-danger" onclick="removeToken(${t.id})">🗑 Retirer</button>
+        </div>
+    </div>`;
+}
+
+// ==================== PLAYER PANELS (hand / gold / deck) ====================
+function renderPlayerPanel(pk) {
+    const pl = state.players[pk];
+    const panel = document.getElementById('playerPanel_' + pk);
+
+    // Preserve the hand/discard <details> open/closed state across re-renders
+    // (renderPlayerPanel rebuilds the whole panel on every action, e.g. Piocher).
+    const prevHandDetails = document.getElementById('handDetails_' + pk);
+    const prevDiscardDetails = document.getElementById('discardDetails_' + pk);
+    const handOpen = prevHandDetails ? prevHandDetails.open : false;
+    const discardOpen = prevDiscardDetails ? prevDiscardDetails.open : false;
+
+    const handHtml = pl.hand.length ? pl.hand.map((cid, idx) => {
+        const c = getCreature(cid);
+        if (!c) return '';
+        const affordable = pl.gold >= c.cost;
+        return `<div class="hand-card">
+            <div class="hc-icon">${c.icon}</div>
+            <div class="hc-name">${escapeHtml(c.name)}</div>
+            ${rarityBadge(c.rarity)} ${typeBadge(c.type)}
+            <div class="hc-stats">PV ${c.hp} · PM ${c.pm} · <span class="${affordable ? '' : 'cost-warn'}">🪙${c.cost}</span></div>
+            <div class="hc-actions">
+                <button class="btn-small btn-gold" ${affordable ? '' : 'disabled'} onclick="armHandPlacement('${pk}',${idx})">Poser</button>
+                <button class="btn-small btn-danger" onclick="discardFromHand('${pk}',${idx})">Défausser</button>
+            </div>
+        </div>`;
+    }).join('') : '<p class="inspector-hint">Main vide.</p>';
+
+    panel.innerHTML = `
+        <h2><input type="text" value="${escapeHtml(pl.name)}" oninput="renamePlayer('${pk}', this.value)" style="width:100%;background:transparent;border:none;font-family:'Cinzel',serif;font-size:1em;color:inherit;"></h2>
+        <div class="panel-actions">
+            <button onclick="drawCard('${pk}')">🂠 Piocher (${pl.deck.length})</button>
+            <div class="stat-controls">
+                <button class="btn-small" onclick="adjustGold('${pk}',-1)">−</button><span>${pl.gold} 🪙</span><button class="btn-small" onclick="adjustGold('${pk}',1)">+</button>
+            </div>
+        </div>
+        <details class="discard-details" id="handDetails_${pk}" ${handOpen ? 'open' : ''}>
+            <summary>Voir la main (${pl.hand.length})</summary>
+            <div class="hand-row">${handHtml}</div>
+        </details>
+        <details class="discard-details" id="discardDetails_${pk}" ${discardOpen ? 'open' : ''}>
+            <summary>Voir la défausse (${pl.discard.length})</summary>
+            <div class="discard-list">${pl.discard.map(cid => { const c = getCreature(cid); return c ? escapeHtml(c.icon + ' ' + c.name) : '?'; }).join(', ') || 'Vide'}</div>
+        </details>
+    `;
+}
+
+function renamePlayer(pk, value) {
+    state.players[pk].name = value;
+    saveState();
+    // Only refresh dependent read-only labels, not the input the user is typing in.
+    renderBoard();
+    renderInspector();
+}
+
+function adjustGold(pk, delta) {
+    state.players[pk].gold = Math.max(0, state.players[pk].gold + delta);
+    saveState();
+    renderAll();
+}
+
+function drawCard(pk) {
+    const pl = state.players[pk];
+    if (!pl.deck.length) { alert(`Le deck de ${pl.name} est vide.`); return; }
+    const idx = Math.floor(Math.random() * pl.deck.length);
+    const [cid] = pl.deck.splice(idx, 1);
+    pl.hand.push(cid);
+    saveState();
+    renderAll();
+}
+
+function discardFromHand(pk, idx) {
+    const pl = state.players[pk];
+    const [cid] = pl.hand.splice(idx, 1);
+    if (cid) pl.discard.push(cid);
+    saveState();
+    renderAll();
+}
+
+// ==================== BIBLIOTHEQUE ====================
+// Display order for the Bibliotheque list only — purely visual, kept separate
+// from state.library itself so it never affects decks, dropdowns, etc.
+function getOrderedLibrary() {
+    const ids = state.library.map(c => c.id);
+    state.libraryOrder = state.libraryOrder.filter(id => ids.includes(id));
+    ids.forEach(id => { if (!state.libraryOrder.includes(id)) state.libraryOrder.push(id); });
+    return state.libraryOrder.map(id => getCreature(id)).filter(Boolean);
+}
+
+function moveLibraryItem(id, direction) {
+    getOrderedLibrary();
+    const idx = state.libraryOrder.indexOf(id);
+    const newIdx = idx + direction;
+    if (idx < 0 || newIdx < 0 || newIdx >= state.libraryOrder.length) return;
+    [state.libraryOrder[idx], state.libraryOrder[newIdx]] = [state.libraryOrder[newIdx], state.libraryOrder[idx]];
+    saveState();
+    renderLibrary();
+}
+
+function renderLibrary() {
+    const container = document.getElementById('libraryTable');
+    if (!state.library.length) {
+        container.innerHTML = '<p class="inspector-hint">Aucune créature. Ajoutez-en une ci-dessous.</p>';
+        return;
+    }
+    const ordered = getOrderedLibrary();
+    container.innerHTML = ordered.map((c, idx) => `
+        <div class="lib-row">
+            <div><span class="lib-col-label">Icône</span><input class="lib-icon" value="${escapeHtml(c.icon)}" data-field="icon" data-id="${c.id}" maxlength="4"></div>
+            <div><span class="lib-col-label">Nom</span><input value="${escapeHtml(c.name)}" data-field="name" data-id="${c.id}"></div>
+            <div><span class="lib-col-label">PV base</span><input type="number" value="${c.hp}" data-field="hp" data-id="${c.id}"></div>
+            <div><span class="lib-col-label">PM base</span><input type="number" value="${c.pm}" data-field="pm" data-id="${c.id}"></div>
+            <div><span class="lib-col-label">Coût 🪙</span><input type="number" value="${c.cost}" data-field="cost" data-id="${c.id}"></div>
+            <div><span class="lib-col-label">Rareté</span><select data-field="rarity" data-id="${c.id}">
+                <option value="commune" ${c.rarity === 'commune' ? 'selected' : ''}>Commune</option>
+                <option value="rare" ${c.rarity === 'rare' ? 'selected' : ''}>Rare</option>
+                <option value="epique" ${c.rarity === 'epique' ? 'selected' : ''}>Épique</option>
+            </select></div>
+            <div><span class="lib-col-label">Type</span><select data-field="type" data-id="${c.id}">
+                <option value="classique" ${c.type === 'classique' ? 'selected' : ''}>Classique</option>
+                <option value="distance" ${c.type === 'distance' ? 'selected' : ''}>Distance</option>
+                <option value="batiment" ${c.type === 'batiment' ? 'selected' : ''}>Bâtiment</option>
+            </select></div>
+            <div><span class="lib-col-label">Description / capacités</span><textarea data-field="desc" data-id="${c.id}">${escapeHtml(c.desc)}</textarea></div>
+            <div><span class="lib-col-label">&nbsp;</span><button class="btn-danger btn-small" data-action="delete-creature" data-id="${c.id}">🗑</button></div>
+            <div><span class="lib-col-label">&nbsp;</span><div class="lib-reorder">
+                <button class="btn-small" data-action="move-up" data-id="${c.id}" title="Monter" ${idx === 0 ? 'disabled' : ''}>▲</button>
+                <button class="btn-small" data-action="move-down" data-id="${c.id}" title="Descendre" ${idx === ordered.length - 1 ? 'disabled' : ''}>▼</button>
+            </div></div>
+        </div>
+    `).join('');
+    container.querySelectorAll('textarea').forEach(autoGrowTextarea);
+}
+
+function handleLibraryFieldChange(e) {
+    const field = e.target.dataset.field, id = e.target.dataset.id;
+    if (!field || !id) return;
+    const c = getCreature(id);
+    if (!c) return;
+    if (field === 'hp' || field === 'pm' || field === 'cost') c[field] = parseInt(e.target.value) || 0;
+    else c[field] = e.target.value;
+    if (e.target.tagName === 'TEXTAREA') autoGrowTextarea(e.target);
+    saveState();
+    refreshLibraryDependents();
+}
+document.getElementById('libraryTable').addEventListener('input', handleLibraryFieldChange);
+document.getElementById('libraryTable').addEventListener('change', handleLibraryFieldChange);
+
+document.getElementById('libraryTable').addEventListener('click', e => {
+    if (e.target.dataset.action === 'delete-creature') {
+        const id = e.target.dataset.id;
+        const c = getCreature(id);
+        if (!confirm(`Supprimer "${c ? c.name : id}" de la bibliothèque ? Elle sera aussi retirée des decks, mains et défausses.`)) return;
+        state.library = state.library.filter(c => c.id !== id);
+        ['p1', 'p2'].forEach(pk => {
+            const pl = state.players[pk];
+            pl.deck = pl.deck.filter(cid => cid !== id);
+            pl.hand = pl.hand.filter(cid => cid !== id);
+            pl.discard = pl.discard.filter(cid => cid !== id);
+        });
+        saveState();
+        renderAll();
+    } else if (e.target.dataset.action === 'move-up') {
+        moveLibraryItem(e.target.dataset.id, -1);
+    } else if (e.target.dataset.action === 'move-down') {
+        moveLibraryItem(e.target.dataset.id, 1);
+    }
+});
+
+function addCreature() {
+    const id = 'custom_' + (state.nextCreatureId++);
+    state.library.push({ id, icon: '❔', name: 'Nouvelle créature', hp: 1, pm: 1, cost: 1, rarity: 'commune', type: 'classique', desc: '' });
+    saveState();
+    renderAll();
+}
+
+// ==================== DECKS ====================
+function renderDecks() {
+    ['p1', 'p2'].forEach(pk => {
+        const container = document.getElementById('deckBuilder_' + pk);
+        const pl = state.players[pk];
+        if (!state.library.length) {
+            container.innerHTML = `<h3 class="section-title">${escapeHtml(pl.name)} — 0 carte(s)</h3><p class="inspector-hint">Ajoutez des créatures dans la Bibliothèque d'abord.</p>`;
+            return;
+        }
+        let html = `<h3 class="section-title">${escapeHtml(pl.name)} — ${pl.deck.length} carte(s)</h3><div class="deck-list">`;
+        getOrderedLibrary().forEach(c => {
+            const count = pl.deck.filter(cid => cid === c.id).length;
+            html += `<div class="deck-row">
+                <span>${c.icon}</span>
+                <span class="deck-row-name">${escapeHtml(c.name)}</span>
+                <button class="btn-small" onclick="deckAdjust('${pk}','${c.id}',-1)">−</button>
+                <span class="deck-row-count">${count}</span>
+                <button class="btn-small" onclick="deckAdjust('${pk}','${c.id}',1)">+</button>
+            </div>`;
+        });
+        html += `</div><button class="btn-danger btn-small" onclick="clearDeck('${pk}')">Vider le deck</button>`;
+        container.innerHTML = html;
+    });
+}
+
+function deckAdjust(pk, creatureId, delta) {
+    const pl = state.players[pk];
+    if (delta > 0) {
+        pl.deck.push(creatureId);
+    } else {
+        const idx = pl.deck.indexOf(creatureId);
+        if (idx >= 0) pl.deck.splice(idx, 1);
+    }
+    saveState();
+    renderAll();
+}
+
+function clearDeck(pk) {
+    if (!confirm(`Vider entièrement le deck de ${state.players[pk].name} ?`)) return;
+    state.players[pk].deck = [];
+    saveState();
+    renderAll();
+}
+
+// ==================== RESET ====================
+function resetBoard() {
+    if (!confirm('Réinitialiser le plateau (jetons), les mains, les défausses et l\'or ? La bibliothèque et les decks sont conservés.')) return;
+    state.tokens = [];
+    ['p1', 'p2'].forEach(pk => {
+        const pl = state.players[pk];
+        pl.hand = [];
+        pl.discard = [];
+        pl.gold = 0;
+    });
+    game.inspecting = null;
+    game.placement = null;
+    game.moveMode = null;
+    saveState();
+    hideBanner();
+    renderAll();
+}
+
+function resetEverything() {
+    if (!confirm('Tout réinitialiser (bibliothèque, decks, plateau, carte) ? Cette action est irréversible.')) return;
+    state = defaultState();
+    game = { inspecting: null, placement: null, moveMode: null };
+    saveState();
+    hideBanner();
+    renderAll();
+}
+
+// ==================== CARTE (map editor) ====================
+// Palette figée reprenant les couleurs de terrain du jeu de base (pas de sélecteur de couleur libre).
+const MAP_PALETTE = [
+    { label: 'Plaine',        color: '#2d5a3d' },
+    { label: 'Colline',       color: '#4c8360' },
+    { label: 'Montagne',      color: '#6bab82' },
+    { label: 'Eau',           color: '#1565c0' },
+    { label: 'Eau colline',   color: '#3294dc' },
+    { label: 'Eau montagne',  color: '#4fc3f7' },
+    { label: 'Rocher',        color: '#6b6b6b' },
+    { label: 'Mur',           color: '#3e2723' }
+];
+let selectedPaletteColor = MAP_PALETTE[0].color;
+
+function renderMapPalette() {
+    const el = document.getElementById('mapPalette');
+    el.innerHTML = MAP_PALETTE.map(p => `
+        <button type="button" class="palette-swatch ${p.color === selectedPaletteColor ? 'active' : ''}" data-color="${p.color}">
+            <span class="swatch-color" style="background:${p.color}"></span>${escapeHtml(p.label)}
+        </button>
+    `).join('');
+}
+
+document.getElementById('mapPalette').addEventListener('click', e => {
+    const btn = e.target.closest('.palette-swatch');
+    if (!btn) return;
+    selectedPaletteColor = btn.dataset.color;
+    renderMapPalette();
+});
+
+function renderMapEditor() {
+    renderMapPalette();
+    const board = document.getElementById('mapEditorBoard');
+    board.innerHTML = '';
+    board.style.width = HEX_BOARD_W + 'px';
+    board.style.height = HEX_BOARD_H + 'px';
+
+    HEX_CELLS.forEach(({ x, y, left, top }) => {
+        const cell = document.createElement('div');
+        cell.className = 'hex-cell';
+        cell.style.left = left + 'px';
+        cell.style.top = top + 'px';
+        cell.style.background = getCellColor(x, y);
+        cell.dataset.x = x;
+        cell.dataset.y = y;
+        cell.addEventListener('click', () => paintCell(x, y));
+        board.appendChild(cell);
+    });
+
+    fitAllBoards();
+}
+
+function paintCell(x, y) {
+    const color = selectedPaletteColor;
+    state.mapColors[x + ',' + y] = color;
+    if (document.getElementById('mapMirrorToggle').checked) {
+        const m = mirrorOf(x, y);
+        if (isValidHexCell(m.x, m.y)) state.mapColors[m.x + ',' + m.y] = color;
+    }
+    saveState();
+    renderMapEditor();
+    renderBoard();
+}
+
+function resetMapColors() {
+    if (!confirm('Réinitialiser toutes les couleurs de la carte ?')) return;
+    state.mapColors = {};
+    saveState();
+    renderMapEditor();
+    renderBoard();
+}
+
+// ==================== FREE CREATURE TOOL ====================
+function populateFreeCreatureSelect() {
+    const sel = document.getElementById('freeCreatureSelect');
+    const prevVal = sel.value;
+    sel.innerHTML = getOrderedLibrary().map(c => `<option value="${c.id}">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</option>`).join('');
+    if (state.library.some(c => c.id === prevVal)) sel.value = prevVal;
+    updateFreeCreatureToolState();
+}
+
+function updateFreeCreatureToolState() {
+    const sel = document.getElementById('freeCreatureSelect');
+    const c = getCreature(sel.value);
+    const info = document.getElementById('freeCreatureInfo');
+    const btn = document.getElementById('freeCreaturePlaceBtn');
+    if (!c) { info.innerHTML = ''; btn.disabled = true; return; }
+    info.innerHTML = `PV ${c.hp} · PM ${c.pm} ${rarityBadge(c.rarity)}`;
+    btn.disabled = false;
+}
+
+// ==================== TABS ====================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        requestAnimationFrame(() => {
+            fitAllBoards();
+            if (btn.dataset.tab === 'regles') autoGrowTextarea(document.getElementById('rulesText'));
+            if (btn.dataset.tab === 'bibliotheque') document.querySelectorAll('.lib-row textarea').forEach(autoGrowTextarea);
+        });
+    });
+});
+
+// ==================== RENDER ALL ====================
+function renderAll() {
+    renderBoard();
+    renderInspector();
+    renderPlayerPanel('p1');
+    renderPlayerPanel('p2');
+    renderLibrary();
+    renderDecks();
+    renderMapEditor();
+    populateFreeCreatureSelect();
+}
+
+// Refreshes everything that can display a creature's name/icon/stats,
+// without touching the library table itself (keeps focus/cursor while typing).
+function refreshLibraryDependents() {
+    renderBoard();
+    renderInspector();
+    renderPlayerPanel('p1');
+    renderPlayerPanel('p2');
+    renderDecks();
+    populateFreeCreatureSelect();
+}
+
+function updateRulesText(value) {
+    state.rulesText = value;
+    saveState();
+}
+
+// ==================== CONFIG EXPORT / IMPORT ====================
+function exportConfig() {
+    const dataStr = JSON.stringify(state, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const d = new Date();
+    const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hytabletop-config-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function importConfig(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        let parsed;
+        try {
+            parsed = JSON.parse(reader.result);
+        } catch (e) {
+            alert('Impossible de lire ce fichier : ce n\'est pas un JSON valide.');
+            return;
+        }
+        if (!parsed || !parsed.library || !parsed.players || !parsed.tokens) {
+            alert('Fichier invalide : ce n\'est pas une configuration Hytabletop reconnue.');
+            return;
+        }
+        if (!confirm('Remplacer la configuration actuelle (bibliothèque, decks, plateau, carte, règles) par celle importée ? Cette action est irréversible.')) return;
+        state = normalizeState(parsed);
+        game = { inspecting: null, placement: null, moveMode: null };
+        saveState();
+        hideBanner();
+        renderAll();
+        const rulesEl = document.getElementById('rulesText');
+        rulesEl.value = state.rulesText;
+        autoGrowTextarea(rulesEl);
+        alert('Configuration importée avec succès.');
+    };
+    reader.readAsText(file);
+}
+
+// Grows a textarea to fit its content, so it never shows its own scrollbar.
+function autoGrowTextarea(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+}
+
+function init() {
+    renderAll();
+    const rulesEl = document.getElementById('rulesText');
+    rulesEl.value = state.rulesText;
+    autoGrowTextarea(rulesEl);
+    document.getElementById('freeCreatureSelect').addEventListener('change', updateFreeCreatureToolState);
+    document.getElementById('freeCreatureOwner').addEventListener('change', updateFreeCreatureToolState);
+
+    // The custom Google Font loads asynchronously and can reflow text after
+    // the initial render, making earlier auto-grow height measurements stale.
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => {
+            autoGrowTextarea(rulesEl);
+            document.querySelectorAll('.lib-row textarea').forEach(autoGrowTextarea);
+        });
+    }
+}
+
+init();
+</script>
+</body>
+</html>

@@ -190,13 +190,15 @@
         border: 1px solid rgba(130,100,40,0.35);
         border-radius: 8px;
         padding: 8px;
-        width: 118px;
+        width: 200px;
         text-align: center;
     }
     .hand-card .hc-icon { font-size: 1.8em; line-height: 1; }
     .hand-card .hc-name { font-family:'Cinzel', serif; font-size: 0.8em; margin: 3px 0; color: var(--text-primary); }
     .hand-card .hc-stats { font-size: 0.72em; color: var(--text-secondary); margin-bottom: 5px; }
-    .hand-card .hc-actions { display:flex; flex-direction:column; gap:4px; margin-top: 5px; }
+    .hand-card .hc-desc { font-size: 0.68em; color: var(--text-secondary); text-align: left; margin-bottom: 5px; }
+    .hand-card .hc-actions { display:flex; flex-direction:row; gap:4px; margin-top: 5px; }
+    .hand-card .hc-actions button { flex: 1; }
     .cost-warn { color: #e08080; font-weight: 600; }
 
     .rarity-badge {
@@ -228,7 +230,6 @@
     .type-badge.type-batiment  { background: rgba(150,60,60,0.25); color: #e08888; border: 1px solid rgba(180,80,80,0.4); }
 
     .discard-details summary { cursor:pointer; color: var(--text-dim); font-size: 0.82em; }
-    .discard-list { font-size: 0.82em; color: var(--text-secondary); margin-top: 4px; }
 
     .board-area {
         display: flex;
@@ -1069,6 +1070,19 @@ function renderInspectorToken(t) {
 }
 
 // ==================== PLAYER PANELS (hand / gold / deck) ====================
+// Shared card body (icon, name, rarity/type badges, stats, description) used by
+// both hand cards and discard cards, so they show the same info as the inspector.
+function renderCreatureCardBody(c, affordable) {
+    const costHtml = affordable === undefined ? `🪙${c.cost}` : `<span class="${affordable ? '' : 'cost-warn'}">🪙${c.cost}</span>`;
+    return `
+        <div class="hc-icon">${c.icon}</div>
+        <div class="hc-name">${escapeHtml(c.name)}</div>
+        ${rarityBadge(c.rarity)} ${typeBadge(c.type)}
+        <div class="hc-stats">PV ${c.hp} · PM ${c.pm} · ${costHtml}</div>
+        ${c.desc ? `<div class="hc-desc">${escapeHtml(c.desc)}</div>` : ''}
+    `;
+}
+
 function renderPlayerPanel(pk) {
     const pl = state.players[pk];
     const panel = document.getElementById('playerPanel_' + pk);
@@ -1085,16 +1099,19 @@ function renderPlayerPanel(pk) {
         if (!c) return '';
         const affordable = pl.gold >= c.cost;
         return `<div class="hand-card">
-            <div class="hc-icon">${c.icon}</div>
-            <div class="hc-name">${escapeHtml(c.name)}</div>
-            ${rarityBadge(c.rarity)} ${typeBadge(c.type)}
-            <div class="hc-stats">PV ${c.hp} · PM ${c.pm} · <span class="${affordable ? '' : 'cost-warn'}">🪙${c.cost}</span></div>
+            ${renderCreatureCardBody(c, affordable)}
             <div class="hc-actions">
                 <button class="btn-small btn-gold" ${affordable ? '' : 'disabled'} onclick="armHandPlacement('${pk}',${idx})">Poser</button>
                 <button class="btn-small btn-danger" onclick="discardFromHand('${pk}',${idx})">Défausser</button>
             </div>
         </div>`;
     }).join('') : '<p class="inspector-hint">Main vide.</p>';
+
+    const discardHtml = pl.discard.length ? pl.discard.map(cid => {
+        const c = getCreature(cid);
+        if (!c) return '';
+        return `<div class="hand-card">${renderCreatureCardBody(c)}</div>`;
+    }).join('') : '<p class="inspector-hint">Défausse vide.</p>';
 
     panel.innerHTML = `
         <h2><input type="text" value="${escapeHtml(pl.name)}" oninput="renamePlayer('${pk}', this.value)" style="width:100%;background:transparent;border:none;font-family:'Cinzel',serif;font-size:1em;color:inherit;"></h2>
@@ -1110,7 +1127,7 @@ function renderPlayerPanel(pk) {
         </details>
         <details class="discard-details" id="discardDetails_${pk}" ${discardOpen ? 'open' : ''}>
             <summary>Voir la défausse (${pl.discard.length})</summary>
-            <div class="discard-list">${pl.discard.map(cid => { const c = getCreature(cid); return c ? escapeHtml(c.icon + ' ' + c.name) : '?'; }).join(', ') || 'Vide'}</div>
+            <div class="hand-row">${discardHtml}</div>
         </details>
     `;
 }

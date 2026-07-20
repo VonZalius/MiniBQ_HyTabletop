@@ -1,0 +1,101 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - heading "Hytabletop" [level=1] [ref=e4]
+  - navigation [ref=e5]:
+    - button "Jeu" [ref=e6] [cursor=pointer]
+    - button "Plateau" [ref=e7] [cursor=pointer]
+    - button "Decks" [ref=e8] [cursor=pointer]
+    - button "Bibliothèque" [ref=e9] [cursor=pointer]
+    - button "Règles" [ref=e10] [cursor=pointer]
+  - generic [ref=e11]:
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - heading [level=2] [ref=e14]:
+          - textbox [ref=e15]: Joueur 1
+        - generic [ref=e16]:
+          - button "🂠 Piocher (15)" [ref=e17] [cursor=pointer]
+          - generic [ref=e18]:
+            - button "−" [ref=e19] [cursor=pointer]
+            - generic [ref=e20]: 5 🪙
+            - button "+" [ref=e21] [cursor=pointer]
+        - group [ref=e22]:
+          - generic "Voir la main (0)" [ref=e23] [cursor=pointer]
+        - group [ref=e24]:
+          - generic "Voir la défausse (0)" [ref=e25] [cursor=pointer]
+      - generic [ref=e26]:
+        - heading [level=2] [ref=e27]:
+          - textbox [ref=e28]: Joueur 2
+        - generic [ref=e29]:
+          - button "🂠 Piocher (14)" [ref=e30] [cursor=pointer]
+          - generic [ref=e31]:
+            - button "−" [ref=e32] [cursor=pointer]
+            - generic [ref=e33]: 2 🪙
+            - button "+" [ref=e34] [cursor=pointer]
+        - group [ref=e35]:
+          - generic "Voir la main (1)" [ref=e36] [cursor=pointer]
+        - group [ref=e37]:
+          - generic "Voir la défausse (0)" [ref=e38] [cursor=pointer]
+    - group [ref=e39]:
+      - generic "▶ Options de la partie" [ref=e40] [cursor=pointer]
+      - option "Joueur 1" [selected]
+      - option "Joueur 2"
+      - option "🧭 Éclaireur" [selected]
+      - option "💰 Kobold"
+      - option "🛡️ Garde"
+      - option "🏹 Archer"
+      - option "🧱 Barricades"
+      - option "🎣 Pêcheur"
+      - option "🐎 Cavalier"
+      - option "⚔️ Fantassin"
+      - option "🎯 Arbalétrier"
+      - option "⛲ Source"
+      - option "🪓 Bourreau"
+      - option "⚜️ Paladin"
+      - option "🔮 Invocateur"
+      - option "🛞 Catapulte"
+      - option "🏦 Mine"
+      - option "Joueur 1" [selected]
+      - option "Joueur 2"
+    - generic [ref=e41]:
+      - generic [ref=e43]:
+        - generic:
+          - generic "Cristal — 10 PV (Joueur 1)":
+            - generic: 💎
+            - generic: "10"
+        - generic:
+          - generic "Cristal — 10 PV (Joueur 1)":
+            - generic: 💎
+            - generic: "10"
+        - generic:
+          - generic "Cristal — 10 PV (Joueur 2)":
+            - generic: 💎
+            - generic: "10"
+        - generic:
+          - generic "Cristal — 10 PV (Joueur 2)":
+            - generic: 💎
+            - generic: "10"
+        - generic:
+          - generic "Éclaireur — 1 PV (Joueur 1)":
+            - generic: 🧭
+            - generic: "1"
+        - generic:
+          - generic "Archer — 2 PV (Joueur 1)":
+            - generic: 🏹
+            - generic: "2"
+        - generic:
+          - generic "Archer — 2 PV (Joueur 1)":
+            - generic: 🏹
+            - generic: "2"
+        - generic:
+          - generic "Paladin — 6 PV (Joueur 2)":
+            - generic: ⚜️
+            - generic: "6"
+        - generic:
+          - generic "Archer — 2 PV (Joueur 2)":
+            - generic: 🏹
+            - generic: "2"
+        - generic:
+          - generic "Éclaireur — 1 PV (Joueur 2)":
+            - generic: 🧭
+            - generic: "1"
+      - paragraph [ref=e214]: Cliquez sur une case du plateau pour l'inspecter.

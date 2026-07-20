@@ -316,7 +316,6 @@
 
     /* Highlight rings: two-layer technique so clip-path doesn't distort a plain box-shadow */
     .hex-cell.cell-selected::before,
-    .hex-cell.cell-armed::before,
     .hex-cell.cell-move-source::before {
         content: '';
         position: absolute;
@@ -324,7 +323,6 @@
         pointer-events: none;
     }
     .hex-cell.cell-selected::after,
-    .hex-cell.cell-armed::after,
     .hex-cell.cell-move-source::after {
         content: '';
         position: absolute;
@@ -333,12 +331,16 @@
         clip-path: polygon(50% 10%, 90% 30%, 90% 70%, 50% 90%, 10% 70%, 10% 30%);
         background: inherit;
     }
-    .hex-cell.cell-armed { filter: drop-shadow(0 0 6px rgba(80,255,120,0.6)); z-index: 4; }
-    .hex-cell.cell-armed::before { background: #4aff7a; }
     .hex-cell.cell-selected { filter: drop-shadow(0 0 7px rgba(232,192,74,0.8)); z-index: 5; }
     .hex-cell.cell-selected::before { background: #e8c04a; }
     .hex-cell.cell-move-source { filter: drop-shadow(0 0 7px rgba(74,200,255,0.8)); z-index: 6; }
     .hex-cell.cell-move-source::before { background: #4ac8ff; }
+
+    /* Whole-board highlight while a placement/move is armed, instead of every cell glowing individually */
+    .board-wrap:has(.hex-board.armed) {
+        border-color: rgba(80,255,120,0.9);
+        box-shadow: 0 0 40px rgba(80,255,120,0.5), inset 0 0 20px rgba(0,0,0,0.5);
+    }
 
     .token-wrap {
         position: absolute;
@@ -353,29 +355,54 @@
 
     .token {
         position: relative;
-        width: 34px;
-        height: 34px;
+        width: 30.6px;
+        height: 30.6px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 21px;
+        font-size: 18.9px;
         background: rgba(20,20,20,0.6);
-        border: 3px solid rgba(255,255,255,0.55);
+        border: 2.7px solid rgba(255,255,255,0.55);
         pointer-events: none;
     }
-    .token.owner-p1 { border-color: var(--p1-color); }
-    .token.owner-p2 { border-color: var(--p2-color); }
-    .token.token-gold { border-color: var(--gold); }
+    .token.owner-p1 { --token-border: var(--p1-color); border-color: var(--p1-color); }
+    .token.owner-p2 { --token-border: var(--p2-color); border-color: var(--p2-color); }
+    .token.token-gold { --token-border: var(--gold); border-color: var(--gold); }
+    /* Hex tokens: a plain CSS border stays rectangular even under clip-path (only the
+       flat sides keep a visible line, the chamfered corners have none) — so the "border"
+       here is really two stacked hexagons instead: a full-size one in the owner colour,
+       and a smaller one inset on top in the background colour, leaving a hex-shaped ring. */
+    .token.token-hex {
+        background: transparent;
+        border: none;
+        border-radius: 0;
+    }
+    .token.token-hex::before,
+    .token.token-hex::after {
+        content: '';
+        position: absolute;
+        clip-path: polygon(50% 2%, 98% 26%, 98% 74%, 50% 98%, 2% 74%, 2% 26%);
+    }
+    .token.token-hex::before {
+        inset: 0;
+        background: var(--token-border, rgba(255,255,255,0.55));
+    }
+    .token.token-hex::after {
+        inset: 2.7px;
+        background: rgba(20,20,20,0.6);
+    }
+    .token.token-hex > span:not(.token-badge) { position: relative; z-index: 1; }
+    .token.token-hex .token-badge { z-index: 1; }
     .token .token-badge {
         position: absolute;
-        bottom: -7px;
-        right: -9px;
+        bottom: -6.3px;
+        right: -8.1px;
         background: #111;
         border: 1px solid rgba(255,255,255,0.4);
-        border-radius: 6px;
-        font-size: 11px;
-        padding: 0 4px;
+        border-radius: 5.4px;
+        font-size: 9.9px;
+        padding: 0 3.6px;
         color: #fff;
         line-height: 1.4;
     }
@@ -429,7 +456,19 @@
         font-size: 0.9em;
     }
     .deck-row .deck-row-name { flex:1; }
+    .deck-row .deck-row-stats { font-size: 0.85em; color: var(--text-secondary); white-space: nowrap; }
     .deck-row .deck-row-count { min-width: 1.6em; text-align:center; font-weight:600; color: var(--gold-light); }
+    .deck-rarity-separator {
+        font-family: 'Cinzel', serif;
+        font-size: 0.82em;
+        color: var(--gold-light);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin: 10px 0 2px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid rgba(160,120,50,0.3);
+    }
+    .deck-rarity-separator:first-child { margin-top: 0; }
 
     /* ---------- Carte tab ---------- */
     .map-toolbar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom: 14px; }
@@ -671,19 +710,40 @@ window.addEventListener('resize', fitAllBoards);
 const STORAGE_KEY = 'hytabletop_state_v2';
 
 const DEFAULT_LIBRARY = [
-    { id:'souris', icon:'🐭', name:'Souris', hp:1, pm:5, cost:1, rarity:'commune', type:'classique',
-      desc:"Morsure au corps à corps (portée 1). Passif Fuite rapide : après une attaque, peut se déplacer de 2 cases supplémentaires." },
-    { id:'ecureuil', icon:'🐿️', name:'Écureuil', hp:2, pm:2, cost:2, rarity:'commune', type:'distance',
-      desc:"Lancer de gland à distance (portée 3). Passif Grimpeur : peut cibler des unités à une hauteur différente." },
-    { id:'canard', icon:'🦆', name:'Canard', hp:4, pm:2, cost:3, rarity:'rare', type:'classique',
-      desc:"Coup de bec au corps à corps (portée 1). Passif Aquatique : se déplace sur l'eau, et peut y soigner un allié adjacent de 2 PV au lieu d'attaquer." },
-    { id:'lapin', icon:'🐰', name:'Lapin', hp:3, pm:4, cost:4, rarity:'rare', type:'classique',
-      desc:"Charge en ligne droite jusqu'à 3 cases, frappe la première cible rencontrée." },
-    { id:'renard', icon:'🦊', name:'Renard', hp:5, pm:3, cost:5, rarity:'epique', type:'classique',
-      desc:"Griffure perçante au corps à corps : blesse aussi l'ennemi juste derrière la cible. Passif Prédateur : se soigne de 1 PV après avoir éliminé un ennemi." },
-    { id:'sanglier', icon:'🐗', name:'Sanglier', hp:6, pm:2, cost:6, rarity:'epique', type:'classique',
-      desc:"Furie : frappe tous les ennemis adjacents à la même hauteur. Passif Cuir épais : ne peut pas perdre plus de 3 PV par tour." }
+    { id:'souris', icon:'🧭', name:'Éclaireur', hp:1, pm:5, cost:1, rarity:'commune', type:'classique',
+      desc:"Action : Inflige 1 dégât au corps à corps.\nPassif : Après une attaque, peut se déplacer de 2 cases supplémentaires." },
+    { id:'ecureuil', icon:'🏹', name:'Archer', hp:2, pm:2, cost:2, rarity:'commune', type:'distance',
+      desc:"Action : Inflige 1 dégât jusqu'à 3 cases de distance." },
+    { id:'canard', icon:'🎣', name:'Pêcheur', hp:4, pm:2, cost:3, rarity:'rare', type:'classique',
+      desc:"Action : Inflige 2 dégât au corps à corps.\nAction : En étant sur l'eau, soigne de 2PV au corps à corps.\nPassif : Se déplace sur l'eau." },
+    { id:'lapin', icon:'🐎', name:'Cavalier', hp:3, pm:4, cost:4, rarity:'rare', type:'classique',
+      desc:"Action : Se déplace en ligne droite de jusqu'à 3 case en direction d'une cible à portée, et lui inflige 2 dégâts au corps à corps. " },
+    { id:'renard', icon:'🪓', name:'Bourreau', hp:5, pm:3, cost:5, rarity:'epique', type:'classique',
+      desc:"Action : Inflige 3 dégâts au corps à corps. Inflige autant de dégâts sur les 2 cases en ligne droite derriere la cible.\nPassif : Se soigne de 1 PV après avoir éliminé une unités ." },
+    { id:'sanglier', icon:'⚜️', name:'Paladin', hp:6, pm:2, cost:6, rarity:'epique', type:'classique',
+      desc:"Action : Inflige 3 dégâts sur toutes les cases adjacentes.\nPassif : Ne peut pas perdre plus de 3 PV par tour." },
+    { id:'custom_100', icon:'💰', name:'Kobold', hp:1, pm:4, cost:1, rarity:'commune', type:'classique',
+      desc:"Action : Inflige 1 dégât au corps à corps.\nPassif : Génère 1 OR lorsqu'il inflige des dégâts à une unité non-Bâtiment." },
+    { id:'custom_101', icon:'🛡️', name:'Garde', hp:3, pm:3, cost:3, rarity:'commune', type:'classique',
+      desc:"Action : Inflige aléatoirement entre 1 et 3 dégâts au corps à corps.\nPassif : Repousse la cible de jusqu'à 2 cases si possible lorsqu'il inflige des dégâts à une unité non-Bâtiment." },
+    { id:'custom_102', icon:'⚔️', name:'Fantassin', hp:3, pm:3, cost:2, rarity:'rare', type:'classique',
+      desc:"Action : Inflige 1 dégât au corps à corps.\nPassif : Inflige 1 dégât de plus pour chaque autre Fantassin allié en jeu." },
+    { id:'custom_103', icon:'🎯', name:'Arbalétrier', hp:2, pm:2, cost:4, rarity:'rare', type:'distance',
+      desc:"Action : Inflige 2 dégât jusqu'à 5 cases de distance en ligne droite.\nPassif : Inflige 1 dégât de plus pour chaque élévation dont il est supérieur à sa cible." },
+    { id:'custom_104', icon:'🔮', name:'Invocateur', hp:3, pm:2, cost:5, rarity:'epique', type:'classique',
+      desc:"Action : Soigne de 1 PV au corps à corps. Ce soin peut dépasser le maximum de PV.\nPassif : Permet de faire apparaitre les unités alliées sur les cases adjacentes." },
+    { id:'custom_105', icon:'🛞', name:'Catapulte', hp:3, pm:3, cost:6, rarity:'epique', type:'distance',
+      desc:"Action : Inflige 3 dégâts entre 4 et 6 cases de distance, ainsi que 1 dégât à toutes les cases adjacentes à la cible.\nPassif : Ne peut initier un déplacement qu'en étant adjacent à une unité alliée." },
+    { id:'custom_106', icon:'🧱', name:'Barricades', hp:8, pm:0, cost:0, rarity:'commune', type:'batiment', desc:"" },
+    { id:'custom_107', icon:'⛲', name:'Source', hp:6, pm:0, cost:2, rarity:'rare', type:'batiment',
+      desc:"Passif : Soigne de 2PV l'unité qui lui inflige des dégâts." },
+    { id:'custom_108', icon:'🏦', name:'Mine', hp:5, pm:0, cost:1, rarity:'epique', type:'batiment',
+      desc:"Passif : Génère 1 OR pour le joueur contrôlant l'unité qui lui inflige des dégâts." }
 ];
+
+const DEFAULT_LIBRARY_ORDER = ['souris','custom_100','custom_101','ecureuil','custom_106','canard','lapin','custom_102','custom_103','custom_107','renard','sanglier','custom_104','custom_105','custom_108'];
+
+const DEFAULT_MAP_COLORS = {"3,4":"#4c8360","11,10":"#4c8360","4,4":"#4c8360","10,10":"#4c8360","5,3":"#6bab82","9,11":"#6bab82","6,3":"#4c8360","8,11":"#4c8360","7,3":"#3e2723","7,11":"#3e2723","8,3":"#4c8360","6,11":"#4c8360","9,2":"#4c8360","5,12":"#4c8360","10,2":"#4c8360","4,12":"#4c8360","11,1":"#3294dc","3,13":"#3294dc","12,0":"#3294dc","2,14":"#3294dc","11,0":"#3294dc","3,14":"#3294dc","10,1":"#4c8360","4,13":"#4c8360","1,6":"#4c8360","13,8":"#4c8360","2,6":"#4c8360","12,8":"#4c8360","3,6":"#4c8360","11,8":"#4c8360","4,5":"#4c8360","10,9":"#4c8360","5,5":"#4c8360","9,9":"#4c8360","6,5":"#4c8360","8,9":"#4c8360","7,4":"#4c8360","7,10":"#4c8360","8,4":"#4c8360","6,10":"#4c8360","9,3":"#4c8360","5,11":"#4c8360","10,3":"#4c8360","4,11":"#4c8360","11,2":"#4c8360","3,12":"#4c8360","12,1":"#4c8360","2,13":"#4c8360","13,0":"#4c8360","1,14":"#4c8360","13,1":"#3e2723","1,13":"#3e2723","14,1":"#4c8360","0,13":"#4c8360","14,0":"#4c8360","0,14":"#4c8360","6,4":"#4c8360","8,10":"#4c8360","5,4":"#4c8360","9,10":"#4c8360","7,5":"#4c8360","7,9":"#4c8360","3,5":"#4c8360","11,9":"#4c8360","2,5":"#6b6b6b","12,9":"#6b6b6b","4,3":"#6bab82","10,11":"#6bab82","5,2":"#6bab82","9,12":"#6bab82","6,2":"#6bab82","8,12":"#6bab82","7,2":"#6bab82","7,12":"#6bab82","8,2":"#6bab82","6,12":"#6bab82","9,1":"#6bab82","5,13":"#6bab82","10,0":"#6bab82","4,14":"#6bab82","9,0":"#6bab82","5,14":"#6bab82","8,1":"#6b6b6b","6,13":"#6b6b6b","7,1":"#6bab82","7,13":"#6bab82","6,1":"#6bab82","8,13":"#6bab82","7,0":"#6bab82","7,14":"#6bab82","8,0":"#6b6b6b","6,14":"#6b6b6b","10,8":"#1565c0","4,6":"#1565c0","9,8":"#1565c0","5,6":"#1565c0","10,7":"#1565c0","4,7":"#1565c0","10,6":"#1565c0","4,8":"#1565c0","11,6":"#1565c0","3,8":"#1565c0","11,7":"#1565c0","3,7":"#1565c0","11,5":"#6b6b6b","3,9":"#6b6b6b","2,12":"#4c8360","12,2":"#4c8360","13,2":"#4c8360","1,12":"#4c8360","0,10":"#3e2723","14,4":"#3e2723","7,7":"#3e2723","6,8":"#6b6b6b","8,6":"#6b6b6b"};
 
 function rarityLabel(r) {
     return r === 'rare' ? 'Rare' : r === 'epique' ? 'Épique' : 'Commune';
@@ -708,52 +768,71 @@ const DEFAULT_RULES_TEXT =
 Détruire les cristaux de l'adversaire avant qu'il ne détruise les vôtres.
 
 MISE EN PLACE
+
 1. Chaque joueur compose son deck dans l'onglet Decks. Pour cela, il choisit jusqu'à 6 créatures différentes, et pour chaque créature choisie, ajoute autant de cartes dans son deck que sa rareté le permet (4 cartes pour les Communes, 3 pour les Rares, 2 pour les Épiques).
-2. Chaque joueur choisit une case pour y placer un cristal. Les cases choisies sont révélées simultanément, et un second cristal est ajouté en position miroir sur le plateau pour le joueur adverse, reflétant le positionnement choisi. Chaque joueur possède alors 2 cristaux à protéger.
+2. Chaque joueur choisit une case pour y placer un cristal. Les cases choisies sont révélées simultanément, et un second cristal est ajouté en position miroir sur le plateau pour le joueur adverse. Chaque joueur possède alors 2 cristaux à protéger.
 3. Si les joueurs le souhaitent, ils peuvent convenir de déposer des pièces d'or sur le plateau. Pour cela, chaque joueur choisit une case où placer le nombre de pièces convenu ; les cases choisies sont révélées simultanément, et pour chacune, une seconde pile est ajoutée en position miroir. Quatre piles d'or sont ainsi déposées à chaque répétition de cette étape, qui peut être répétée autant de fois que voulu.
-4. Chaque joueur pioche une main de départ de 3 cartes.
+4. Chaque joueur pioche une main de départ de 3 cartes et commence avec 10 pièces d'or.
 
 DÉROULEMENT D'UN TOUR
 Au début de son tour, un joueur doit :
-- Piocher une carte. S'il n'a plus de cartes à piocher, il doit infliger 1 dégât à une de ses créatures ou à un de ses cristaux.
-- Gagner une pièce d'or.
 
-Il peut ensuite :
-- Poser une ou plusieurs créatures de sa main sur le plateau, sur une case adjacente à l'un de ses cristaux. Le coût en or est alors déduit de sa réserve.
-- Utiliser une créature : la déplacer d'un nombre de cases inférieur ou égal à ses PM, puis lui faire utiliser une de ses actions. Cette étape peut être répétée autant de fois qu'il y a de créatures alliées en jeu, une fois par créature. Si une créature se trouve sur une ou plusieurs piles d'or, elle peut utiliser son action pour en ramasser une.
+* Piocher une carte. S'il n'a plus de cartes à piocher, il doit infliger 1 dégât à une de ses créatures ou à un de ses cristaux.
+* Gagner une pièce d'or.
+* Lors du premier tour du premier joueur, ces deux étapes sont sautées.
+
+Il peut ensuite, dans n'importe quel ordre :
+
+* Poser une ou plusieurs créatures de sa main sur une case adjacente à l'un de ses cristaux, à n'importe quel niveau d'élévation. Le coût en or est alors déduit de sa réserve.
+* Utiliser une créature : la déplacer d'un nombre de cases plus petit ou égal à ses PM, puis/ou lui faire utiliser une de ses actions si désiré. Cette étape peut être réalisée une fois pour chacune des créatures du joueur. Une créature ne peux ni se déplacer ni faire d'action le tour ou elle a été invoqué. Si une créature se trouve sur une ou plusieurs pièces d'or, elle peut utiliser son action pour en ramasser une. Une créature peut utiliser son action pour déployer un Bâtiment sur une case adjacente.
 
 À la fin du tour, le joueur doit :
-- Défausser une carte de sa main s'il en possède plus de 5.
+
+* Défausser une carte de sa main s'il en possède plus de 5.
+
+UNITÉS
+Toute les unités, alliés ou ennemis, peuvent être ciblé par n'importe quel action.
+Une unité est infranchissable, mais on peut attaquer à travers si la portée le permet, à l'exception des bâtiments.
+Toutes les unités possèdent un ensemble de propriétés :
+
+* PV : Le nombre de points de vie de la créature. Les PV ne peuvent généralement pas dépasser leur total de base. Les PV diminuent lorsque l'unité subit des dégâts. L'unité est détruite une fois les PV à 0.
+* PM : La distance maximale en cases que peut parcourir l'unité avant d'utiliser une Capacité.
+* Coût : Le prix en OR que doit dépenser le propriétaire d'une Unité pour la déployer.
+* Rareté : Le nombre de cartes de cette Unité présentes dans le deck de son propriétaire : 4 cartes pour les Communes, 3 pour les Rares, 2 pour les Épiques.
+* Type : La manière dont l'unité adapte certaines règles :
+  Classique - Règles habituelles.
+  Distance - Peut cibler des unités à n'importe quel niveau d'élévation.
+  Bâtiment - Pour être déployé, une unité alliée doit utiliser une action spéciale à la place d'une de ses actions habituelles. Le bâtiment est alors déployé sur une case adjacente à cette dernière.
+  Cristal - Se déploie selon la règle de la position miroir en début de partie. Ne peut pas être soigné, ni déplacé d'aucune manière. Lorsqu'il est détruit, son propriétaire reçoit 3 OR.
+* Capacité.s : L'ensemble de règles uniques à une unité. Seule une action peut être faite par tour et par unité après qu'elle ait fini de se déplacer. Les passifs sont à prendre en compte à tout moment.
 
 TERRAIN ET DÉPLACEMENT
-- L'eau et les rochers sont infranchissables, mais on peut attaquer à travers si la portée le permet.
-- Les murs bloquent aussi les attaques (ils bloquent à la fois le déplacement et la ligne d'attaque).
-- Monter d'un niveau de hauteur coûte 2 PM au lieu de 1. Descendre coûte toujours 1 PM.
-- Il est impossible de monter ou descendre de 2 niveaux de hauteur en un seul déplacement.
-- On ne peut pas se déplacer à travers une autre créature ou un cristal, mais on peut viser à travers eux.
-- On ne peut pas cibler une créature ou un cristal situé à une hauteur de terrain différente.
-- On peut se déplacer au-dessus des piles d'or.
 
-CRISTAUX
-Chaque cristal possède 10 PV. Quand un cristal atteint 0 PV, il est considéré comme détruit (vous pouvez le retirer du plateau).
+* L'eau et les rochers sont infranchissables, mais on peut attaquer à travers si la portée le permet.
+* Les murs sont infranchissables et bloquent les attaques si elles devaient les traverser (en traçant une ligne droite entre le centre de l'unité attaquante et l'unité ciblée).
+* Monter d'un niveau d'élévation coûte 2 PM au lieu de 1. Descendre coûte toujours 1 PM.
+* Il est impossible de monter ou descendre de plus d'un niveau d'élévation en une case de déplacement.
+* On ne peut pas se déplacer à travers une autre unité, mais on peut attaquer à travers si la portée le permet.
+* On ne peut pas cibler une unité sur un niveau d'élévation différent.
+* On peut se déplacer au-dessus des piles d'or.
 
 FIN DE PARTIE
-La partie se termine quand un joueur n'a plus de cristaux, ou s'il ne possède plus aucune créature en jeu, en main, ni dans son deck.`;
+La partie se termine quand un joueur n'a plus de cristaux ou ne possède plus aucune créature ni en jeu, ni en main, ni dans son deck.`;
 
 function defaultState() {
     return {
         library: DEFAULT_LIBRARY.map(c => ({ ...c })),
         players: {
-            p1: { name: 'Joueur 1', gold: 0, deck: [], hand: [], discard: [] },
-            p2: { name: 'Joueur 2', gold: 0, deck: [], hand: [], discard: [] }
+            p1: { name: 'Joueur 1', gold: 10, deck: [], hand: [], discard: [] },
+            p2: { name: 'Joueur 2', gold: 10, deck: [], hand: [], discard: [] }
         },
         tokens: [],
-        mapColors: {},
+        mapColors: { ...DEFAULT_MAP_COLORS },
         rulesText: DEFAULT_RULES_TEXT,
-        libraryOrder: DEFAULT_LIBRARY.map(c => c.id),
-        nextTokenId: 1,
-        nextCreatureId: 100,
-        nextSeq: 1
+        libraryOrder: [...DEFAULT_LIBRARY_ORDER],
+        nextTokenId: 75,
+        nextCreatureId: 109,
+        nextSeq: 202
     };
 }
 
@@ -836,7 +915,6 @@ function renderBoard() {
         cell.dataset.y = y;
 
         if (game.inspecting && game.inspecting.x === x && game.inspecting.y === y) cell.classList.add('cell-selected');
-        if (game.placement || game.moveMode) cell.classList.add('cell-armed');
         if (moveSource && moveSource.x === x && moveSource.y === y) cell.classList.add('cell-move-source');
 
         cell.addEventListener('click', () => onCellClick(x, y));
@@ -874,11 +952,12 @@ function renderTokenEl(t) {
     const el = document.createElement('div');
     if (t.type === 'creature') {
         const c = getCreature(t.creatureId);
-        el.className = `token token-creature owner-${t.owner}`;
+        const hexShape = c && c.type === 'batiment' ? ' token-hex' : '';
+        el.className = `token token-creature owner-${t.owner}${hexShape}`;
         el.innerHTML = `<span>${c ? c.icon : '❓'}</span><span class="token-badge">${t.hp}</span>`;
         el.title = `${c ? c.name : 'Créature inconnue'} — ${t.hp} PV (${ownerLabel(t.owner)})`;
     } else if (t.type === 'crystal') {
-        el.className = `token token-crystal owner-${t.owner}`;
+        el.className = `token token-crystal token-hex owner-${t.owner}`;
         el.innerHTML = `<span>💎</span><span class="token-badge">${t.hp}</span>`;
         el.title = `Cristal — ${t.hp} PV (${ownerLabel(t.owner)})`;
     } else if (t.type === 'gold') {
@@ -901,14 +980,12 @@ function armCrystalPlacement() {
     const owner = document.getElementById('crystalOwner').value;
     const hp = parseInt(document.getElementById('crystalHp').value) || 0;
     game.placement = { type: 'crystal', owner, hp };
-    showBanner(`💎 Cliquez sur une case pour placer un cristal (${hp} PV, ${ownerLabel(owner)}).`);
     renderAll();
 }
 
 function armGoldPlacement() {
     const amount = parseInt(document.getElementById('goldAmount').value) || 0;
     game.placement = { type: 'gold', amount };
-    showBanner(`🪙 Cliquez sur une case pour placer ${amount} or.`);
     renderAll();
 }
 
@@ -918,7 +995,6 @@ function armFreeCreaturePlacement() {
     const c = getCreature(creatureId);
     if (!c) { alert('Aucune créature disponible dans la bibliothèque.'); return; }
     game.placement = { type: 'creature', creatureId, owner, deductCost: false };
-    showBanner(`${c.icon} Cliquez sur une case pour placer ${c.name} (${ownerLabel(owner)}).`);
     renderAll();
 }
 
@@ -971,7 +1047,6 @@ function cancelPlacement() {
 // ---- Move ----
 function armMove(tokenId) {
     game.moveMode = { tokenId };
-    showBanner('🧭 Cliquez sur la case de destination.');
     renderAll();
 }
 
@@ -1262,6 +1337,8 @@ function addCreature() {
 }
 
 // ==================== DECKS ====================
+const DECK_RARITY_ORDER = ['commune', 'rare', 'epique'];
+
 function renderDecks() {
     ['p1', 'p2'].forEach(pk => {
         const container = document.getElementById('deckBuilder_' + pk);
@@ -1270,16 +1347,24 @@ function renderDecks() {
             container.innerHTML = `<h3 class="section-title">${escapeHtml(pl.name)} — 0 carte(s)</h3><p class="inspector-hint">Ajoutez des créatures dans la Bibliothèque d'abord.</p>`;
             return;
         }
+        const ordered = getOrderedLibrary();
         let html = `<h3 class="section-title">${escapeHtml(pl.name)} — ${pl.deck.length} carte(s)</h3><div class="deck-list">`;
-        getOrderedLibrary().forEach(c => {
-            const count = pl.deck.filter(cid => cid === c.id).length;
-            html += `<div class="deck-row">
-                <span>${c.icon}</span>
-                <span class="deck-row-name">${escapeHtml(c.name)}</span>
-                <button class="btn-small" onclick="deckAdjust('${pk}','${c.id}',-1)">−</button>
-                <span class="deck-row-count">${count}</span>
-                <button class="btn-small" onclick="deckAdjust('${pk}','${c.id}',1)">+</button>
-            </div>`;
+        DECK_RARITY_ORDER.forEach(rarity => {
+            const group = ordered.filter(c => c.rarity === rarity);
+            if (!group.length) return;
+            html += `<div class="deck-rarity-separator">${rarityLabel(rarity)}</div>`;
+            group.forEach(c => {
+                const count = pl.deck.filter(cid => cid === c.id).length;
+                html += `<div class="deck-row">
+                    <span>${c.icon}</span>
+                    <span class="deck-row-name">${escapeHtml(c.name)}</span>
+                    <span class="deck-row-stats">PV ${c.hp} · PM ${c.pm} · 🪙${c.cost}</span>
+                    ${typeBadge(c.type)}
+                    <button class="btn-small" onclick="deckAdjust('${pk}','${c.id}',-1)">−</button>
+                    <span class="deck-row-count">${count}</span>
+                    <button class="btn-small" onclick="deckAdjust('${pk}','${c.id}',1)">+</button>
+                </div>`;
+            });
         });
         html += `</div><button class="btn-danger btn-small" onclick="clearDeck('${pk}')">Vider le deck</button>`;
         container.innerHTML = html;

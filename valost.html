@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hytabletop</title>
+<title>Valost</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -517,7 +517,7 @@
 <body>
 <div class="app">
     <header>
-        <h1>Hytabletop</h1>
+        <h1>Valost</h1>
     </header>
 
     <nav class="tabs">
@@ -1579,7 +1579,7 @@ function importConfig(file) {
             return;
         }
         if (!parsed || !parsed.library || !parsed.players || !parsed.tokens) {
-            alert('Fichier invalide : ce n\'est pas une configuration Hytabletop reconnue.');
+            alert('Fichier invalide : ce n\'est pas une configuration Valost reconnue.');
             return;
         }
         if (!confirm('Remplacer la configuration actuelle (bibliothèque, decks, plateau, carte, règles) par celle importée ? Cette action est irréversible.')) return;
